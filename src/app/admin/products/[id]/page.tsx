@@ -1,0 +1,51 @@
+import { supabase } from '@/lib/supabase';
+import { requireAdmin } from '@/services/auth.service';
+import ProductForm from '@/components/admin/ProductForm';
+import { notFound } from 'next/navigation';
+
+export default async function EditProductPage({ params }: { params: { id: string } }) {
+  await requireAdmin();
+
+  // Load categories and occasions
+  const [
+    { data: categories },
+    { data: occasions },
+    { data: product, error: prodError },
+    { data: pricing },
+    { data: productOccasions },
+    { data: productImages }
+  ] = await Promise.all([
+    supabase.from('categories').select('*').order('display_order'),
+    supabase.from('occasions').select('*').order('display_order'),
+    supabase.from('products').select('*').eq('id', params.id).single(),
+    supabase.from('product_pricing').select('*').eq('product_id', params.id).single(),
+    supabase.from('product_occasions').select('occasion_id').eq('product_id', params.id),
+    supabase.from('product_images').select('image_url').eq('product_id', params.id).eq('is_primary', true).limit(1)
+  ]);
+
+  if (prodError || !product) {
+    notFound();
+  }
+
+  const initialData = {
+    ...product,
+    pricing: pricing || undefined,
+    occasionIds: productOccasions ? productOccasions.map(po => po.occasion_id) : [],
+    primaryImageUrl: productImages && productImages.length > 0 ? productImages[0].image_url : undefined
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
+        <p className="text-gray-500">Update product information and pricing.</p>
+      </div>
+      
+      <ProductForm 
+        initialData={initialData}
+        categories={categories || []} 
+        occasions={occasions || []} 
+      />
+    </div>
+  );
+}

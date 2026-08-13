@@ -1,0 +1,18 @@
+'use client';
+
+import { useEffect, useState, use } from 'react';
+import { getPublicProductBySlug, PublicProduct } from '@/services/catalog.service';
+import { PageTransition } from '@/components/ui/AnimatedWrapper';
+import { notFound } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { getInventoryStatus, getInventoryStatusColor } from '@/lib/inventory';
+import { ShoppingBag, ArrowLeft, Plus, Minus, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
+import { useSelection } from '@/contexts/SelectionContext';
+
+// Note: In Next.js 14/15/16 App Router, creating a Client Component that fetches data in useEffect
+// is one way to handle it if we want rich interactivity and don't strictly need SSR.
+// However, SEO requires SSR. So we usually split it.
+// For the sake of this phase, we will do a standard React fetch or use a Server Component with a Client Component child.
+// Wait, I can make this a Server Component and pass the product to a Client Component for the interactive "Add to Selection" part!
+// Let me refactor this to be a proper Server Component.
