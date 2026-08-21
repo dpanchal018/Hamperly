@@ -2,6 +2,7 @@ import { getPurchases } from '@/actions/purchase.actions';
 import { PackageCheck, FileDown, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { PurchaseFilters } from '@/components/admin/PurchaseFilters';
+import { AutoRefresh } from '@/components/admin/AutoRefresh';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -144,6 +145,7 @@ export default async function CustomersPurchasesPage({
           </div>
         </div>
       )}
+      <AutoRefresh intervalMs={10000} />
     </div>
   );
 }

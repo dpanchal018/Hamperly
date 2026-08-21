@@ -17,3 +17,9 @@
 
 ## Supabase Cloud Architecture
 As of Phase 2B, Hamperly uses Supabase Cloud for its backend, removing the runtime dependency on local Docker/Supabase containers. The application communicates directly with Supabase Cloud for Database, Auth, and Storage.
+
+- **Supabase Client/Server Architecture**: The frontend uses a public anon key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`) for browser-side authenticated queries protected by Row Level Security (RLS). Privileged backend tasks utilize the `SUPABASE_SERVICE_ROLE_KEY` inside protected Server Actions, completely isolated from the browser.
+
+## AI Architecture
+- **Gemini Server-Side Architecture**: Hamperly integrates Google Gemini for AI-driven prompt generation. The `GOOGLE_GENERATIVE_AI_API_KEY` is strictly confined to the backend. Client components send requests to Next.js Server Actions, which then invoke the Gemini SDK using the protected key. The browser never receives the API key.
+- **Replicate Server-Side Architecture**: Similarly, the `REPLICATE_API_TOKEN` (used for image generation) is restricted to server-side execution only and is never exposed in client bundles.
