@@ -1,5 +1,5 @@
-﻿import { signup } from '@/actions/auth.actions'
-import { Button } from '@/components/ui/button'
+import { signup } from '@/actions/auth.actions'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { Input } from '@/components/ui/input'
 import { Logo } from '@/components/ui/Logo'
 import Link from 'next/link'
@@ -58,9 +58,9 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               className="w-full"
             />
           </div>
-          <Button type="submit" className="w-full mt-2 bg-rose-600 hover:bg-rose-700 text-white">
+          <SubmitButton className="w-full mt-2 bg-rose-600 hover:bg-rose-700 text-white">
             Create Account
-          </Button>
+          </SubmitButton>
           
           <div className="mt-4 text-center text-sm text-slate-500">
             Already have an account?{' '}

@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/contexts/CartContext";
+import NextTopLoader from 'nextjs-toploader';
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${nunito.variable} ${playfair.variable} ${dancingScript.variable} font-sans h-full antialiased text-foreground bg-background`}
     >
       <body className="min-h-full flex flex-col">
+        <NextTopLoader color="#4f46e5" showSpinner={false} />
         <CartProvider>
           {children}
         </CartProvider>

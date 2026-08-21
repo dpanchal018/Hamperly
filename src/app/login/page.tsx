@@ -1,5 +1,5 @@
 import { login } from '@/actions/auth.actions'
-import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { Input } from '@/components/ui/input'
 import { Logo } from '@/components/ui/Logo'
 
@@ -46,9 +46,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               className="w-full"
             />
           </div>
-          <Button type="submit" className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+          <SubmitButton className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white">
             Sign In
-          </Button>
+          </SubmitButton>
           
           <div className="mt-4 text-center text-sm text-slate-500">
             Don't have an account?{' '}
