@@ -34,6 +34,10 @@ export async function login(formData: FormData) {
     if (roleData?.role === 'ADMIN') {
       redirect('/admin');
     } else {
+      const redirectTo = formData.get('redirect') as string;
+      if (redirectTo && redirectTo.startsWith('/')) {
+        redirect(redirectTo);
+      }
       redirect('/account');
     }
   }
@@ -120,7 +124,11 @@ export async function signup(formData: FormData) {
     }
   }
 
-  redirect('/account')
+  const redirectTo = formData.get('redirect') as string;
+  if (redirectTo && redirectTo.startsWith('/')) {
+    redirect(redirectTo);
+  }
+  redirect('/account');
 }
 
 export async function logout() {

@@ -8,9 +8,10 @@ export const metadata = {
   title: 'Sign Up - Hamperly',
 }
 
-export default async function SignupPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ error?: string, redirect?: string }> }) {
   const resolvedParams = await searchParams;
   const error = resolvedParams.error;
+  const redirectTo = resolvedParams.redirect;
   
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
@@ -25,6 +26,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           </div>
         )}
         <form action={signup as any} className="flex flex-col space-y-4 px-4 py-8 sm:px-12">
+          {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
           <div>
             <label htmlFor="full_name" className="block text-xs text-slate-500 uppercase font-medium mb-2">Full Name</label>
             <Input

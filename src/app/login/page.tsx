@@ -7,9 +7,10 @@ export const metadata = {
   title: 'Admin Login - Hamperly',
 }
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string, redirect?: string }> }) {
   const resolvedParams = await searchParams;
   const error = resolvedParams.error;
+  const redirectTo = resolvedParams.redirect;
   
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -24,6 +25,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </div>
         )}
         <form action={login as any} className="flex flex-col space-y-4 bg-white px-4 py-8 sm:px-16">
+          {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
           <div>
             <label htmlFor="email" className="block text-xs text-slate-500 uppercase font-medium mb-2">Email Address</label>
             <Input

@@ -8,10 +8,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { getStorefrontProducts } from '@/actions/storefront.actions';
+import { AuthModal } from './AuthModal';
 
 export function CartSlideover({ user }: { user?: any }) {
   const { isCartOpen, setIsCartOpen, items, removeItem, updateQuantity, subtotal, addItem } = useCart();
   const [products, setProducts] = useState<any[]>([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -168,11 +170,10 @@ export function CartSlideover({ user }: { user?: any }) {
             </p>
             <button 
               onClick={() => {
-                setIsCartOpen(false);
                 if (!user) {
-                  toast.error("Login to Proceed");
-                  router.push('/login');
+                  setShowAuthModal(true);
                 } else {
+                  setIsCartOpen(false);
                   router.push('/checkout');
                 }
               }}
@@ -183,6 +184,7 @@ export function CartSlideover({ user }: { user?: any }) {
           </div>
         )}
       </div>
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 }
