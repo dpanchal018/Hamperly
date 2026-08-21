@@ -32,19 +32,19 @@ export default async function ProductsPage({
   return (
     <PageTransition className="container mx-auto px-4 py-12">
       <div className="mb-12">
-        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
+        <h1 className="text-4xl font-extrabold font-serif tracking-tight text-foreground mb-4">
           Explore Products
         </h1>
-        <p className="text-lg text-slate-600 max-w-2xl">
+        <p className="text-lg text-muted-foreground max-w-2xl">
           Discover premium items to include in your personalized hamper.
         </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Filters Sidebar */}
-        <aside className="w-full md:w-64 flex-shrink-0 space-y-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
+        <aside className="w-full md:w-64 flex-shrink-0 space-y-8 bg-card p-6 rounded-2xl border border-border shadow-sm sticky top-24">
           <div>
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center">
+            <h3 className="font-bold text-foreground mb-4 flex items-center">
               <Search className="w-4 h-4 mr-2" /> Search
             </h3>
             <form className="relative" method="GET">
@@ -56,20 +56,20 @@ export default async function ProductsPage({
                 name="q"
                 defaultValue={searchQuery || ''}
                 placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
             </form>
           </div>
 
-          <div className="border-t border-slate-100 pt-6">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center">
+          <div className="border-t border-border pt-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center">
               <Filter className="w-4 h-4 mr-2" /> Categories
             </h3>
             <div className="space-y-2">
               <Link 
                 href={`/products?${new URLSearchParams({...resolvedParams, category: ''}).toString()}`}
-                className={`block text-sm py-1 transition-colors ${!categoryFilter ? 'font-bold text-rose-600' : 'text-slate-600 hover:text-rose-500'}`}
+                className={`block text-sm py-1 transition-colors ${!categoryFilter ? 'font-bold text-primary' : 'text-muted-foreground hover:text-primary'}`}
               >
                 All Categories
               </Link>
@@ -77,7 +77,7 @@ export default async function ProductsPage({
                 <Link 
                   key={cat.id}
                   href={`/products?${new URLSearchParams({...resolvedParams, category: cat.id}).toString()}`}
-                  className={`block text-sm py-1 transition-colors ${categoryFilter === cat.id ? 'font-bold text-rose-600' : 'text-slate-600 hover:text-rose-500'}`}
+                  className={`block text-sm py-1 transition-colors ${categoryFilter === cat.id ? 'font-bold text-primary' : 'text-muted-foreground hover:text-primary'}`}
                 >
                   {cat.name}
                 </Link>
@@ -85,8 +85,8 @@ export default async function ProductsPage({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-6">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center">
+          <div className="border-t border-border pt-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center">
               <SlidersHorizontal className="w-4 h-4 mr-2" /> Availability
             </h3>
             <form method="GET">
@@ -99,14 +99,11 @@ export default async function ProductsPage({
                   name="inStock" 
                   value="true" 
                   defaultChecked={inStockOnly}
-                  onChange={(e) => e.target.form?.submit()}
-                  className="rounded text-rose-600 focus:ring-rose-500"
+                  className="rounded text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-slate-600">In Stock Only</span>
+                <span className="text-sm text-foreground">In Stock Only</span>
               </label>
-              <noscript>
-                <Button type="submit" size="sm" className="mt-4 w-full">Apply Filters</Button>
-              </noscript>
+              <Button type="submit" size="sm" className="mt-4 w-full">Apply Filters</Button>
             </form>
           </div>
         </aside>
@@ -114,12 +111,12 @@ export default async function ProductsPage({
         {/* Product Grid */}
         <div className="flex-1">
           <div className="flex justify-between items-center mb-6">
-            <div className="text-sm text-slate-500 font-medium">
-              Showing <span className="text-slate-900 font-bold">{products.length}</span> results
+            <div className="text-sm text-muted-foreground font-medium">
+              Showing <span className="text-foreground font-bold">{products.length}</span> results
             </div>
             
             {(categoryFilter || searchQuery || inStockOnly) && (
-              <Link href="/products" className="text-sm text-rose-600 hover:text-rose-700 font-medium">
+              <Link href="/products" className="text-sm text-primary hover:opacity-80 font-medium">
                 Clear all filters
               </Link>
             )}
@@ -134,10 +131,10 @@ export default async function ProductsPage({
               ))}
             </StaggerContainer>
           ) : (
-            <div className="text-center py-24 bg-white rounded-2xl shadow-sm border border-slate-200">
-              <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 mb-2">No products found</h3>
-              <p className="text-slate-500 mb-6">Try adjusting your filters or search query.</p>
+            <div className="text-center py-24 bg-card rounded-3xl shadow-sm border border-border">
+              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-bold font-serif text-foreground mb-2">No products found</h3>
+              <p className="text-muted-foreground mb-6">Try adjusting your filters or search query.</p>
               <Link href="/products">
                 <Button variant="outline">Clear Filters</Button>
               </Link>

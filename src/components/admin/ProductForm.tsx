@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createProductAction, updateProductAction } from '@/actions/admin.products.actions';
 import { Product, Category, Occasion, ProductPricing } from '@/types/database.types';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getInventoryStatus, getInventoryStatusColor } from '@/lib/inventory';
 
@@ -99,6 +99,8 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `products/${fileName}`;
+
+      const supabase = createClient();
 
       const { data, error } = await supabase.storage
         .from('product-images')

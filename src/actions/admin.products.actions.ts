@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import { revalidatePath } from 'next/cache';
 
@@ -26,6 +26,8 @@ export async function createProductAction(formData: FormData) {
   if (!name || !slug || !category_id) throw new Error('Name, Slug, and Category are required');
   if (target_margin < 0 || target_margin >= 1) throw new Error('Invalid target margin');
   if (cost_price < 0) throw new Error('Cost price cannot be negative');
+
+  const supabase = await createClient();
 
   // 1. Create Product
   const { data: product, error: productError } = await supabase.from('products').insert({
@@ -92,6 +94,8 @@ export async function updateProductAction(id: string, formData: FormData) {
   if (!name || !slug || !category_id) throw new Error('Name, Slug, and Category are required');
   if (target_margin < 0 || target_margin >= 1) throw new Error('Invalid target margin');
   if (cost_price < 0) throw new Error('Cost price cannot be negative');
+
+  const supabase = await createClient();
 
   // 1. Update Product
   const { error: productError } = await supabase.from('products').update({

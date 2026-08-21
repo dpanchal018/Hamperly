@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from './auth.service';
 import { CustomHamper, CustomHamperItem } from '@/types/database.types';
 import { getProductById } from './catalog.service';
@@ -6,6 +6,7 @@ import { getProductById } from './catalog.service';
 export async function createCustomHamper(occasionId: string): Promise<CustomHamper> {
   const user = await getCurrentUser();
   const userId = user ? user.id : null;
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('custom_hampers')
@@ -34,6 +35,8 @@ export async function addHamperItem(hamperId: string, productId: string, quantit
   if (!product) {
     throw new Error('Product not found or not active');
   }
+
+  const supabase = await createClient();
 
   // Insert item with snapshot price
   const { data, error } = await supabase

@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import { revalidatePath } from 'next/cache';
 
@@ -16,6 +16,7 @@ export async function createOccasionAction(formData: FormData) {
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
+  const supabase = await createClient();
   const { error } = await supabase.from('occasions').insert({
     name, slug, description, is_active, display_order
   });
@@ -34,6 +35,7 @@ export async function updateOccasionAction(id: string, formData: FormData) {
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
+  const supabase = await createClient();
   const { error } = await supabase.from('occasions').update({
     name, slug, description, is_active, display_order, updated_at: new Date().toISOString()
   }).eq('id', id);
@@ -54,6 +56,7 @@ export async function createCategoryAction(formData: FormData) {
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
+  const supabase = await createClient();
   const { error } = await supabase.from('categories').insert({
     name, slug, description, display_order
   });
@@ -71,6 +74,7 @@ export async function updateCategoryAction(id: string, formData: FormData) {
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
+  const supabase = await createClient();
   const { error } = await supabase.from('categories').update({
     name, slug, description, display_order, updated_at: new Date().toISOString()
   }).eq('id', id);

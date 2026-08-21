@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 export default async function CategoriesPage() {
   await requireAdmin();
+  const supabase = await createClient();
 
   const { data: categories, error } = await supabase
     .from('categories')

@@ -1,10 +1,12 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import ProductForm from '@/components/admin/ProductForm';
 import { notFound } from 'next/navigation';
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   await requireAdmin();
+  const supabase = await createClient();
 
   // Load categories and occasions
   const [
@@ -17,10 +19,10 @@ export default async function EditProductPage({ params }: { params: { id: string
   ] = await Promise.all([
     supabase.from('categories').select('*').order('display_order'),
     supabase.from('occasions').select('*').order('display_order'),
-    supabase.from('products').select('*').eq('id', params.id).single(),
-    supabase.from('product_pricing').select('*').eq('product_id', params.id).single(),
-    supabase.from('product_occasions').select('occasion_id').eq('product_id', params.id),
-    supabase.from('product_images').select('image_url').eq('product_id', params.id).eq('is_primary', true).limit(1)
+    supabase.from('products').select('*').eq('id', id).single(),
+    supabase.from('product_pricing').select('*').eq('product_id', id).single(),
+    supabase.from('product_occasions').select('occasion_id').eq('product_id', id),
+    supabase.from('product_images').select('image_url').eq('product_id', id).eq('is_primary', true).limit(1)
   ]);
 
   if (prodError || !product) {

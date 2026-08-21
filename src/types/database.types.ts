@@ -57,6 +57,19 @@ export interface ProductPricing {
   updated_at: string;
 }
 
+export interface PreMadeHamper {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  stock_quantity: number;
+  selling_price: number;
+  actual_cost: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CustomHamper {
   id: string;
   user_id: string | null;
@@ -90,4 +103,89 @@ export interface AIDesign {
   validation_status: AIValidationStatus;
   created_at: string;
   updated_at: string;
+}
+
+export type PurchaseStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
+export type PaymentStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID';
+export type PaymentMode = 'CASH' | 'UPI' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'NET_BANKING' | 'OTHER';
+export type SaleSource = 'WEBSITE' | 'EXHIBITION' | 'WALK_IN' | 'WHATSAPP' | 'PHONE' | 'OTHER';
+
+export type NotificationType = 
+  | 'ACCOUNT_WELCOME'
+  | 'PURCHASE_CREATED'
+  | 'ORDER_CONFIRMED'
+  | 'PAYMENT_RECEIVED'
+  | 'PAYMENT_COMPLETED'
+  | 'ORDER_PREPARING'
+  | 'ORDER_READY'
+  | 'ORDER_COMPLETED'
+  | 'ORDER_CANCELLED';
+
+export interface Notification {
+  id: string;
+  customer_id: string;
+  purchase_id: string | null;
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata: any | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface Customer {
+  id: string;
+  customer_reference: string | null;
+  full_name: string;
+  mobile_number: string | null;
+  email: string | null;
+  city: string | null;
+  address: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Purchase {
+  id: string;
+  customer_id: string;
+  hamper_id: string | null;
+  occasion_id: string | null;
+  purchase_date: string;
+  sale_source: SaleSource;
+  
+  subtotal: number;
+  discount: number;
+  final_amount: number;
+  amount_paid: number;
+  amount_due: number;
+  
+  payment_mode: PaymentMode | null;
+  payment_status: PaymentStatus;
+  payment_reference: string | null;
+  
+  status: PurchaseStatus;
+  notes: string | null;
+  
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseItem {
+  id: string;
+  purchase_id: string;
+  product_id: string | null;
+  product_name_snapshot: string;
+  category_snapshot: string | null;
+  quantity: number;
+  catalog_unit_price: number;
+  actual_unit_price: number;
+  line_total: number;
+  created_at: string;
 }

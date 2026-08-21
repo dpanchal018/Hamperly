@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from './auth.service';
 import { ProductPricing } from '@/types/database.types';
 
@@ -13,6 +13,8 @@ export async function setProductPricing(productId: string, costPrice: number, ta
   if (costPrice < 0) {
     throw new Error('Invalid cost price. Cannot be negative.');
   }
+
+  const supabase = await createClient();
 
   // 3. Upsert pricing
   const { data, error } = await supabase
@@ -36,6 +38,8 @@ export async function setProductPricing(productId: string, costPrice: number, ta
 export async function getProductPricing(productId: string): Promise<ProductPricing | null> {
   // 1. Authorize
   await requireAdmin();
+
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('product_pricing')

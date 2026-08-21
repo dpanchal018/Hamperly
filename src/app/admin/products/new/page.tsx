@@ -1,9 +1,10 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import ProductForm from '@/components/admin/ProductForm';
 
 export default async function NewProductPage() {
   await requireAdmin();
+  const supabase = await createClient();
 
   // Load categories and occasions for the form dropdowns
   const [

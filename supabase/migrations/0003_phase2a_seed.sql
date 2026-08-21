@@ -64,7 +64,7 @@ ON CONFLICT (slug) DO UPDATE
 SET name = EXCLUDED.name, is_active = EXCLUDED.is_active, display_order = EXCLUDED.display_order;
 
 INSERT INTO public.occasions (name, slug, is_active, display_order)
-VALUES ('Valentine's Day', 'valentines-day', true, 4)
+VALUES ('Valentine''s Day', 'valentines-day', true, 4)
 ON CONFLICT (slug) DO UPDATE 
 SET name = EXCLUDED.name, is_active = EXCLUDED.is_active, display_order = EXCLUDED.display_order;
 
@@ -74,12 +74,12 @@ ON CONFLICT (slug) DO UPDATE
 SET name = EXCLUDED.name, is_active = EXCLUDED.is_active, display_order = EXCLUDED.display_order;
 
 INSERT INTO public.occasions (name, slug, is_active, display_order)
-VALUES ('Mother's Day', 'mothers-day', true, 6)
+VALUES ('Mother''s Day', 'mothers-day', true, 6)
 ON CONFLICT (slug) DO UPDATE 
 SET name = EXCLUDED.name, is_active = EXCLUDED.is_active, display_order = EXCLUDED.display_order;
 
 INSERT INTO public.occasions (name, slug, is_active, display_order)
-VALUES ('Father's Day', 'fathers-day', true, 7)
+VALUES ('Father''s Day', 'fathers-day', true, 7)
 ON CONFLICT (slug) DO UPDATE 
 SET name = EXCLUDED.name, is_active = EXCLUDED.is_active, display_order = EXCLUDED.display_order;
 

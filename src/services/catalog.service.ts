@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { Occasion, Category, Product } from '@/types/database.types';
 
 export interface PublicProduct extends Omit<Product, 'status'> {
@@ -7,6 +7,7 @@ export interface PublicProduct extends Omit<Product, 'status'> {
 }
 
 export async function getPublicOccasions(): Promise<Occasion[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('occasions')
     .select('*')
@@ -21,6 +22,7 @@ export async function getPublicOccasions(): Promise<Occasion[]> {
 }
 
 export async function getPublicOccasionBySlug(slug: string): Promise<Occasion | null> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('occasions')
     .select('*')
@@ -33,6 +35,7 @@ export async function getPublicOccasionBySlug(slug: string): Promise<Occasion | 
 }
 
 export async function getPublicCategories(): Promise<Category[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('categories')
     .select('*')
@@ -50,6 +53,7 @@ export async function getPublicProducts(options?: {
   searchQuery?: string;
   inStockOnly?: boolean;
 }): Promise<PublicProduct[]> {
+  const supabase = await createClient();
   let query = supabase
     .from('products')
     .select(`
@@ -80,6 +84,7 @@ export async function getPublicProducts(options?: {
   let products = data as any[];
 
   if (options?.occasionId) {
+    const supabase = await createClient();
     const { data: mappingData, error: mappingError } = await supabase
         .from('product_occasions')
         .select('product_id')
@@ -106,6 +111,7 @@ export async function getPublicProducts(options?: {
 }
 
 export async function getPublicProductBySlug(slug: string): Promise<PublicProduct | null> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
     .select(`
@@ -119,22 +125,25 @@ export async function getPublicProductBySlug(slug: string): Promise<PublicProduc
 
   if (error || !data) return null;
 
+  const p = data as any;
+
   return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    description: data.description,
-    stock_quantity: data.stock_quantity,
-    selling_price: data.selling_price,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    category_id: data.category_id,
-    category: data.categories ? { name: data.categories.name, slug: data.categories.slug } : null,
-    primary_image_url: data.product_images && data.product_images.length > 0 ? data.product_images[0].image_url : null
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    stock_quantity: p.stock_quantity,
+    selling_price: p.selling_price,
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+    category_id: p.category_id,
+    category: p.categories ? { name: p.categories.name, slug: p.categories.slug } : null,
+    primary_image_url: p.product_images && p.product_images.length > 0 ? p.product_images[0].image_url : null
   };
 }
 
 export async function getProductById(productId: string): Promise<Product | null> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
     .select('id, category_id, name, slug, description, stock_quantity, status, selling_price, created_at, updated_at')

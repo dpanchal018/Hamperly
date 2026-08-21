@@ -88,10 +88,6 @@ export default async function ProductDetailPage(props: Props) {
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-4">
                 {product.name}
               </h1>
-              
-              <div className="text-3xl font-bold text-slate-900 mb-6">
-                ₹{product.selling_price.toFixed(2)}
-              </div>
             </div>
 
             <div className="prose prose-slate max-w-none mb-10">

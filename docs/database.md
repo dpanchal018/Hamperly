@@ -18,3 +18,6 @@ This document describes the schema for the Hamperly platform.
 - The development database contains a realistic mock catalog of **50 products** spanning 9 categories and 10 occasions.
 - The seed script (`0003_phase2a_seed.sql`) uses idempotent `INSERT ... ON CONFLICT` statements relying on unique slugs. This allows the script to be safely rerun without duplicating categories, occasions, or products.
 - **Future Excel Compatibility**: The seed fields (Name, Slug, Description, Category, Occasions, Cost Price, Target Margin, Stock Quantity, Active Status, Image URL) identically match the required columns for future CSV/Excel import tools.
+
+## Cloud Database
+The database is hosted on Supabase Cloud. Local Docker is no longer required. Migrations should be pushed using `npx supabase db push --db-url <connection-string>`.

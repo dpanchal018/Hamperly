@@ -20,7 +20,7 @@ export function OccasionCard({ occasion }: OccasionCardProps) {
             style={{ backgroundImage: `url(${occasion.image_url})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 transition-transform duration-700 group-hover:scale-110 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand-rose)] to-[var(--brand-lavender)] transition-transform duration-700 group-hover:scale-110 flex items-center justify-center">
              <Calendar className="w-16 h-16 text-white/20" />
           </div>
         )}
@@ -30,7 +30,7 @@ export function OccasionCard({ occasion }: OccasionCardProps) {
         
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <h3 className="text-2xl font-bold text-white mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">{occasion.name}</h3>
+          <h3 className="text-2xl font-bold text-white mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300 font-serif">{occasion.name}</h3>
           {occasion.description && (
             <p className="text-white/80 text-sm line-clamp-2 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
               {occasion.description}

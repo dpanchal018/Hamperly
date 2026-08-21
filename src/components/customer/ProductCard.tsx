@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { PublicProduct } from '@/services/catalog.service';
 import { useSelection } from '@/contexts/SelectionContext';
 import { Button } from '@/components/ui/button';
-import { Plus, ShoppingBag } from 'lucide-react';
+import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { getInventoryStatus } from '@/lib/inventory';
 import { HoverCard } from '@/components/ui/AnimatedWrapper';
 
@@ -13,7 +13,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { addItem, items } = useSelection();
+  const { addItem, updateQuantity, removeItem, items } = useSelection();
   
   const status = getInventoryStatus(product.stock_quantity);
   const isOutOfStock = status === 'OUT OF STOCK';
@@ -35,15 +35,15 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <HoverCard>
-      <div className="group bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col h-full relative shadow-sm">
+      <div className="group bg-card border border-border rounded-3xl overflow-hidden flex flex-col h-full relative shadow-sm">
         {selectedCount > 0 && (
-          <div className="absolute top-4 left-4 z-10 bg-rose-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-md">
+          <div className="absolute top-4 left-4 z-10 bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-full flex items-center shadow-md">
             <ShoppingBag className="w-3 h-3 mr-1" />
             {selectedCount} Selected
           </div>
         )}
         
-        <Link href={`/products/${product.slug}`} className="relative aspect-square overflow-hidden bg-slate-50 flex items-center justify-center">
+        <Link href={`/products/${product.slug}`} className="relative aspect-square overflow-hidden bg-secondary flex items-center justify-center">
           {product.primary_image_url ? (
             <img 
               src={product.primary_image_url} 
@@ -51,13 +51,13 @@ export function ProductCard({ product }: ProductCardProps) {
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="text-slate-300">No image</div>
+            <div className="text-muted-foreground">No image</div>
           )}
         </Link>
         
         <div className="p-5 flex flex-col flex-1">
           <div className="flex justify-between items-start mb-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {product.category?.name || 'Uncategorized'}
             </div>
             <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStatusColor(status)}`}>
@@ -65,23 +65,41 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           
-          <Link href={`/products/${product.slug}`} className="hover:text-rose-600 transition-colors">
-            <h3 className="font-bold text-slate-900 leading-tight mb-2 line-clamp-2">{product.name}</h3>
+          <Link href={`/products/${product.slug}`} className="hover:text-primary transition-colors">
+            <h3 className="font-bold font-serif text-foreground text-lg leading-tight line-clamp-2" title={product.name}>
+              {product.name}
+            </h3>
           </Link>
           
-          <div className="mt-auto pt-4 flex items-center justify-between">
-            <div className="font-bold text-lg text-slate-900">
-              ₹{product.selling_price.toFixed(2)}
-            </div>
-            <Button 
-              size="sm" 
-              onClick={() => addItem(product)}
-              disabled={isOutOfStock || (selectedCount >= product.stock_quantity)}
-              className={selectedCount > 0 ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add
-            </Button>
+          <div className="mt-auto pt-4 flex items-center justify-end">
+            {selectedCount > 0 ? (
+              <div className="flex items-center space-x-3 bg-secondary border border-border rounded-full px-2 py-1">
+                <button 
+                  onClick={() => selectedCount === 1 ? removeItem(product.id) : updateQuantity(product.id, selectedCount - 1)}
+                  className="w-7 h-7 flex items-center justify-center text-primary hover:bg-background rounded-full transition-colors"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-sm font-bold w-4 text-center text-primary">{selectedCount}</span>
+                <button 
+                  onClick={() => updateQuantity(product.id, selectedCount + 1)}
+                  disabled={selectedCount >= product.stock_quantity}
+                  className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${selectedCount >= product.stock_quantity ? 'opacity-50' : 'text-primary hover:bg-background'}`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button 
+                size="sm" 
+                onClick={() => addItem(product)}
+                disabled={isOutOfStock}
+                className="bg-primary hover:opacity-90 text-primary-foreground rounded-full px-4 shadow-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            )}
           </div>
         </div>
       </div>

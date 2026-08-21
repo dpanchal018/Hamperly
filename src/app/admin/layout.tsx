@@ -3,25 +3,23 @@ import { requireAdmin } from '@/services/auth.service';
 import Link from 'next/link';
 import { Package, Calendar, Folder, LayoutDashboard, Image as ImageIcon, Settings } from 'lucide-react';
 import { PageTransition } from '@/components/ui/AnimatedWrapper';
+import { Logo } from '@/components/ui/Logo';
+import { Toaster } from 'react-hot-toast';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   try {
     await requireAdmin();
   } catch (error) {
-    redirect('/unauthorized');
+    redirect('/login');
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200">
+    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-rose-200">
+      <Toaster position="top-right" />
       {/* Sidebar with Glassmorphism */}
       <aside className="w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200 flex flex-col shadow-sm relative z-20">
         <div className="p-6">
-          <Link href="/admin" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform duration-300">
-              H
-            </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">Hamperly</h1>
-          </Link>
+          <Logo className="scale-75 origin-left" />
         </div>
         <nav className="flex-1 px-4 space-y-1.5 mt-2">
           <Link href="/admin" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
@@ -31,6 +29,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/products" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
             <Package className="w-4 h-4 mr-3" />
             Products
+          </Link>
+          <Link href="/admin/hampers" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            Hampers
           </Link>
           <Link href="/admin/occasions" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
             <Calendar className="w-4 h-4 mr-3" />
@@ -43,6 +45,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/ai-designs" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
             <ImageIcon className="w-4 h-4 mr-3" />
             AI Designs
+          </Link>
+          <Link href="/admin/customers-purchases" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Customers & Purchases
           </Link>
         </nav>
         

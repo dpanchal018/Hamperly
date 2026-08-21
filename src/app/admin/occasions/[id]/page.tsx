@@ -1,15 +1,17 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import OccasionForm from '@/components/admin/OccasionForm';
 import { notFound } from 'next/navigation';
 
-export default async function EditOccasionPage({ params }: { params: { id: string } }) {
+export default async function EditOccasionPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   await requireAdmin();
+  const supabase = await createClient();
 
   const { data: occasion, error } = await supabase
     .from('occasions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (error || !occasion) {

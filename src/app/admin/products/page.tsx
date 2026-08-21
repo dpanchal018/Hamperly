@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { getInventoryStatus, getInventoryStatusColor, InventoryStatus } from '@/
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ stock?: string }> }) {
   await requireAdmin();
+  const supabase = await createClient();
 
   let query = supabase
     .from('products')
@@ -51,7 +52,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             name="stock" 
             className="border rounded px-3 py-1 text-sm bg-white" 
             defaultValue={stockFilter || ''}
-            onChange="this.form.submit()"
           >
             <option value="">All</option>
             <option value="IN STOCK">In Stock</option>
@@ -59,9 +59,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <option value="CRITICAL">Critical</option>
             <option value="OUT OF STOCK">Out of Stock</option>
           </select>
-          <noscript>
-            <Button type="submit" size="sm" variant="outline">Filter</Button>
-          </noscript>
+          <Button type="submit" size="sm" variant="outline">Filter</Button>
         </form>
       </div>
 
