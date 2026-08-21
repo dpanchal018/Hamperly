@@ -35,19 +35,50 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
 
   // Load from local storage on mount or user change
   useEffect(() => {
+    let currentItems: CartItem[] = [];
+
+    // 1. Load the target user's cart
     const savedCart = localStorage.getItem(storageKey);
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        currentItems = JSON.parse(savedCart);
       } catch (e) {
         console.error('Failed to parse cart from local storage', e);
-        setItems([]);
       }
-    } else {
-      setItems([]);
     }
+
+    // 2. If logged in, check for a guest cart to merge
+    if (userId !== 'guest') {
+      const guestCartRaw = localStorage.getItem('hamperly_cart_guest');
+      if (guestCartRaw) {
+        try {
+          const guestItems: CartItem[] = JSON.parse(guestCartRaw);
+          if (guestItems.length > 0) {
+            const mergedMap = new Map<string, CartItem>();
+            currentItems.forEach(item => mergedMap.set(item.id, item));
+            
+            guestItems.forEach(guestItem => {
+              if (mergedMap.has(guestItem.id)) {
+                const existing = mergedMap.get(guestItem.id)!;
+                existing.quantity = Math.min(existing.quantity + guestItem.quantity, existing.maxQuantity);
+              } else {
+                mergedMap.set(guestItem.id, guestItem);
+              }
+            });
+            
+            currentItems = Array.from(mergedMap.values());
+            // Clear the guest cart after merging
+            localStorage.removeItem('hamperly_cart_guest');
+          }
+        } catch (e) {
+          console.error('Failed to parse guest cart for merging', e);
+        }
+      }
+    }
+
+    setItems(currentItems);
     setIsInitialized(true);
-  }, [storageKey]);
+  }, [storageKey, userId]);
 
   // Save to local storage on change
   useEffect(() => {
