@@ -189,3 +189,18 @@ export interface PurchaseItem {
   line_total: number;
   created_at: string;
 }
+export interface StoreSettings {
+  id: number;
+  store_name: string;
+  support_email: string | null;
+  support_phone: string | null;
+  store_announcement: string | null;
+  default_tax_rate: number;
+  flat_shipping_rate: number;
+  min_order_amount: number;
+  default_target_margin: number;
+  enable_ai_designer: boolean;
+  accept_new_orders: boolean;
+  maintenance_mode: boolean;
+  updated_at: string;
+}
