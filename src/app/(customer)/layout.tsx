@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { getCurrentUser } from '@/services/auth.service';
+import { getStoreSettings } from '@/actions/settings.actions';
 
 export default async function CustomerLayout({
   children,
@@ -21,9 +22,16 @@ export default async function CustomerLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+  const { settings } = await getStoreSettings();
+
   return (
     <SelectionProvider>
       <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
+        {settings?.store_announcement && (
+          <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
+            {settings.store_announcement}
+          </div>
+        )}
         <Navbar user={user} />
         <main className="flex-1 bg-slate-50">{children}</main>
         <Footer />
