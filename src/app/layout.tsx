@@ -24,8 +24,12 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "@/contexts/CartContext";
 import NextTopLoader from 'nextjs-toploader';
+import { getCurrentUser } from '@/services/auth.service';
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const user = await getCurrentUser();
+  const userId = user?.id || 'guest';
+
   return (
     <html
       lang="en"
@@ -33,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <NextTopLoader color="#4f46e5" showSpinner={false} />
-        <CartProvider>
+        <CartProvider userId={userId}>
           {children}
         </CartProvider>
       </body>

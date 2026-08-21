@@ -26,30 +26,35 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children, userId = 'guest' }: { children: React.ReactNode, userId?: string }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Load from local storage on mount
+  const storageKey = `hamperly_cart_${userId}`;
+
+  // Load from local storage on mount or user change
   useEffect(() => {
-    const savedCart = localStorage.getItem('hamperly_cart');
+    const savedCart = localStorage.getItem(storageKey);
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart));
       } catch (e) {
         console.error('Failed to parse cart from local storage', e);
+        setItems([]);
       }
+    } else {
+      setItems([]);
     }
     setIsInitialized(true);
-  }, []);
+  }, [storageKey]);
 
   // Save to local storage on change
   useEffect(() => {
     if (isInitialized) {
-      localStorage.setItem('hamperly_cart', JSON.stringify(items));
+      localStorage.setItem(storageKey, JSON.stringify(items));
     }
-  }, [items, isInitialized]);
+  }, [items, isInitialized, storageKey]);
 
   const addItem = useCallback((newItem: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
     setItems(prevItems => {
