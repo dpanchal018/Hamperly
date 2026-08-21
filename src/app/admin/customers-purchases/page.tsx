@@ -18,7 +18,7 @@ export default async function CustomersPurchasesPage({
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Customers & Purchases</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Purchases</h1>
           <p className="text-slate-500 mt-2">Manage customer purchase history and generate reports.</p>
         </div>
         

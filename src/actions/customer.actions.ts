@@ -117,3 +117,17 @@ export async function checkDuplicateCustomer(mobile?: string, email?: string) {
 
   return { duplicates };
 }
+export async function getAllCustomers() {
+  const supabase = await createClient();
+  const { data: customers, error } = await supabase
+    .from('customers')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error getting all customers:', error);
+    return { error: error.message };
+  }
+
+  return { customers };
+}
