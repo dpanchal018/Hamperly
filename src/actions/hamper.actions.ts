@@ -291,3 +291,27 @@ export async function validateAndCalculateHamper(requestedItems: HamperItemReque
 
   return response;
 }
+export async function bulkCreateHampers(data: Partial<PreMadeHamper>[]) {
+  const supabase = await createClient();
+  
+  // Format data for insertion
+  const hampersToInsert = data.map(item => ({
+    ...item,
+    is_active: item.is_active !== undefined ? item.is_active : true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { data: hampers, error } = await supabase
+    .from('hampers')
+    .insert(hampersToInsert)
+    .select();
+
+  if (error) {
+    console.error('Error bulk creating hampers:', error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/admin/hampers');
+  return { hampers };
+}

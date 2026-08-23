@@ -25,8 +25,8 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 py-4 px-6 flex justify-center">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC]">
+      <header className="bg-white/80 backdrop-blur border-b border-slate-100 py-4 px-6 flex justify-center">
         <Logo className="scale-75 origin-center" withTagline={false} />
       </header>
 

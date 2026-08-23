@@ -1,166 +1,169 @@
-import Link from 'next/link';
-import { getPublicOccasions, getPublicProducts } from '@/services/catalog.service';
+import { getPublicOccasions } from '@/services/catalog.service';
+import { getPublicHampers } from '@/actions/hamper.actions';
+import { HamperCard } from '@/components/customer/HamperCard';
 import { OccasionCard } from '@/components/customer/OccasionCard';
-import { ProductCard } from '@/components/customer/ProductCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Gift, Sparkles, Heart } from 'lucide-react';
-import { StaggerContainer, StaggerItem, PageTransition } from '@/components/ui/AnimatedWrapper';
-
-import { HeroCarousel } from '@/components/customer/HeroCarousel';
-
-import { Logo } from '@/components/ui/Logo';
+import Link from 'next/link';
+import { ArrowRight, Gift, Heart, Sparkles, Star } from 'lucide-react';
+import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
+import Image from 'next/image';
 
 export default async function HomePage() {
-  // Fetch top 4 active occasions
+  const hampers = await getPublicHampers();
   const occasions = await getPublicOccasions();
+
+  // Show only featured/first few hampers for homepage
+  const featuredHampers = hampers.slice(0, 3);
   const featuredOccasions = occasions.slice(0, 4);
 
-  // Fetch some products across all active occasions for the "Featured" section
-  const products = await getPublicProducts({ inStockOnly: true });
-  // Just show 4 featured products for the homepage
-  const featuredProducts = products.slice(0, 4);
-
   return (
-    <PageTransition>
+    <PageTransition className="min-h-screen bg-background relative overflow-hidden">
+      
+      {/* Decorative Soft Gradients & Floral Vibes */}
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute top-[20%] right-0 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] pointer-events-none translate-x-1/3" />
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-background border-b border-slate-200">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-secondary/80 via-background to-background" />
-        
-        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <StaggerContainer className="max-w-2xl space-y-6">
-              <StaggerItem>
-                <Logo className="items-start mb-6" withTagline={true} />
-              </StaggerItem>
-              
-              <StaggerItem>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground font-serif leading-tight">
-                  Personalized hampers for <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-rose)] to-[var(--brand-peach)]">every occasion</span>
-                </h1>
-              </StaggerItem>
-              
-              <StaggerItem>
-                <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-lg">
-                  Choose the perfect occasion, handpick premium products, and we'll craft a beautiful, bespoke hamper delivered to their door.
-                </p>
-              </StaggerItem>
-              
-              <StaggerItem className="pt-4 flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link href="/occasions">
-                  <Button size="lg" className="rounded-full px-8 h-14 text-lg bg-primary hover:opacity-90 text-primary-foreground shadow-xl transition-all font-semibold">
-                    Build Your Hamper <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/products">
-                  <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg bg-card text-foreground font-semibold hover:bg-secondary">
-                    Explore Products
-                  </Button>
-                </Link>
-              </StaggerItem>
-            </StaggerContainer>
-            
-            <div className="relative">
-              <HeroCarousel />
-            </div>
+      <section className="relative pt-32 pb-24 lg:pt-48 lg:pb-32 container mx-auto px-4 z-10 flex flex-col items-center text-center">
+        <FadeInScroll>
+          <div className="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/20 text-primary mb-8 shadow-sm">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-semibold">Handcrafted with Love</span>
           </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-20 bg-secondary border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground font-serif">How Hamperly Works</h2>
-            <p className="text-muted-foreground mt-2">Create the perfect gift in three simple steps</p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="flex flex-col items-center text-center p-8 bg-card rounded-3xl shadow-sm border border-border">
-              <div className="w-16 h-16 bg-secondary text-primary rounded-full flex items-center justify-center mb-6">
-                <Gift className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">1. Choose Occasion</h3>
-              <p className="text-muted-foreground">Select the event you're celebrating to see our specially curated themes.</p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center p-8 bg-card rounded-3xl shadow-sm border border-border">
-              <div className="w-16 h-16 bg-secondary text-primary rounded-full flex items-center justify-center mb-6">
-                <Sparkles className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">2. Handpick Products</h3>
-              <p className="text-muted-foreground">Select exactly what goes into the hamper from our premium catalog.</p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center p-8 bg-card rounded-3xl shadow-sm border border-border">
-              <div className="w-16 h-16 bg-secondary text-primary rounded-full flex items-center justify-center mb-6">
-                <Heart className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">3. We Build & Deliver</h3>
-              <p className="text-muted-foreground">Our upcoming AI Builder helps wrap it perfectly, and we deliver it with love.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Shop by Occasion */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground font-serif tracking-tight">Shop by Occasion</h2>
-              <p className="text-muted-foreground mt-2">Curated collections for every special moment.</p>
-            </div>
-            <Link href="/occasions" className="hidden md:flex text-primary font-bold hover:opacity-80 items-center transition-opacity">
-              View All <ArrowRight className="w-4 h-4 ml-1" />
+          <h1 className="text-5xl md:text-7xl font-extrabold font-serif text-foreground mb-6 max-w-4xl tracking-tight leading-tight">
+            Gifting made <span className="font-script text-primary font-normal text-6xl md:text-8xl lowercase">beautiful</span>
+          </h1>
+          <p className="text-lg md:text-xl text-foreground/70 font-light max-w-2xl mx-auto mb-10 leading-relaxed">
+            Curate the perfect present with our exquisite selection of premium goods, stunning floral arrangements, and personalized touches.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/products">
+              <Button size="lg" className="rounded-full px-8 h-14 text-lg bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all hover:scale-105">
+                Build Your Hamper
+              </Button>
+            </Link>
+            <Link href="/hampers">
+              <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg border-primary/20 text-primary hover:bg-primary/5 transition-all">
+                Shop Pre-made
+              </Button>
             </Link>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredOccasions.map((occasion) => (
-              <OccasionCard key={occasion.id} occasion={occasion} />
+        </FadeInScroll>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-24 bg-white/50 backdrop-blur-sm relative z-10 border-y border-primary/10">
+        <div className="container mx-auto px-4">
+          <FadeInScroll>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">The Hamperly Touch</h2>
+              <div className="w-16 h-1 bg-primary/20 mx-auto rounded-full"></div>
+            </div>
+          </FadeInScroll>
+          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+            {[
+              { icon: Heart, title: "Curated with Care", desc: "Every item is hand-selected from premium artisans to ensure the highest quality." },
+              { icon: Gift, title: "Exquisite Packaging", desc: "Presented in beautiful floral boxes and finished with luxurious satin ribbons." },
+              { icon: Star, title: "Personalized For You", desc: "Add heartfelt messages and choose themes that match the recipient perfectly." }
+            ].map((feature, idx) => (
+              <FadeInScroll key={idx} delay={0.1 * idx}>
+                <div className="flex flex-col items-center text-center p-6 bg-white rounded-3xl shadow-sm border border-primary/5 hover:shadow-md transition-shadow">
+                  <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
+                    <feature.icon className="w-8 h-8" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-3">{feature.title}</h3>
+                  <p className="text-foreground/70">{feature.desc}</p>
+                </div>
+              </FadeInScroll>
             ))}
           </div>
-          
-          {featuredOccasions.length === 0 && (
-            <div className="text-center py-12 bg-secondary rounded-2xl border border-border">
-              <p className="text-muted-foreground">Occasions will appear here soon.</p>
-            </div>
-          )}
-          
-          <div className="mt-8 text-center md:hidden">
-            <Link href="/occasions">
-              <Button variant="outline" className="w-full">View All Occasions</Button>
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-20 bg-secondary border-t border-border">
+      {/* Occasions */}
+      <section className="py-24 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground font-serif tracking-tight">Featured Products</h2>
-              <p className="text-muted-foreground mt-2">Handpicked premium items for your hampers.</p>
+          <FadeInScroll>
+            <div className="flex justify-between items-end mb-12">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-3">Shop by Occasion</h2>
+                <p className="text-foreground/70">Find the perfect gift for every celebration.</p>
+              </div>
+              <Link href="/occasions" className="hidden md:flex items-center text-primary font-bold hover:text-primary/80 transition-colors">
+                View all <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </div>
-            <Link href="/products" className="hidden md:flex text-primary font-bold hover:opacity-80 items-center transition-opacity">
-              View All <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          
-          {featuredProducts.length === 0 && (
-            <div className="text-center py-12 bg-card rounded-2xl shadow-sm border border-border">
-              <p className="text-muted-foreground">Products will appear here soon.</p>
+          </FadeInScroll>
+
+          <StaggerScrollContainer>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredOccasions.map((occasion) => (
+                <div key={occasion.id} className="h-[300px]">
+                  <OccasionCard occasion={occasion} />
+                </div>
+              ))}
             </div>
-          )}
+          </StaggerScrollContainer>
         </div>
       </section>
+
+      {/* Builder CTA */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-4">
+          <FadeInScroll>
+            <div className="bg-gradient-to-r from-primary to-[#D44D87] rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-primary/20">
+              {/* Soft decorative circles inside CTA */}
+              <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-6 relative z-10">
+                Design Your Masterpiece
+              </h2>
+              <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto mb-10 relative z-10">
+                Choose the perfect box, add premium products, select a beautiful ribbon, and write a personalized note. We'll handle the rest.
+              </p>
+              <Link href="/products" className="relative z-10">
+                <Button size="lg" className="rounded-full px-10 h-16 text-lg bg-white text-primary hover:bg-white/90 hover:scale-105 transition-all shadow-lg text-bold">
+                  Start Crafting <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </FadeInScroll>
+        </div>
+      </section>
+
+      {/* Featured Pre-made Hampers */}
+      <section className="py-24 relative z-10 bg-white/50 backdrop-blur-sm border-t border-primary/10">
+        <div className="container mx-auto px-4">
+          <FadeInScroll>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">Curated Collections</h2>
+              <p className="text-foreground/70">Beautifully pre-designed hampers ready to be gifted.</p>
+            </div>
+          </FadeInScroll>
+
+          <StaggerScrollContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredHampers.map((hamper) => (
+                <div key={hamper.id} className="h-full">
+                  <HamperCard hamper={hamper} />
+                </div>
+              ))}
+            </div>
+          </StaggerScrollContainer>
+
+          <FadeInScroll delay={0.3}>
+            <div className="text-center mt-12">
+              <Link href="/hampers">
+                <Button variant="outline" size="lg" className="rounded-full px-8 border-primary/20 text-primary hover:bg-primary/5">
+                  View All Hampers
+                </Button>
+              </Link>
+            </div>
+          </FadeInScroll>
+        </div>
+      </section>
+
     </PageTransition>
   );
 }

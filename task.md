@@ -1,0 +1,11 @@
+- `[x]` Add `bulkCreateHampers` action to `src/actions/hamper.actions.ts`
+- `[x]` Create `src/components/admin/HamperImportButton.tsx` client component
+- `[x]` Integrate `<HamperImportButton />` into `src/app/admin/hampers/page.tsx`
+- `[x]` Build and verify
+- `[x]` Design Transformation: Global Design System & Tokens
+- `[x]` Design Transformation: Update Homepage (`src/app/(customer)/page.tsx`)
+- `[x]` Design Transformation: Update Navbar & Footer
+- `[x]` Design Transformation: Update ProductCard, OccasionCard, HamperCard
+- `[ ]` Design Transformation: Update Hamper Builder Flow (`/products`, `/build`, `/personalize`, `/review`)
+- `[ ]` Design Transformation: Update Customer Accounts Page
+- `[ ]` Design Transformation: Verify Checkout Flow

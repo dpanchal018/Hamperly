@@ -38,33 +38,35 @@ export function ProductDetailActions({ product }: Props) {
 
   if (isOutOfStock) {
     return (
-      <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg bg-slate-100 text-slate-500 cursor-not-allowed border-none" disabled>
-        Out of Stock
+      <Button size="lg" className="w-full sm:w-auto h-14 px-12 text-sm tracking-[0.2em] uppercase bg-primary/5 text-foreground/60 cursor-not-allowed border-none rounded-full font-semibold" disabled>
+        Sold Out
       </Button>
     );
   }
 
   if (currentQuantity > 0) {
     return (
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-full h-14 px-2">
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-4 bg-primary/5 rounded-full px-4 py-2 w-fit border border-primary/10">
           <button 
             onClick={handleDecrease}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-600 hover:bg-slate-200 transition-colors"
+            aria-label="Decrease quantity"
+            className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
           >
-            <Minus className="w-5 h-5" />
+            <Minus className="w-4 h-4" strokeWidth={1.5} />
           </button>
-          <span className="w-12 text-center font-bold text-lg text-slate-900">{currentQuantity}</span>
+          <span className="w-8 text-center font-medium text-foreground">{currentQuantity}</span>
           <button 
             onClick={handleIncrease}
             disabled={currentQuantity >= product.stock_quantity}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${currentQuantity >= product.stock_quantity ? 'text-slate-300' : 'text-slate-600 hover:bg-slate-200'}`}
+            aria-label="Increase quantity"
+            className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
-        <div className="flex items-center text-emerald-600 font-medium">
-          <Check className="w-5 h-5 mr-2" />
+        <div className="text-sm font-semibold font-bold text-primary text-primary flex items-center">
+          <Check className="w-4 h-4 mr-2" strokeWidth={2} />
           In your hamper
         </div>
       </div>
@@ -75,12 +77,12 @@ export function ProductDetailActions({ product }: Props) {
     <Button 
       size="lg" 
       onClick={handleAdd}
-      className={`w-full sm:w-auto h-14 px-8 text-lg shadow-lg hover:shadow-xl transition-all ${adding ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'} text-white rounded-full`}
+      className={`w-full sm:w-auto h-14 px-12 text-xs tracking-[0.2em] uppercase font-semibold rounded-full transition-all duration-300 ${adding ? 'bg-primary text-white' : 'bg-primary text-white hover:bg-primary'}`}
     >
       {adding ? (
-        <><Check className="w-5 h-5 mr-2" /> Added</>
+        <><Check className="w-4 h-4 mr-3" /> Added</>
       ) : (
-        <><ShoppingBag className="w-5 h-5 mr-2" /> Select for Hamper</>
+        <><Plus className="w-4 h-4 mr-3" /> Add to Hamper</>
       )}
     </Button>
   );

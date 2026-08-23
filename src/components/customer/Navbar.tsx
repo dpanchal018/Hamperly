@@ -1,41 +1,55 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSelection } from '@/contexts/SelectionContext';
-import { Gift, Search, Menu, X, ShoppingBag } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
+import { Search, Menu, X, Heart, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
-import { Logo } from '@/components/ui/Logo';
 import { NotificationBell } from './NotificationBell';
+import { ProfileDropdown } from './ProfileDropdown';
+
+function CartButton() {
+  const { isCartOpen, setIsCartOpen, totalItems } = useCart();
+  return (
+    <button 
+      onClick={() => setIsCartOpen(true)}
+      className="relative text-foreground/70 hover:text-primary transition-colors p-2"
+    >
+      <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
+      {totalItems > 0 && (
+        <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+          {totalItems}
+        </span>
+      )}
+    </button>
+  );
+}
 
 export function Navbar({ user }: { user: any }) {
   const pathname = usePathname();
-  const { totalItems } = useSelection();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Home', href: '/' },
+    { name: 'Shop', href: '/products' },
     { name: 'Occasions', href: '/occasions' },
     { name: 'Hampers', href: '/hampers' },
-    { name: 'Explore', href: '/products' },
+    { name: 'Exhibitions', href: '/exhibitions' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur-md">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-        {/* Logo */}
-        <Logo className="scale-75 origin-left" withTagline={false} />
-
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-primary/10 shadow-sm">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-8 flex-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === link.href ? 'text-primary' : 'text-foreground'
+              className={`text-sm font-semibold transition-colors hover:text-primary ${
+                pathname === link.href ? 'text-primary' : 'text-foreground/70'
               }`}
             >
               {link.name}
@@ -43,61 +57,58 @@ export function Navbar({ user }: { user: any }) {
           ))}
         </nav>
 
-        {/* Actions */}
-        <div className="flex items-center space-x-4">
-          <Link href="/products" className="hidden md:flex text-slate-500 hover:text-slate-900 transition-colors">
-            <Search className="w-5 h-5" />
-            <span className="sr-only">Search products</span>
+        {/* Logo */}
+        <div className="flex-1 flex md:justify-center">
+          <Link href="/" className="inline-block group">
+             <div className="bg-white border border-primary/20 shadow-sm shadow-primary/5 rounded-full px-6 py-2 transition-transform group-hover:scale-105">
+                <h2 className="text-3xl font-script text-primary leading-none pt-1">Hamperly</h2>
+             </div>
           </Link>
-          
-          <div className="relative group flex items-center space-x-2">
-            <Button variant="outline" size="sm" className="hidden md:flex rounded-full border-slate-200 text-slate-700 bg-white">
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              Build a Hamper
-              {totalItems > 0 && (
-                <span className="ml-2 bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {totalItems}
-                </span>
-              )}
-            </Button>
+        </div>
 
-            <CartButton />
-          </div>
+        {/* Actions */}
+        <div className="flex items-center justify-end space-x-4 flex-1">
+          <Link href="/products" className="hidden md:flex text-foreground/70 hover:text-primary transition-colors p-2">
+            <Search className="w-5 h-5" strokeWidth={1.5} />
+            <span className="sr-only">Search</span>
+          </Link>
 
-          <div className="hidden md:flex items-center gap-3">
+          <CartButton />
+
+          <div className="hidden md:flex items-center gap-3 ml-2">
             {user ? (
               <>
                 <NotificationBell />
-                <Link href="/account" className="inline-flex items-center justify-center rounded-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-1.5 text-sm font-medium transition-colors">
-                  My Account
-                </Link>
+                <ProfileDropdown user={user} />
               </>
             ) : (
-              <Link href="/login" className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-1.5 text-sm font-medium transition-colors">
-                Sign In
+              <Link href="/login">
+                <Button variant="outline" className="rounded-full border-primary/20 text-primary hover:bg-primary/5">
+                  Sign In
+                </Button>
               </Link>
             )}
           </div>
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-slate-600"
+            className="md:hidden p-2 text-foreground/70 hover:text-primary"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-6 h-6" strokeWidth={1.5} /> : <Menu className="w-6 h-6" strokeWidth={1.5} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Nav */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-card">
+        <div className="md:hidden border-t border-primary/10 bg-white">
           <nav className="flex flex-col p-4 space-y-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-lg font-medium ${
+                className={`text-base font-semibold ${
                   pathname === link.href ? 'text-primary' : 'text-foreground'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
@@ -105,38 +116,18 @@ export function Navbar({ user }: { user: any }) {
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 border-t border-border flex items-center justify-between text-foreground">
-              <span className="font-medium">Your Selection ({totalItems})</span>
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
               {user ? (
-                <Link href="/account" className="block text-lg font-medium text-rose-600" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+                <>
+                  <Link href="/account" className="text-base font-semibold text-foreground">Account</Link>
+                </>
               ) : (
-                <Link href="/login" className="block text-lg font-medium text-slate-700" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+                <Link href="/login" className="text-base font-semibold text-primary">Sign In</Link>
               )}
             </div>
           </nav>
         </div>
       )}
     </header>
-  );
-}
-
-function CartButton() {
-  const { totalItems, setIsCartOpen } = require('@/contexts/CartContext').useCart();
-  
-  return (
-    <button 
-      onClick={() => setIsCartOpen(true)}
-      className="relative p-2 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors flex items-center justify-center"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-      {totalItems > 0 && (
-        <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white ring-2 ring-white">
-          {totalItems}
-        </span>
-      )}
-    </button>
   );
 }

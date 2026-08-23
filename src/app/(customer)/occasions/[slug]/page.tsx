@@ -1,9 +1,8 @@
 import { getPublicOccasionBySlug, getPublicProducts } from '@/services/catalog.service';
 import { ProductCard } from '@/components/customer/ProductCard';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedWrapper';
+import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
 import { notFound } from 'next/navigation';
 import { Metadata, ResolvingMetadata } from 'next';
-import { Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -36,55 +35,65 @@ export default async function OccasionDetailPage(props: Props) {
   const products = await getPublicProducts({ occasionId: occasion.id });
 
   return (
-    <PageTransition>
+    <PageTransition className="bg-gradient-to-b from-[#FAFAFA] to-white min-h-screen">
       {/* Occasion Hero */}
-      <div className="relative h-64 md:h-80 lg:h-96 w-full bg-slate-900 overflow-hidden">
+      <div className="relative h-[60vh] min-h-[500px] w-full bg-slate-950 overflow-hidden flex items-center justify-center">
         {occasion.image_url ? (
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-40"
+            className="absolute inset-0 bg-cover bg-center opacity-40 scale-105"
             style={{ backgroundImage: `url(${occasion.image_url})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-rose-900 opacity-80" />
         )}
         
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-gradient-to-t from-slate-900 via-transparent to-transparent">
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-full mb-4">
-            <Calendar className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            {occasion.name}
-          </h1>
-          {occasion.description && (
-            <p className="text-lg text-white/90 max-w-2xl mx-auto">
-              {occasion.description}
-            </p>
-          )}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+        
+        <div className="relative z-10 text-center px-4 max-w-4xl mt-20">
+          <FadeInScroll>
+            <span className="text-rose-400 font-bold tracking-[0.3em] uppercase text-xs mb-6 block">Curated Collection</span>
+            <h1 className="text-5xl md:text-7xl font-black text-white font-serif tracking-tight leading-[1.1] mb-6">
+              {occasion.name}
+            </h1>
+            {occasion.description && (
+              <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
+                {occasion.description}
+              </p>
+            )}
+          </FadeInScroll>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Curated Gifts</h2>
-          <span className="text-sm font-medium text-slate-500">{products.length} Products</span>
-        </div>
+      <div className="container mx-auto px-4 py-24">
+        <FadeInScroll>
+          <div className="flex items-end justify-between mb-16 border-b border-slate-100 pb-4">
+            <h2 className="text-3xl font-bold font-serif text-slate-900">Curated Gifts</h2>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{products.length} Items</span>
+          </div>
+        </FadeInScroll>
 
         {products.length > 0 ? (
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <StaggerItem key={product.id}>
-                <ProductCard product={product} />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          <StaggerScrollContainer>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {products.map((product) => (
+                <div key={product.id} className="h-full">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </StaggerScrollContainer>
         ) : (
-          <div className="text-center py-24 bg-white rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">We're preparing gifts for this occasion.</h3>
-            <p className="text-slate-500 mb-6">Check back soon for curated products.</p>
-            <Link href="/products">
-              <Button>Explore All Products</Button>
-            </Link>
-          </div>
+          <FadeInScroll>
+            <div className="text-center py-32 bg-slate-50 rounded-[3rem] shadow-sm border border-slate-100">
+              <h3 className="text-3xl font-bold font-serif text-slate-900 mb-4">Curating in progress</h3>
+              <p className="text-slate-500 font-light text-lg mb-8">We are selecting the finest items for this collection.</p>
+              <Link href="/products">
+                <Button className="bg-slate-900 hover:bg-rose-600 text-white rounded-full px-8 h-12 transition-all duration-300">
+                  Explore All Products
+                </Button>
+              </Link>
+            </div>
+          </FadeInScroll>
         )}
       </div>
     </PageTransition>

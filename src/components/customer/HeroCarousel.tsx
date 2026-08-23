@@ -20,7 +20,7 @@ export function HeroCarousel() {
   }, []);
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl shadow-rose-900/10">
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
       <AnimatePresence initial={false}>
         <motion.div
           key={currentIndex}

@@ -38,7 +38,7 @@ export async function login(formData: FormData) {
       if (redirectTo && redirectTo.startsWith('/')) {
         redirect(redirectTo);
       }
-      redirect('/account');
+      redirect('/');
     }
   }
 
@@ -128,7 +128,7 @@ export async function signup(formData: FormData) {
   if (redirectTo && redirectTo.startsWith('/')) {
     redirect(redirectTo);
   }
-  redirect('/account');
+  redirect('/');
 }
 
 export async function logout() {

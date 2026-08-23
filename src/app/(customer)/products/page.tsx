@@ -1,14 +1,14 @@
 import { getPublicProducts, getPublicCategories } from '@/services/catalog.service';
 import { ProductCard } from '@/components/customer/ProductCard';
-import { StaggerContainer, StaggerItem, PageTransition } from '@/components/ui/AnimatedWrapper';
+import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'Explore Products',
-  description: 'Browse our entire catalog of premium gifts and build your personalized hamper.',
+  title: 'Craft Your Hamper - Hamperly',
+  description: 'Select premium items to build your personalized hamper.',
 };
 
 export default async function ProductsPage({
@@ -30,116 +30,143 @@ export default async function ProductsPage({
   });
 
   return (
-    <PageTransition className="container mx-auto px-4 py-12">
-      <div className="mb-12">
-        <h1 className="text-4xl font-extrabold font-serif tracking-tight text-foreground mb-4">
-          Explore Products
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl">
-          Discover premium items to include in your personalized hamper.
-        </p>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Filters Sidebar */}
-        <aside className="w-full md:w-64 flex-shrink-0 space-y-8 bg-card p-6 rounded-2xl border border-border shadow-sm sticky top-24">
-          <div>
-            <h3 className="font-bold text-foreground mb-4 flex items-center">
-              <Search className="w-4 h-4 mr-2" /> Search
-            </h3>
-            <form className="relative" method="GET">
-              {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
-              {inStockOnly && <input type="hidden" name="inStock" value="true" />}
-              
-              <input 
-                type="text" 
-                name="q"
-                defaultValue={searchQuery || ''}
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
-            </form>
+    <PageTransition className="min-h-screen pt-32 pb-24 bg-background relative overflow-hidden">
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <FadeInScroll>
+          <div className="text-center max-w-4xl mx-auto mb-20 border-b border-primary/10 pb-16">
+            <span className="text-foreground/60 font-bold tracking-[0.3em] uppercase text-xs mb-6 block">Your Creative Studio</span>
+            <h1 className="text-5xl md:text-7xl font-extrabold font-serif tracking-tight text-foreground mb-6 leading-tight">
+              CRAFT YOUR HAMPER.
+            </h1>
+            <p className="text-lg md:text-xl text-foreground/60 font-light max-w-2xl mx-auto">
+              Select from our curated collection of premium goods. Every detail considered.
+            </p>
           </div>
+        </FadeInScroll>
 
-          <div className="border-t border-border pt-6">
-            <h3 className="font-bold text-foreground mb-4 flex items-center">
-              <Filter className="w-4 h-4 mr-2" /> Categories
-            </h3>
-            <div className="space-y-2">
-              <Link 
-                href={`/products?${new URLSearchParams({...resolvedParams, category: ''}).toString()}`}
-                className={`block text-sm py-1 transition-colors ${!categoryFilter ? 'font-bold text-primary' : 'text-muted-foreground hover:text-primary'}`}
-              >
-                All Categories
-              </Link>
-              {categories.map(cat => (
-                <Link 
-                  key={cat.id}
-                  href={`/products?${new URLSearchParams({...resolvedParams, category: cat.id}).toString()}`}
-                  className={`block text-sm py-1 transition-colors ${categoryFilter === cat.id ? 'font-bold text-primary' : 'text-muted-foreground hover:text-primary'}`}
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
+        <div className="flex flex-col md:flex-row gap-16 items-start">
+          {/* Filters Sidebar */}
+          <aside className="w-full md:w-64 flex-shrink-0 space-y-12 sticky top-32">
+            <FadeInScroll delay={0.1}>
+              <div className="space-y-12">
+                <div>
+                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                    Search
+                  </h3>
+                  <form className="relative" method="GET">
+                    {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+                    {inStockOnly && <input type="hidden" name="inStock" value="true" />}
+                    
+                    <input 
+                      type="text" 
+                      name="q"
+                      defaultValue={searchQuery || ''}
+                      placeholder="Find an item..."
+                      className="w-full pl-4 pr-10 py-3 border-b border-primary/10 bg-transparent focus:outline-none focus:border-primary transition-all text-sm font-light rounded-3xl"
+                    />
+                    <button type="submit" aria-label="Search" className="absolute right-2 top-3 text-foreground/60 hover:text-foreground transition-colors">
+                      <Search className="w-4 h-4" strokeWidth={1.5} />
+                    </button>
+                  </form>
+                </div>
 
-          <div className="border-t border-border pt-6">
-            <h3 className="font-bold text-foreground mb-4 flex items-center">
-              <SlidersHorizontal className="w-4 h-4 mr-2" /> Availability
-            </h3>
-            <form method="GET">
-              {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
-              {searchQuery && <input type="hidden" name="q" value={searchQuery} />}
-              
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="inStock" 
-                  value="true" 
-                  defaultChecked={inStockOnly}
-                  className="rounded text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-foreground">In Stock Only</span>
-              </label>
-              <Button type="submit" size="sm" className="mt-4 w-full">Apply Filters</Button>
-            </form>
-          </div>
-        </aside>
+                <div>
+                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                    Collections
+                  </h3>
+                  <div className="space-y-4">
+                    <Link 
+                      href={`/products?${new URLSearchParams({...resolvedParams, category: ''}).toString()}`}
+                      className={`block text-xs font-bold text-primary transition-colors ${!categoryFilter ? 'font-bold text-foreground' : 'text-foreground/60 hover:text-foreground font-semibold'}`}
+                    >
+                      All Items
+                    </Link>
+                    {categories.map(cat => (
+                      <Link 
+                        key={cat.id}
+                        href={`/products?${new URLSearchParams({...resolvedParams, category: cat.id}).toString()}`}
+                        className={`block text-xs font-bold text-primary transition-colors ${categoryFilter === cat.id ? 'font-bold text-foreground' : 'text-foreground/60 hover:text-foreground font-semibold'}`}
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
 
-        {/* Product Grid */}
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-sm text-muted-foreground font-medium">
-              Showing <span className="text-foreground font-bold">{products.length}</span> results
-            </div>
-            
-            {(categoryFilter || searchQuery || inStockOnly) && (
-              <Link href="/products" className="text-sm text-primary hover:opacity-80 font-medium">
-                Clear all filters
-              </Link>
+                <div>
+                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                    Availability
+                  </h3>
+                  <form method="GET">
+                    {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+                    {searchQuery && <input type="hidden" name="q" value={searchQuery} />}
+                    
+                    <label className="flex items-center space-x-3 cursor-pointer mb-6 group">
+                      <div className="relative flex items-center">
+                        <input 
+                          type="checkbox" 
+                          name="inStock" 
+                          value="true" 
+                          defaultChecked={inStockOnly}
+                          className="peer appearance-none w-4 h-4 border border-primary/10 checked:border-primary checked:bg-primary rounded-3xl transition-colors cursor-pointer"
+                        />
+                        <div className="absolute inset-0 pointer-events-none opacity-0 peer-checked:opacity-100 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                      </div>
+                      <span className="text-foreground/60 text-sm font-light group-hover:text-foreground transition-colors">In Stock Only</span>
+                    </label>
+                    <Button type="submit" className="w-full bg-primary hover:bg-primary text-white rounded-3xl h-12 font-bold text-primary text-xs font-semibold transition-all duration-300">
+                      Apply Filters
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </FadeInScroll>
+          </aside>
+
+          {/* Product Grid */}
+          <div className="flex-1">
+            <FadeInScroll delay={0.2}>
+              <div className="flex justify-between items-center mb-8 pb-4">
+                <div className="text-foreground/60 text-xs font-bold text-primary font-semibold">
+                  <span className="text-foreground font-bold">{products.length}</span> items
+                </div>
+                
+                {(categoryFilter || searchQuery || inStockOnly) && (
+                  <Link href="/products" className="text-primary hover:text-secondary text-xs font-bold text-primary font-semibold transition-colors flex items-center">
+                    Clear filters <ArrowRight className="w-3 h-3 ml-2" />
+                  </Link>
+                )}
+              </div>
+            </FadeInScroll>
+
+            {products.length > 0 ? (
+              <StaggerScrollContainer>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <div key={product.id} className="h-full">
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+              </StaggerScrollContainer>
+            ) : (
+              <FadeInScroll>
+                <div className="text-center py-32 bg-background border border-primary/10">
+                  <Search className="w-12 h-12 text-cream mx-auto mb-6" strokeWidth={1} />
+                  <h3 className="text-2xl font-bold font-serif text-foreground mb-4">No pieces found</h3>
+                  <p className="text-foreground/60 font-light mb-8">Adjust your criteria to discover our collection.</p>
+                  <Link href="/products">
+                    <Button variant="outline" className="border-primary text-foreground hover:bg-primary hover:text-white rounded-3xl px-8 h-12 font-bold text-primary text-xs font-semibold">
+                      Clear Filters
+                    </Button>
+                  </Link>
+                </div>
+              </FadeInScroll>
             )}
           </div>
-
-          {products.length > 0 ? (
-            <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <StaggerItem key={product.id}>
-                  <ProductCard product={product} />
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          ) : (
-            <div className="text-center py-24 bg-card rounded-3xl shadow-sm border border-border">
-              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-bold font-serif text-foreground mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-6">Try adjusting your filters or search query.</p>
-              <Link href="/products">
-                <Button variant="outline">Clear Filters</Button>
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </PageTransition>

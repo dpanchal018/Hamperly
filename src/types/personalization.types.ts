@@ -11,6 +11,8 @@ export interface PersonalizationData {
   ribbon: RibbonValue;
   recipient: RecipientValue;
   personalMessage: string;
+  recipientName?: string;
+  senderName?: string;
 }
 
 export interface Phase6HandoffContract {

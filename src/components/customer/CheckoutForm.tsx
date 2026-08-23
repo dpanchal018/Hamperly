@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useCart } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { placeCustomerOrder } from '@/actions/checkout.actions';
-import { ShoppingBag, Loader2, MapPin, Phone, User } from 'lucide-react';
+import { ShoppingBag, MapPin, Phone, User, Check, PackageOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 
@@ -12,27 +12,35 @@ export function CheckoutForm({ customer }: { customer: any }) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [address, setAddress] = useState(customer?.address || '');
 
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-sm">
-        <ShoppingBag className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Your cart is empty</h2>
-        <p className="text-slate-500 mb-6">Looks like you haven't added anything to your cart yet.</p>
+      <div className="bg-white rounded-3xl border border-primary/10 p-16 text-center shadow-sm max-w-2xl mx-auto">
+        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-primary/40 mx-auto mb-6">
+          <ShoppingBag className="w-12 h-12" strokeWidth={1.5} />
+        </div>
+        <h2 className="text-2xl font-serif font-bold text-foreground mb-3">Your bag is empty</h2>
+        <p className="text-foreground/70 mb-8 font-light text-lg">Looks like you haven't added any beautiful gifts yet.</p>
         <button 
           onClick={() => router.push('/hampers')}
-          className="px-6 py-2.5 bg-rose-600 text-white font-medium rounded-full hover:bg-rose-700 transition-colors"
+          className="px-8 py-4 bg-primary text-white font-bold rounded-full hover:scale-105 shadow-lg shadow-primary/20 transition-all text-sm"
         >
-          Browse Hampers
+          Browse Collections
         </button>
       </div>
     );
   }
 
   const handlePlaceOrder = async () => {
+    if (!address.trim()) {
+      toast.error('Please provide a delivery address.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const result = await placeCustomerOrder(items);
+      const result = await placeCustomerOrder(items, address);
       if (result.error) {
         toast.error(result.error);
         setIsSubmitting(false);
@@ -48,55 +56,61 @@ export function CheckoutForm({ customer }: { customer: any }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
       {/* Left Column: Customer Details */}
-      <div className="lg:col-span-2 space-y-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 font-serif mb-4">Delivery Information</h2>
-          <div className="space-y-4">
+      <div className="lg:col-span-2 space-y-8">
+        <div className="bg-white rounded-3xl border border-primary/10 p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-foreground font-serif mb-6 flex items-center">
+             <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-sans mr-3">1</span>
+             Delivery Details
+          </h2>
+          <div className="space-y-6 pl-11">
             <div className="flex items-start">
-              <User className="w-5 h-5 text-slate-400 mr-3 mt-0.5" />
+              <User className="w-5 h-5 text-primary/60 mr-4 mt-0.5" strokeWidth={1.5} />
               <div>
-                <p className="text-sm font-medium text-slate-900">Name</p>
-                <p className="text-slate-600">{customer.full_name}</p>
+                <p className="text-sm font-semibold text-foreground/60 mb-1">Recipient Name</p>
+                <p className="text-foreground font-medium">{customer.full_name}</p>
               </div>
             </div>
             <div className="flex items-start">
-              <Phone className="w-5 h-5 text-slate-400 mr-3 mt-0.5" />
+              <Phone className="w-5 h-5 text-primary/60 mr-4 mt-0.5" strokeWidth={1.5} />
               <div>
-                <p className="text-sm font-medium text-slate-900">Phone</p>
-                <p className="text-slate-600">{customer.mobile_number || 'Not provided'}</p>
+                <p className="text-sm font-semibold text-foreground/60 mb-1">Contact Phone</p>
+                <p className="text-foreground font-medium">{customer.mobile_number || 'Not provided'}</p>
               </div>
             </div>
             <div className="flex items-start">
-              <MapPin className="w-5 h-5 text-slate-400 mr-3 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-slate-900">Delivery Address</p>
-                <p className="text-slate-600">
-                  {customer.address ? (
-                    <span className="whitespace-pre-wrap">{customer.address}</span>
-                  ) : (
-                    <span className="italic text-slate-400">No address provided. We will contact you to confirm delivery details.</span>
-                  )}
-                </p>
-                <button 
-                  onClick={() => router.push('/account/profile')}
-                  className="text-xs text-rose-600 hover:underline mt-2 font-medium"
-                >
-                  Edit Profile
-                </button>
+              <MapPin className="w-5 h-5 text-primary/60 mr-4 mt-2" strokeWidth={1.5} />
+              <div className="w-full">
+                <p className="text-sm font-semibold text-foreground/60 mb-2">Delivery Address</p>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Enter your full delivery address here..."
+                  className="w-full min-h-[120px] p-4 text-sm font-medium border border-primary/20 rounded-2xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-primary/5 resize-y transition-all"
+                  required
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 font-serif mb-4">Payment Method</h2>
-          <div className="p-4 border-2 border-rose-600 rounded-xl bg-rose-50 flex items-center">
-            <div className="w-4 h-4 rounded-full bg-rose-600 ring-4 ring-rose-200 mr-3 shrink-0"></div>
-            <div>
-              <p className="font-bold text-rose-900">Pay Later / Bank Transfer</p>
-              <p className="text-sm text-rose-700 mt-1">Our team will contact you with payment links and finalize the delivery schedule after you confirm the order.</p>
+        <div className="bg-white rounded-3xl border border-primary/10 p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-foreground font-serif mb-6 flex items-center">
+             <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-sans mr-3">2</span>
+             Payment Method
+          </h2>
+          <div className="pl-11">
+            <div className="p-6 border-2 border-primary rounded-2xl bg-primary/5 flex items-start">
+              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0 mr-4 mt-0.5 text-white">
+                 <Check className="w-3 h-3" strokeWidth={3} />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Pay Later / Bank Transfer</p>
+                <p className="text-sm text-foreground/70 mt-2 font-light leading-relaxed">
+                  Our team will contact you with secure payment links and finalize your preferred delivery schedule once your order is confirmed.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -104,50 +118,52 @@ export function CheckoutForm({ customer }: { customer: any }) {
 
       {/* Right Column: Order Summary */}
       <div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm sticky top-24">
-          <h2 className="text-lg font-bold text-slate-900 font-serif mb-6">Order Summary</h2>
+        <div className="bg-white rounded-3xl border border-primary/10 p-8 shadow-sm sticky top-28">
+          <h2 className="text-2xl font-bold text-foreground font-serif mb-8">Order Summary</h2>
           
-          <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
+          <div className="space-y-6 mb-8 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-4">
-                <div className="w-16 h-16 bg-slate-50 rounded-lg border border-slate-100 overflow-hidden shrink-0">
+              <div key={item.id} className="flex gap-4 group">
+                <div className="w-20 h-20 bg-primary/5 rounded-2xl flex items-center justify-center relative flex-shrink-0">
                   {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-2xl" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <ShoppingBag className="w-6 h-6" />
+                    <div className="text-primary/30">
+                      {item.itemType === 'PRODUCT' ? <PackageOpen className="w-6 h-6" strokeWidth={1.5} /> : <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />}
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-slate-900 text-sm truncate">{item.name}</h4>
-                  <p className="text-slate-500 text-xs mt-0.5">Qty: {item.quantity}</p>
-                  <p className="text-slate-900 font-medium text-sm mt-1">₹{(item.price * item.quantity).toFixed(2)}</p>
+                
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <h4 className="font-bold text-foreground text-sm line-clamp-2 leading-snug">{item.name}</h4>
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-foreground/60 text-xs font-semibold">Qty: {item.quantity}</p>
+                    <p className="text-primary font-bold text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-slate-100 pt-4 space-y-3 mb-6">
-            <div className="flex justify-between text-slate-500 text-sm">
+          <div className="border-t border-primary/10 pt-6 space-y-4 mb-8">
+            <div className="flex justify-between text-foreground/70 text-sm font-medium">
               <span>Subtotal</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-slate-500 text-sm">
+            <div className="flex justify-between text-foreground/70 text-sm font-medium">
               <span>Delivery</span>
-              <span>Calculated later</span>
+              <span className="italic text-foreground/50">Calculated later</span>
             </div>
-            <div className="flex justify-between text-slate-900 font-bold text-lg pt-2 border-t border-slate-100">
+            <div className="flex justify-between text-foreground font-bold text-xl pt-4 border-t border-primary/10">
               <span>Total Due</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+              <span className="text-primary">₹{subtotal.toFixed(2)}</span>
             </div>
           </div>
 
           <Button
             isLoading={isSubmitting}
             onClick={handlePlaceOrder}
-            size="lg"
-            className="w-full h-14 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-sm text-lg"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-lg shadow-primary/20 text-base transition-transform hover:scale-[1.02]"
           >
             Confirm Order
           </Button>

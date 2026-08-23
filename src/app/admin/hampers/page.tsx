@@ -2,6 +2,7 @@ import { getHampers } from '@/actions/hamper.actions';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Gift } from 'lucide-react';
 import Link from 'next/link';
+import { HamperImportButton } from '@/components/admin/HamperImportButton';
 
 export default async function HampersPage() {
   const hampers = await getHampers();
@@ -17,11 +18,14 @@ export default async function HampersPage() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Hampers</h1>
           <p className="text-slate-500 mt-1">Manage pre-made hamper bundles.</p>
         </div>
-        <Link href="/admin/hampers/new">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
-            <Plus className="w-4 h-4 mr-2" /> Add Hamper
-          </Button>
-        </Link>
+        <div className="flex items-center space-x-3">
+          <HamperImportButton />
+          <Link href="/admin/hampers/new">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+              <Plus className="w-4 h-4 mr-2" /> Add Hamper
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

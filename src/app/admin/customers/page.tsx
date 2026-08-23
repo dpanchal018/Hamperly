@@ -1,6 +1,7 @@
 import { getAllCustomers } from '@/actions/customer.actions';
 import { Users, Mail, Phone, Calendar, UserCheck, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { AutoRefresh } from '@/components/admin/AutoRefresh';
 export const dynamic = 'force-dynamic';
 
 export default async function CustomersPage() {
@@ -8,6 +9,7 @@ export default async function CustomersPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      <AutoRefresh intervalMs={10000} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Customers Directory</h1>

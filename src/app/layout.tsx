@@ -26,7 +26,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import NextTopLoader from 'nextjs-toploader';
 import { getCurrentUser } from '@/services/auth.service';
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   const userId = user?.id || 'guest';
 
@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${nunito.variable} ${playfair.variable} ${dancingScript.variable} font-sans h-full antialiased text-foreground bg-background`}
     >
       <body className="min-h-full flex flex-col">
-        <NextTopLoader color="#4f46e5" showSpinner={false} />
+        <NextTopLoader color="#C04A7B" showSpinner={false} />
         <CartProvider userId={userId}>
           {children}
         </CartProvider>

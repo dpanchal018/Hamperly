@@ -9,7 +9,7 @@ const supabaseAdmin = createSupabaseClient(
 );
 import { requireCustomer, getCurrentUser } from '@/services/auth.service';
 
-export async function placeCustomerOrder(cartItems: any[]) {
+export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: string) {
   try {
     await requireCustomer();
     const user = await getCurrentUser();
@@ -25,6 +25,14 @@ export async function placeCustomerOrder(cartItems: any[]) {
 
     if (customerError || !customer) {
       throw new Error("Customer profile not found");
+    }
+
+    // Update customer address if provided
+    if (deliveryAddress !== undefined) {
+      await supabaseAdmin
+        .from('customers')
+        .update({ address: deliveryAddress })
+        .eq('id', customer.id);
     }
 
     if (!cartItems || cartItems.length === 0) {
