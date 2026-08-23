@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { inviteAdminUser, listAdminUsers, removeAdminUser, updateAdminPermissions } from "@/actions/users.actions";
+import { inviteAdminUser, listAdminUsers, removeAdminUser, updateAdminUser } from "@/actions/users.actions";
 import { AdminPermission } from "@/types/database.types";
 import { toast } from "sonner";
 import { Users, UserPlus, Trash, Shield, Save, Edit2, X } from "lucide-react";
@@ -71,7 +71,7 @@ export function AdminUsersManager() {
 
   const handleSaveEdit = async (userId: string) => {
     setSavingEdit(true);
-    const res = await updateAdminPermissions(userId, editPermissions);
+    const res = await updateAdminUser(userId, editPermissions);
     if (res.error) {
       toast.error(res.error);
     } else {
