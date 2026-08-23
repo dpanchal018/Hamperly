@@ -1,4 +1,5 @@
 export type UserRole = 'CUSTOMER' | 'ADMIN';
+export type AdminPermission = 'manage_products' | 'manage_content' | 'manage_users' | 'manage_settings' | 'manage_orders';
 export type ProductStatus = 'draft' | 'active' | 'archived';
 export type HamperStatus = 'draft' | 'generated' | 'purchased';
 export type AIGenerationStatus = 'PENDING' | 'GENERATING' | 'COMPLETED' | 'FAILED' | 'REJECTED';
@@ -8,6 +9,7 @@ export interface UserRoleRecord {
   id: string;
   user_id: string;
   role: UserRole;
+  permissions?: AdminPermission[]; // JSONB array for admin permissions
   created_at: string;
   updated_at: string;
 }
@@ -195,12 +197,29 @@ export interface StoreSettings {
   support_email: string | null;
   support_phone: string | null;
   store_announcement: string | null;
-  default_tax_rate: number;
-  flat_shipping_rate: number;
-  min_order_amount: number;
-  default_target_margin: number;
   enable_ai_designer: boolean;
   accept_new_orders: boolean;
   maintenance_mode: boolean;
   updated_at: string;
+}
+
+export interface SiteContent {
+  section_id: string;
+  content: any;
+  updated_at: string;
+}
+
+export interface HeaderContent {
+  logoText: string;
+  navLinks: { name: string; href: string }[];
+}
+
+export interface FooterContent {
+  logoText: string;
+  description: string;
+  socialLinks: { platform: string; url: string }[];
+  columns: {
+    title: string;
+    links: { name: string; href: string }[];
+  }[];
 }

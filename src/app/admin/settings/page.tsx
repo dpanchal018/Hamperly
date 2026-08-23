@@ -1,5 +1,6 @@
 import { getStoreSettings } from '@/actions/settings.actions';
 import { SettingsForm } from '@/components/admin/SettingsForm';
+import { AdminUsersManager } from '@/components/admin/AdminUsersManager';
 import { Settings } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Store Settings</h1>
-          <p className="text-slate-500 mt-1">Configure your storefront, financial rules, and feature flags.</p>
+          <p className="text-slate-500 mt-1">Configure your storefront, feature flags, and manage admin users.</p>
         </div>
       </div>
 
@@ -26,6 +27,8 @@ export default async function SettingsPage() {
       )}
 
       {settings && <SettingsForm initialSettings={settings} />}
+      
+      <AdminUsersManager />
     </div>
   );
 }

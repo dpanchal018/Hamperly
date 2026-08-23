@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 
 import { NotificationBell } from './NotificationBell';
 import { ProfileDropdown } from './ProfileDropdown';
+
+import { HeaderContent } from '@/types/database.types';
 
 function CartButton() {
   const { isCartOpen, setIsCartOpen, totalItems } = useCart();
@@ -27,16 +29,11 @@ function CartButton() {
   );
 }
 
-export function Navbar({ user }: { user: any }) {
+export function Navbar({ user, role, content }: { user: any; role?: string | null; content: HeaderContent }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
-    { name: 'Shop', href: '/products' },
-    { name: 'Occasions', href: '/occasions' },
-    { name: 'Hampers', href: '/hampers' },
-    { name: 'Exhibitions', href: '/exhibitions' },
-  ];
+  const navLinks = content.navLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-primary/10 shadow-sm">
@@ -61,7 +58,7 @@ export function Navbar({ user }: { user: any }) {
         <div className="flex-1 flex md:justify-center">
           <Link href="/" className="inline-block group">
              <div className="bg-white border border-primary/20 shadow-sm shadow-primary/5 rounded-full px-6 py-2 transition-transform group-hover:scale-105">
-                <h2 className="text-3xl font-script text-primary leading-none pt-1">Hamperly</h2>
+                <h2 className="text-3xl font-script text-primary leading-none pt-1">{content.logoText}</h2>
              </div>
           </Link>
         </div>
@@ -79,7 +76,7 @@ export function Navbar({ user }: { user: any }) {
             {user ? (
               <>
                 <NotificationBell />
-                <ProfileDropdown user={user} />
+                <ProfileDropdown user={user} role={role} />
               </>
             ) : (
               <Link href="/login">
@@ -119,7 +116,12 @@ export function Navbar({ user }: { user: any }) {
             <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
               {user ? (
                 <>
-                  <Link href="/account" className="text-base font-semibold text-foreground">Account</Link>
+                  <Link href={role === 'ADMIN' ? "/admin" : "/account"} className="text-base font-semibold text-foreground">
+                    {role === 'ADMIN' ? "Admin Dashboard" : "Account"}
+                  </Link>
+                  <form action="/api/auth/logout" method="POST">
+                    <button type="submit" className="text-base font-semibold text-red-600">Sign Out</button>
+                  </form>
                 </>
               ) : (
                 <Link href="/login" className="text-base font-semibold text-primary">Sign In</Link>

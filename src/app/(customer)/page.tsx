@@ -18,13 +18,13 @@ export default async function HomePage() {
 
   return (
     <PageTransition className="min-h-screen bg-background relative overflow-hidden">
-      
+
       {/* Decorative Soft Gradients & Floral Vibes */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute top-[20%] right-0 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] pointer-events-none translate-x-1/3" />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 lg:pt-48 lg:pb-32 container mx-auto px-4 z-10 flex flex-col items-center text-center">
+      <section className="relative pt-24 pb-24 lg:pt-24 lg:pb-24 container mx-auto px-4 z-10 flex flex-col items-center text-center">
         <FadeInScroll>
           <div className="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/20 text-primary mb-8 shadow-sm">
             <Sparkles className="w-4 h-4" />
@@ -115,7 +115,7 @@ export default async function HomePage() {
               {/* Soft decorative circles inside CTA */}
               <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-              
+
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-6 relative z-10">
                 Design Your Masterpiece
               </h2>

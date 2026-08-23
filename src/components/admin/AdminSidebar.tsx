@@ -82,6 +82,10 @@ export function AdminSidebar() {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span className={isDesktopOpen ? 'block' : 'hidden'}>Purchases</span>
           </Link>
+          <Link href="/admin/content" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
+            <ImageIcon className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
+            <span className={isDesktopOpen ? 'block' : 'hidden'}>Content</span>
+          </Link>
         </nav>
         
         <div className="p-4 border-t border-slate-100 mt-auto">

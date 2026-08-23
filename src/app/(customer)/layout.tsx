@@ -13,8 +13,9 @@ export const metadata: Metadata = {
   description: 'Create beautiful, personalized hampers for every occasion. Choose from our curated selection of premium gifts.',
 };
 
-import { getCurrentUser } from '@/services/auth.service';
+import { getCurrentUser, getCurrentUserRole } from '@/services/auth.service';
 import { getStoreSettings } from '@/actions/settings.actions';
+import { getSiteContent, defaultHeaderContent, defaultFooterContent } from '@/services/content.service';
 
 export default async function CustomerLayout({
   children,
@@ -22,7 +23,10 @@ export default async function CustomerLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+  const role = await getCurrentUserRole();
   const { settings } = await getStoreSettings();
+  const headerContent = await getSiteContent('header', defaultHeaderContent);
+  const footerContent = await getSiteContent('footer', defaultFooterContent);
 
   return (
     <SelectionProvider>
@@ -32,9 +36,9 @@ export default async function CustomerLayout({
             {settings.store_announcement}
           </div>
         )}
-        <Navbar user={user} />
+        <Navbar user={user} role={role} content={headerContent} />
         <main className="flex-1 bg-slate-50">{children}</main>
-        <Footer />
+        <Footer content={footerContent} />
         <SelectionSummary />
         <CartSlideover user={user} />
       </div>

@@ -27,7 +27,7 @@ export async function getPublicHampers() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching public hampers:', error);
+    console.error('Error fetching public hampers:', error.message || error, error.details, error.hint, error.code);
     return [];
   }
   return hampers as PreMadeHamper[];

@@ -14,10 +14,6 @@ const settingsSchema = z.object({
   support_email: z.string().email('Invalid email').or(z.literal('')),
   support_phone: z.string().optional(),
   store_announcement: z.string().optional(),
-  default_tax_rate: z.coerce.number().min(0).max(100),
-  flat_shipping_rate: z.coerce.number().min(0),
-  min_order_amount: z.coerce.number().min(0),
-  default_target_margin: z.coerce.number().min(0).max(100),
   enable_ai_designer: z.boolean(),
   accept_new_orders: z.boolean(),
   maintenance_mode: z.boolean(),
@@ -35,10 +31,6 @@ export function SettingsForm({ initialSettings }: { initialSettings: StoreSettin
       support_email: initialSettings.support_email || '',
       support_phone: initialSettings.support_phone || '',
       store_announcement: initialSettings.store_announcement || '',
-      default_tax_rate: initialSettings.default_tax_rate,
-      flat_shipping_rate: initialSettings.flat_shipping_rate,
-      min_order_amount: initialSettings.min_order_amount,
-      default_target_margin: initialSettings.default_target_margin,
       enable_ai_designer: initialSettings.enable_ai_designer,
       accept_new_orders: initialSettings.accept_new_orders,
       maintenance_mode: initialSettings.maintenance_mode,
@@ -104,54 +96,6 @@ export function SettingsForm({ initialSettings }: { initialSettings: StoreSettin
             <input 
               {...register('support_phone')} 
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Financial Settings */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-        <div className="flex items-center space-x-2 border-b border-slate-100 pb-4">
-          <CreditCard className="w-5 h-5 text-emerald-500" />
-          <h2 className="text-xl font-semibold text-slate-800">Financial Rules</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Default Tax Rate (%)</label>
-            <input 
-              type="number" step="0.01"
-              {...register('default_tax_rate')} 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-            {errors.default_tax_rate && <p className="text-red-500 text-sm mt-1">{errors.default_tax_rate.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Flat Shipping Rate (₹)</label>
-            <input 
-              type="number" step="0.01"
-              {...register('flat_shipping_rate')} 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-            {errors.flat_shipping_rate && <p className="text-red-500 text-sm mt-1">{errors.flat_shipping_rate.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Minimum Order Amount (₹)</label>
-            <input 
-              type="number" step="0.01"
-              {...register('min_order_amount')} 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Default Target Margin (%)</label>
-            <input 
-              type="number" step="0.01"
-              {...register('default_target_margin')} 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
           </div>
         </div>

@@ -1,7 +1,8 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { Heart } from 'lucide-react';
+import { FooterContent } from '@/types/database.types';
 
-export function Footer() {
+export function Footer({ content }: { content: FooterContent }) {
   return (
     <footer className="bg-white border-t border-primary/10 pt-16 pb-8 relative overflow-hidden">
       
@@ -12,37 +13,44 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-1">
              <div className="bg-white border border-primary/20 shadow-sm shadow-primary/5 rounded-full px-6 py-2 inline-block mb-6">
-                <h2 className="text-3xl font-script text-primary leading-none pt-1">Hamperly</h2>
+                <h2 className="text-3xl font-script text-primary leading-none pt-1">{content.logoText}</h2>
              </div>
             <p className="text-foreground/70 font-light text-sm mb-6 max-w-sm">
-              Curating beautiful, personalized gifts for every special moment. Handcrafted with love and delivered with care.
+              {content.description}
             </p>
-            <div className="flex space-x-4 text-primary font-bold text-sm">
-              <a href="#" className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors">IG</a>
-              <a href="#" className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors">FB</a>
-              <a href="#" className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors">X</a>
+            <div className="flex flex-wrap gap-4 text-primary font-bold text-sm">
+              {content.socialLinks.map((link, i) => {
+                const isPlaceholder = link.url === '#' || !link.url;
+                const href = isPlaceholder ? '#' : (link.url.startsWith('http') ? link.url : `https://${link.url}`);
+                return (
+                  <a 
+                    key={i} 
+                    href={href} 
+                    target={isPlaceholder ? undefined : "_blank"} 
+                    rel={isPlaceholder ? undefined : "noopener noreferrer"}
+                    className="w-10 h-10 shrink-0 rounded-full bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors"
+                  >
+                    {link.platform}
+                  </a>
+                );
+              })}
             </div>
           </div>
           
-          <div>
-            <h4 className="font-bold text-foreground mb-6">Shop</h4>
-            <ul className="space-y-4 text-sm text-foreground/70">
-              <li><Link href="/products" className="hover:text-primary transition-colors">Build a Hamper</Link></li>
-              <li><Link href="/hampers" className="hover:text-primary transition-colors">Pre-made Hampers</Link></li>
-              <li><Link href="/occasions" className="hover:text-primary transition-colors">Shop by Occasion</Link></li>
-              <li><Link href="/exhibitions" className="hover:text-primary transition-colors">Exhibitions</Link></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-bold text-foreground mb-6">Information</h4>
-            <ul className="space-y-4 text-sm text-foreground/70">
-              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
-              <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping & Returns</Link></li>
-              <li><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
-            </ul>
-          </div>
+          {content.columns.map((col, i) => (
+            <div key={i}>
+              <h4 className="font-bold text-foreground mb-6">{col.title}</h4>
+              <ul className="space-y-4 text-sm text-foreground/70">
+                {col.links.map((link, j) => (
+                  <li key={j}>
+                    <Link href={link.href} className="hover:text-primary transition-colors">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           <div>
             <h4 className="font-bold text-foreground mb-6">Newsletter</h4>
