@@ -11,7 +11,7 @@
   --font-serif: var(--font-playfair);
   --font-heading: var(--font-playfair);
   --font-script: var(--font-dancing);
-  
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -28,7 +28,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -40,44 +40,44 @@
 
 :root {
   /* Brand Specific Variables - Soft Floral Pastel & Gold */
-  --brand-rose: #C04A7B;
-  --brand-blush: #FDF8F9;
-  --brand-lavender: #9C89B8;
-  --brand-peach: #F5B8A5;
-  --brand-gold: #D4AF37;
-  --brand-brown: #4A3B32;
-  --brand-soft-pink: #F9E0E8;
-  --brand-cream: #FFFDF9;
-  
+  --brand-rose: #c04a7b;
+  --brand-blush: #fdf8f9;
+  --brand-lavender: #9c89b8;
+  --brand-peach: #f5b8a5;
+  --brand-gold: #d4af37;
+  --brand-brown: #4a3b32;
+  --brand-soft-pink: #f9e0e8;
+  --brand-cream: #fffdf9;
+
   /* Shadcn Semantic Mapping */
-  --background: #FDF8F9; /* Blush */
-  --foreground: #4A3B32; /* Warm Brown */
-  
-  --card: #FFFFFF;
-  --card-foreground: #4A3B32;
-  
-  --popover: #FFFFFF;
-  --popover-foreground: #4A3B32;
-  
-  --primary: #C04A7B; /* Deep Rose */
-  --primary-foreground: #FFFFFF;
-  
-  --secondary: #9C89B8; /* Lavender */
-  --secondary-foreground: #FFFFFF;
-  
-  --muted: #F9E0E8;
-  --muted-foreground: #8B7A75;
-  
-  --accent: #F5B8A5; /* Peach */
-  --accent-foreground: #4A3B32;
-  
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  
-  --border: #F5D6DF;
-  --input: #F5D6DF;
-  --ring: #C04A7B;
-  
+  --background: #fdf8f9; /* Blush */
+  --foreground: #4a3b32; /* Warm Brown */
+
+  --card: #ffffff;
+  --card-foreground: #4a3b32;
+
+  --popover: #ffffff;
+  --popover-foreground: #4a3b32;
+
+  --primary: #c04a7b; /* Deep Rose */
+  --primary-foreground: #ffffff;
+
+  --secondary: #9c89b8; /* Lavender */
+  --secondary-foreground: #ffffff;
+
+  --muted: #f9e0e8;
+  --muted-foreground: #8b7a75;
+
+  --accent: #f5b8a5; /* Peach */
+  --accent-foreground: #4a3b32;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #f5d6df;
+  --input: #f5d6df;
+  --ring: #c04a7b;
+
   --radius: 0.75rem;
 }
 
@@ -103,4 +103,8 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--brand-rose);
+}
+a,
+button {
+  cursor: pointer;
 }

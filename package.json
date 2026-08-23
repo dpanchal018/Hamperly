@@ -58,5 +58,11 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "@tsparticles/engine@4.3.2": true,
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true
   }
 }
