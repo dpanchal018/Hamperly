@@ -76,7 +76,7 @@ export default function UpdatePasswordPage() {
               type="password"
               value={password}
               onChange={(e: any) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               required
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
