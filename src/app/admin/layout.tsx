@@ -6,6 +6,7 @@ import { PageTransition } from '@/components/ui/AnimatedWrapper';
 import { Logo } from '@/components/ui/Logo';
 import { Toaster } from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/server';
+import AdminCopilotWrapper from '@/components/admin/AdminCopilotWrapper';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   let currentUser;
@@ -99,6 +100,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {children}
         </PageTransition>
       </main>
+      <AdminCopilotWrapper />
     </div>
   );
 }

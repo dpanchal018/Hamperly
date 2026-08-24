@@ -1,7 +1,9 @@
-﻿import { getSiteContent, defaultHeaderContent, defaultFooterContent } from "@/services/content.service";
+import { getSiteContent, defaultHeaderContent, defaultFooterContent } from "@/services/content.service";
 import HeaderForm from "@/components/admin/content/HeaderForm";
 import FooterForm from "@/components/admin/content/FooterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Content Management | Hamperly Admin',
