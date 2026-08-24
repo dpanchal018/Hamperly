@@ -51,22 +51,35 @@ export async function inviteAdminUser(email: string, permissions: AdminPermissio
     await requireAdmin();
     const supabaseAdmin = getAdminClient();
 
-    // 1. Invite the user
+    // 1. Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users.find((u) => u.email === email);
+
+    if (existingUser) {
+      return { success: false, error: "User already exists. Please proceed to login or upgrade their existing account instead." };
+    }
+
+    // 2. Invite the user
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
     if (inviteError) throw new Error(inviteError.message);
 
     const newUserId = inviteData.user.id;
 
-    // 2. Add them to user_roles
+    // 3. Upsert them to user_roles (Trigger creates them as CUSTOMER, so we overwrite to ADMIN)
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({
+      .upsert({
         user_id: newUserId,
         role: "ADMIN",
         permissions: permissions
-      });
+      }, { onConflict: 'user_id' });
 
     if (roleError) throw new Error(roleError.message);
+
+    // 4. Set a flag in user_metadata so admins can identify them easily in Supabase dashboard
+    await supabaseAdmin.auth.admin.updateUserById(newUserId, {
+      user_metadata: { is_admin: true }
+    });
 
     revalidatePath("/admin/settings");
     return { success: true, error: null };
