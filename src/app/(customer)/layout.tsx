@@ -4,6 +4,7 @@ import { Footer } from '@/components/customer/Footer';
 import { SelectionProvider } from '@/contexts/SelectionContext';
 import { SelectionSummary } from '@/components/customer/SelectionSummary';
 import { CartSlideover } from '@/components/customer/CartSlideover';
+import { ChatWidget } from '@/components/customer/ChatWidget';
 
 export const metadata: Metadata = {
   title: {
@@ -41,6 +42,7 @@ export default async function CustomerLayout({
         <Footer content={footerContent} />
         <SelectionSummary />
         <CartSlideover user={user} />
+        <ChatWidget />
       </div>
     </SelectionProvider>
   );
