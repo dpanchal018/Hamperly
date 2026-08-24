@@ -5,13 +5,23 @@ import { Package, Calendar, Folder, LayoutDashboard, Image as ImageIcon, Setting
 import { PageTransition } from '@/components/ui/AnimatedWrapper';
 import { Logo } from '@/components/ui/Logo';
 import { Toaster } from 'react-hot-toast';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  let currentUser;
   try {
     await requireAdmin();
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    currentUser = data.user;
   } catch (error) {
     redirect('/login');
   }
+
+  // Get initial letters for avatar
+  const initials = currentUser?.user_metadata?.full_name
+    ? currentUser.user_metadata.full_name.substring(0, 2).toUpperCase()
+    : currentUser?.email?.substring(0, 2).toUpperCase() || 'AD';
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-rose-200">
@@ -42,12 +52,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Folder className="w-4 h-4 mr-3" />
             Categories
           </Link>
-          {/* Parked for future: Requires OpenAI license
-          <Link href="/admin/ai-designs" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
-            <ImageIcon className="w-4 h-4 mr-3" />
-            AI Designs
-          </Link>
-          */}
           <Link href="/admin/customers" className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Customers
@@ -62,11 +66,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
         </nav>
         
-        <div className="p-4 border-t border-slate-100">
-          <Link href="/admin/settings" className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-slate-500 rounded-lg hover:bg-slate-100 transition-colors duration-200">
+        <div className="border-t border-slate-100">
+          <Link href="/admin/settings" className="flex items-center w-full px-8 py-4 text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors duration-200">
             <Settings className="w-4 h-4 mr-3" />
             Settings
           </Link>
+          
+          <div className="p-4 bg-slate-50 border-t border-slate-100">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs border border-indigo-200">
+                  {initials}
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+              </div>
+              <div className="overflow-hidden flex-1">
+                <p className="text-sm font-semibold text-slate-800 truncate">
+                  {currentUser?.user_metadata?.full_name || 'Admin User'}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {currentUser?.email}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 

@@ -51,7 +51,7 @@ export async function signup(formData: FormData) {
   const full_name = formData.get('full_name') as string
 
   if (!email || !password || !full_name) {
-    return { error: 'All fields are required' }
+    redirect('/signup?error=All fields are required')
   }
 
   // Create an admin client to bypass the email confirmation requirement
@@ -59,6 +59,14 @@ export async function signup(formData: FormData) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // 1. Check if user already exists
+  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+  const existingUser = existingUsers?.users.find((u) => u.email === email);
+
+  if (existingUser) {
+    redirect('/signup?error=User already exists. Please proceed to login.')
+  }
 
   // Create user directly via admin API (auto-confirms email)
   const { data: adminData, error: adminError } = await supabaseAdmin.auth.admin.createUser({
@@ -71,7 +79,7 @@ export async function signup(formData: FormData) {
   })
 
   if (adminError) {
-    return { error: adminError.message }
+    redirect(`/signup?error=${encodeURIComponent(adminError.message)}`)
   }
 
   // Now log the user in to establish the session cookies
@@ -82,7 +90,7 @@ export async function signup(formData: FormData) {
   })
   
   if (loginError) {
-    return { error: loginError.message }
+    redirect(`/signup?error=${encodeURIComponent(loginError.message)}`)
   }
 
   if (authData.user) {
