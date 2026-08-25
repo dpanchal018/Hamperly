@@ -1,6 +1,7 @@
 import { login } from '@/actions/auth.actions'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Logo } from '@/components/ui/Logo'
 
@@ -50,7 +51,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               className="w-full"
             />
           </div>
-          <SubmitButton className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+            
+            <div className="flex items-center space-x-2 mt-4 mb-2">
+              <Checkbox id="keepLoggedIn" name="keepLoggedIn" defaultChecked value="on" />
+              <label htmlFor="keepLoggedIn" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600">
+                Keep me logged in
+              </label>
+            </div>
+            
+            <SubmitButton className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white">
             Sign In
           </SubmitButton>
           
