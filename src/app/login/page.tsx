@@ -1,6 +1,7 @@
 import { login } from '@/actions/auth.actions'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Logo } from '@/components/ui/Logo'
 
 export const metadata = {
@@ -40,10 +41,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </div>
           <div>
             <label htmlFor="password" className="block text-xs text-slate-500 uppercase font-medium mb-2">Password</label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
+              
               autoComplete="current-password"
               required
               className="w-full"

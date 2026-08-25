@@ -1,6 +1,7 @@
 import { signup } from '@/actions/auth.actions'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Logo } from '@/components/ui/Logo'
 import Link from 'next/link'
 
@@ -52,10 +53,10 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           </div>
           <div>
             <label htmlFor="password" className="block text-xs text-slate-500 uppercase font-medium mb-2">Password</label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
+              
               required
               className="w-full"
             />
