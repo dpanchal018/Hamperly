@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { bulkCreateHampers } from '@/actions/hamper.actions';
+import { bulkUpsertHampers } from '@/actions/hamper.actions';
 import { PreMadeHamper } from '@/types/database.types';
 
 export function HamperImportButton() {
@@ -29,7 +29,6 @@ export function HamperImportButton() {
 
     try {
       const text = await file.text();
-      // Basic CSV parsing
       const rows = text.split('\n').filter(row => row.trim() !== '');
       if (rows.length < 2) {
         toast.error('File is empty or missing headers.', { id: toastId });
@@ -38,11 +37,11 @@ export function HamperImportButton() {
       }
 
       const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
-      const expectedHeaders = ['name', 'description', 'stock_quantity', 'selling_price', 'actual_cost'];
+      // Make it a bit more flexible with column names
+      const hasName = headers.some(h => h.includes('name'));
       
-      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
-      if (missingHeaders.length > 0) {
-        toast.error(`Missing required columns: ${missingHeaders.join(', ')}`, { id: toastId });
+      if (!hasName) {
+        toast.error('Missing required column: name', { id: toastId });
         setIsImporting(false);
         return;
       }
@@ -50,19 +49,23 @@ export function HamperImportButton() {
       const data: Partial<PreMadeHamper>[] = [];
 
       for (let i = 1; i < rows.length; i++) {
-        // Handle basic quotes to some extent, but for a simple split we assume no commas in values for this basic impl
-        // A more robust implementation would use a library like papaparse
-        const values = rows[i].split(',').map(v => v.trim());
+        // Parse CSV robustly (handling quotes for commas inside strings if needed, though basic for now)
+        // Let's use a regex that handles quoted values correctly
+        const values = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || rows[i].split(',');
+        const cleanValues = values.map(v => v.replace(/^"|"$/g, '').trim());
+        
         const rowData: Record<string, any> = {};
         
         headers.forEach((header, index) => {
-          if (expectedHeaders.includes(header)) {
-            const val = values[index];
-            if (header === 'stock_quantity' || header === 'selling_price' || header === 'actual_cost') {
-              rowData[header] = parseFloat(val) || 0;
-            } else {
-              rowData[header] = val;
-            }
+          const val = cleanValues[index] || '';
+          
+          if (header.includes('name')) rowData.name = val;
+          else if (header.includes('desc')) rowData.description = val;
+          else if (header.includes('quant') || header.includes('stock')) rowData.stock_quantity = parseFloat(val) || 0;
+          else if (header.includes('sell') || header.includes('price')) rowData.selling_price = parseFloat(val) || 0;
+          else if (header.includes('cost')) rowData.actual_cost = parseFloat(val) || 0;
+          else if (header.includes('active') || header.includes('status')) {
+            rowData.is_active = val.toLowerCase() === 'true' || val.toLowerCase() === 'active' || val === '1';
           }
         });
 
@@ -77,21 +80,20 @@ export function HamperImportButton() {
         return;
       }
 
-      toast.loading(`Importing ${data.length} hampers...`, { id: toastId });
+      toast.loading(`Processing ${data.length} hampers (upsert)...`, { id: toastId });
       
-      const result = await bulkCreateHampers(data);
+      const result = await bulkUpsertHampers(data);
       
       if (result.error) {
-        toast.error(`Import failed: ${result.error}`, { id: toastId });
+        toast.error(`Import finished with some errors: ${result.error}`, { id: toastId, duration: 5000 });
       } else {
-        toast.success(`Successfully imported ${data.length} hampers!`, { id: toastId });
+        toast.success(`Successfully imported/updated ${result.successCount} hampers!`, { id: toastId });
       }
     } catch (error: any) {
       console.error('Import error:', error);
       toast.error('An error occurred during import.', { id: toastId });
     } finally {
       setIsImporting(false);
-      // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
