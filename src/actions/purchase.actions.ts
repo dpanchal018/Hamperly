@@ -129,6 +129,8 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
   if (purchase.status === newStatus) return { purchase }; 
 
   if (purchase.status !== 'COMPLETED' && newStatus === 'COMPLETED') {
+    const { sendTelegramMessage } = await import('./telegram.actions');
+
     for (const item of purchase.purchase_items) {
       if (item.product_id) {
         // It's an individual Product add-on
@@ -137,7 +139,12 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
           if (product.stock_quantity < item.quantity) {
             return { error: `Insufficient stock for Product: ${item.product_name_snapshot}` };
           }
-          await supabase.from('products').update({ stock_quantity: product.stock_quantity - item.quantity }).eq('id', product.id);
+          const newStock = product.stock_quantity - item.quantity;
+          await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+          
+          if (newStock <= 3) {
+            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nProduct: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+          }
         }
       } else if (item.product_name_snapshot) {
         // It's a Hamper (no product_id)
@@ -146,7 +153,12 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
           if (hamper.stock_quantity < item.quantity) {
             return { error: `Insufficient stock for Hamper: ${item.product_name_snapshot}` };
           }
-          await supabase.from('hampers').update({ stock_quantity: hamper.stock_quantity - item.quantity }).eq('id', hamper.id);
+          const newStock = hamper.stock_quantity - item.quantity;
+          await supabase.from('hampers').update({ stock_quantity: newStock }).eq('id', hamper.id);
+
+          if (newStock <= 3) {
+            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nHamper: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+          }
         }
       }
     }

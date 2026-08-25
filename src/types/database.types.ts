@@ -9,7 +9,10 @@ export interface UserRoleRecord {
   id: string;
   user_id: string;
   role: UserRole;
-  permissions?: AdminPermission[]; // JSONB array for admin permissions
+  permissions?: AdminPermission[];
+  is_super_admin: boolean;
+  telegram_chat_id: string | null;
+  receives_daily_summary: boolean;
   created_at: string;
   updated_at: string;
 }

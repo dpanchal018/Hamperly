@@ -16,10 +16,10 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
     if (!user) throw new Error("Not logged in");
     const supabase = await createClient(); // for authenticated reads
     
-    // 1. Get the customer ID
+    // 1. Get the customer ID and details
     const { data: customer, error: customerError } = await supabase
       .from('customers')
-      .select('id')
+      .select('id, full_name, mobile_number')
       .eq('user_id', user.id)
       .single();
 
@@ -139,10 +139,10 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
         final_amount: subtotal,
         amount_paid: 0,
         amount_due: subtotal,
-        status: 'PENDING',
+        status: 'CONFIRMED',
         payment_status: 'PENDING'
       })
-      .select('id')
+      .select()
       .single();
 
     if (purchaseError || !newPurchase) {
@@ -173,10 +173,36 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
       customer_id: customer.id,
       purchase_id: newPurchase.id,
       type: 'PURCHASE_CREATED',
-      title: 'Your order has been received 🎁',
+      title: 'Your order has been received 🎉',
       message: `Your Hamperly order ${newPurchase.id.split('-')[0]} has been successfully received.`
     });
 
+    // 7. Send Telegram Alert
+    const { sendTelegramMessage } = await import('./telegram.actions');
+    const orderShortId = newPurchase.id.split('-')[0].toUpperCase();
+    
+    let itemsList = '';
+    finalItemsToInsert.forEach(item => {
+      itemsList += `- ${item.quantity}x ${item.product_name_snapshot}\n`;
+    });
+
+    const telegramMessage = `
+🚨 <b>NEW ORDER RECEIVED!</b> 🚨
+<b>Order ID:</b> #${orderShortId}
+<b>Customer:</b> ${customer.full_name} (${customer.mobile_number || 'No Phone'})
+<b>Amount:</b> ₹${newPurchase.final_amount}
+<b>Order Status:</b> ${newPurchase.status}
+<b>Payment Status:</b> ${newPurchase.payment_status}
+
+<b>Items Ordered:</b>
+${itemsList.trim()}
+
+Please check the Admin Portal for details.
+    `.trim();
+    
+    await sendTelegramMessage(telegramMessage);
+
+    // TODO: Clear user's cart here when Cart feature is implemented.
     return { success: true, purchaseId: newPurchase.id };
 
   } catch (error: any) {

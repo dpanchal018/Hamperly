@@ -7,6 +7,7 @@ import { Logo } from '@/components/ui/Logo';
 import { Toaster } from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/server';
 import AdminCopilotWrapper from '@/components/admin/AdminCopilotWrapper';
+import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   let currentUser;
@@ -73,9 +74,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Settings
           </Link>
           
-          <div className="p-4 bg-slate-50 border-t border-slate-100">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
+          <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <div className="relative shrink-0">
                 <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs border border-indigo-200">
                   {initials}
                 </div>
@@ -90,6 +91,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </p>
               </div>
             </div>
+            <AdminLogoutButton />
           </div>
         </div>
       </aside>

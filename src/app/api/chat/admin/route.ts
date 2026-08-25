@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 import { streamText, tool, CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { createClient } from '@/lib/supabase/server';
@@ -351,10 +351,10 @@ Do NOT use markdown tables. Format multiple records (like recent orders or low s
           }
         }),
         updatePurchaseStatus: tool({
-          description: 'Update the status of a specific purchase/order (e.g., PENDING, COMPLETED, CANCELLED). Automatically handles stock deduction/restoration in the backend.',
+          description: 'Update the status of a specific purchase/order (e.g., PENDING, CONFIRMED, PREPARING, READY, COMPLETED, CANCELLED). Automatically handles stock deduction/restoration in the backend.',
           parameters: z.object({
             purchaseId: z.string().describe('The UUID of the purchase/order to update'),
-            newStatus: z.enum(['PENDING', 'COMPLETED', 'CANCELLED']).describe('The new status for the order')
+            newStatus: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED']).describe('The new status for the order')
           }),
           execute: async ({ purchaseId, newStatus }) => {
             try {

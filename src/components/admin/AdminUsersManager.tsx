@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { inviteAdminUser, listAdminUsers, removeAdminUser, updateAdminUser } from "@/actions/users.actions";
+import { inviteAdminUser, listAdminUsers, removeAdminUser, updateAdminUser, updateAdminTelegramSettings } from "@/actions/users.actions";
 import { AdminPermission } from "@/types/database.types";
 import { toast } from "sonner";
 import { Users, UserPlus, Trash, Shield, Save, Edit2, X } from "lucide-react";
@@ -15,11 +15,14 @@ export function AdminUsersManager() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitePermissions, setInvitePermissions] = useState<AdminPermission[]>([]);
   const [inviting, setInviting] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   // Edit state
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editPermissions, setEditPermissions] = useState<AdminPermission[]>([]);
   const [editFullName, setEditFullName] = useState<string>("");
+  const [editTelegramId, setEditTelegramId] = useState<string>("");
+  const [editReceivesSummary, setEditReceivesSummary] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   
   // Current session state
@@ -36,17 +39,6 @@ export function AdminUsersManager() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    
-    try {
-      // Get current logged-in user to highlight their row
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    } catch (e) {
-      console.error("Error fetching current user:", e);
-    }
-
     const res = await listAdminUsers();
     if (res.error) {
       toast.error(res.error);
@@ -58,16 +50,32 @@ export function AdminUsersManager() {
 
   useEffect(() => {
     fetchUsers();
+
+    const fetchCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+      } catch (e) {
+        console.error("Error fetching current user:", e);
+      }
+    };
+    fetchCurrentUser();
   }, []);
 
   const handleInvite = async () => {
     if (!inviteEmail) return toast.error("Email is required");
     setInviting(true);
+    setGeneratedLink(null);
     const res = await inviteAdminUser(inviteEmail, invitePermissions);
     if (res.error) {
       toast.error(res.error);
     } else {
-      toast.success(`Invitation sent to ${inviteEmail}`);
+      toast.success(`Invitation created for ${inviteEmail}`);
+      if (res.inviteLink) {
+        setGeneratedLink(res.inviteLink);
+      }
       setInviteEmail("");
       setInvitePermissions([]);
       fetchUsers();
@@ -89,8 +97,10 @@ export function AdminUsersManager() {
   const handleSaveEdit = async (userId: string) => {
     setSavingEdit(true);
     const res = await updateAdminUser(userId, editPermissions, editFullName);
-    if (res.error) {
-      toast.error(res.error);
+    const tgRes = await updateAdminTelegramSettings(userId, editTelegramId, editReceivesSummary);
+    
+    if (res.error || tgRes.error) {
+      toast.error(res.error || tgRes.error);
     } else {
       toast.success("Admin user updated");
       setEditingUserId(null);
@@ -119,7 +129,11 @@ export function AdminUsersManager() {
     setEditingUserId(user.user_id);
     setEditPermissions(user.permissions || []);
     setEditFullName(user.full_name || "");
+    setEditTelegramId(user.telegram_chat_id || "");
+    setEditReceivesSummary(user.receives_daily_summary || false);
   };
+
+  const isCurrentUserSuperAdmin = users.find(u => u.user_id === currentUserId)?.is_super_admin;
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
@@ -129,46 +143,71 @@ export function AdminUsersManager() {
       </div>
 
       {/* Invite Section */}
-      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
-          <UserPlus className="w-4 h-4 mr-2" /> Invite New Admin
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-slate-600 mb-1">Email Address</label>
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="admin@hamperly.com"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-slate-600 mb-2">Permissions</label>
-            <div className="flex flex-wrap gap-2">
-              {availablePermissions.map(perm => (
-                <label key={perm.id} className="flex items-center space-x-2 bg-white px-3 py-1.5 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50">
-                  <input
-                    type="checkbox"
-                    checked={invitePermissions.includes(perm.id)}
-                    onChange={() => toggleInvitePermission(perm.id)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-slate-700">{perm.label}</span>
-                </label>
-              ))}
+      {isCurrentUserSuperAdmin && (
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
+            <UserPlus className="w-4 h-4 mr-2" /> Invite New Admin
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">Email Address</label>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="admin@hamperly.com"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
+            <div>
+              <label className="block text-sm text-slate-600 mb-2">Permissions</label>
+              <div className="flex flex-wrap gap-2">
+                {availablePermissions.map(perm => (
+                  <label key={perm.id} className="flex items-center space-x-2 bg-white px-3 py-1.5 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50">
+                    <input
+                      type="checkbox"
+                      checked={invitePermissions.includes(perm.id)}
+                      onChange={() => toggleInvitePermission(perm.id)}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-700">{perm.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={handleInvite}
+              disabled={inviting || !inviteEmail}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {inviting ? "Creating..." : "Create & Send Invitation"}
+            </button>
+            
+            {generatedLink && (
+              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <p className="text-sm text-emerald-800 font-medium mb-2">Invitation generated successfully! You can manually copy the link below:</p>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={generatedLink} 
+                    className="flex-1 text-xs px-3 py-2 bg-white border border-emerald-200 rounded-md outline-none"
+                  />
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedLink);
+                      toast.success("Link copied to clipboard");
+                    }}
+                    className="px-3 py-2 bg-emerald-600 text-white text-xs font-medium rounded-md hover:bg-emerald-700"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleInvite}
-            disabled={inviting || !inviteEmail}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {inviting ? "Inviting..." : "Send Invitation"}
-          </button>
         </div>
-      </div>
+      )}
 
       {/* User List */}
       <div>
@@ -194,21 +233,59 @@ export function AdminUsersManager() {
                             className="w-full max-w-xs px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-1 focus:ring-indigo-500"
                           />
                         </div>
-                        <div className="text-sm text-slate-500 mb-2">{user.email}</div>
                         
-                        <div className="flex flex-wrap gap-2">
-                          {availablePermissions.map(perm => (
-                            <label key={perm.id} className="flex items-center space-x-2 bg-white px-3 py-1.5 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50">
+                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg max-w-xs space-y-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-blue-800 mb-1">Personal Telegram Chat ID</label>
+                            <input 
+                              type="text"
+                              value={editTelegramId}
+                              onChange={(e) => setEditTelegramId(e.target.value)}
+                              placeholder="-100... or 12345..."
+                              className="w-full px-3 py-1.5 text-sm border border-blue-200 rounded-md focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+                          
+                          {users.find(u => u.user_id === currentUserId)?.is_super_admin && (
+                            <label className="flex items-center space-x-2 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={editPermissions.includes(perm.id)}
-                                onChange={() => toggleEditPermission(perm.id)}
-                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={editReceivesSummary}
+                                onChange={(e) => setEditReceivesSummary(e.target.checked)}
+                                className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                               />
-                              <span className="text-sm text-slate-700">{perm.label}</span>
+                              <span className="text-xs font-semibold text-blue-800">Receive Daily Financial Summary</span>
                             </label>
-                          ))}
+                          )}
                         </div>
+
+                        <div className="text-sm text-slate-500 mb-2">{user.email}</div>
+                        
+                        {isCurrentUserSuperAdmin ? (
+                          <div className="flex flex-wrap gap-2">
+                            {availablePermissions.map(perm => (
+                              <label key={perm.id} className="flex items-center space-x-2 bg-white px-3 py-1.5 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50">
+                                <input
+                                  type="checkbox"
+                                  checked={editPermissions.includes(perm.id)}
+                                  onChange={() => toggleEditPermission(perm.id)}
+                                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-sm text-slate-700">{perm.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            <span className="text-xs text-slate-400 mr-2 flex items-center">Permissions (Locked):</span>
+                            {user.permissions?.map((p: string) => (
+                              <span key={p} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full flex items-center">
+                                <Shield className="w-3 h-3 mr-1" />
+                                {p.replace('manage_', '')}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <div className="flex space-x-2 pt-2">
                           <button
                             onClick={() => handleSaveEdit(user.user_id)}
@@ -229,8 +306,13 @@ export function AdminUsersManager() {
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                           <div className="font-medium text-slate-900">{user.full_name || "Pending Name"}</div>
+                          {user.is_super_admin && (
+                            <div className="flex items-center bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase border border-amber-200">
+                              👑 Owner
+                            </div>
+                          )}
                           {isCurrentUser && (
                             <div className="flex items-center bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
@@ -238,7 +320,24 @@ export function AdminUsersManager() {
                             </div>
                           )}
                         </div>
-                        <div className="text-sm text-slate-500 mb-3">{user.email || "Unknown Email"}</div>
+                        <div className="text-sm text-slate-500 mb-2">{user.email || "Unknown Email"}</div>
+                        
+                        {/* Telegram Status Indicators */}
+                        {(user.telegram_chat_id || user.receives_daily_summary) && (
+                          <div className="flex items-center space-x-2 mb-3">
+                            {user.telegram_chat_id && (
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100 flex items-center">
+                                📱 Telegram Active
+                              </span>
+                            )}
+                            {user.receives_daily_summary && (
+                              <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-xs rounded border border-purple-100 flex items-center">
+                                📊 Receives Summary
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-1">
                           {user.permissions?.map((p: string) => (
                             <span key={p} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full flex items-center">
@@ -251,7 +350,7 @@ export function AdminUsersManager() {
                     )}
                   </div>
 
-                  {editingUserId !== user.user_id && (
+                  {editingUserId !== user.user_id && (isCurrentUserSuperAdmin || isCurrentUser) && (
                     <div className="mt-4 sm:mt-0 flex space-x-2 shrink-0">
                       <button
                         onClick={() => startEditing(user)}
@@ -260,15 +359,15 @@ export function AdminUsersManager() {
                         <Edit2 className="w-4 h-4 mr-2" />
                         Edit
                       </button>
-                      <button
-                        onClick={() => handleRemove(user.user_id)}
-                        disabled={isCurrentUser}
-                        title={isCurrentUser ? "You cannot revoke your own access" : "Revoke Access"}
-                        className={`p-2 rounded-lg transition-colors flex items-center text-sm ${isCurrentUser ? 'text-slate-300 cursor-not-allowed' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
-                      >
-                        <Trash className="w-4 h-4 mr-2" />
-                        Revoke Access
-                      </button>
+                      {isCurrentUserSuperAdmin && !isCurrentUser && (
+                        <button
+                          onClick={() => handleRemove(user.user_id)}
+                          className="p-2 rounded-lg transition-colors flex items-center text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash className="w-4 h-4 mr-2" />
+                          Revoke Access
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
