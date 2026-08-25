@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 import { streamText, tool, CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { createClient } from '@/lib/supabase/server';
@@ -46,7 +46,8 @@ export async function POST(req: Request) {
 Your job is to provide the store owner with clear, data-driven insights and perform management tasks.
 Always be professional, concise, and helpful. 
 You can dynamically query any core database table (products, hampers, purchases, customers, categories, etc.) to answer ANY question the admin has. When fetching purchases, ALWAYS pass select="*, customers(full_name)" to get the human-readable customer name instead of just the ID.
-You can also update stock/prices, check low stock, summarize revenue and profit, and fetch recent orders.
+You can also update stock/prices, check low stock, summarize revenue and profit, fetch recent orders, and update order statuses.
+CRITICAL RULE: You are STRICTLY FORBIDDEN from performing bulk updates by iterating and executing multiple update commands (e.g. updating 10 items to 0). If the user asks you to "Update ALL" or perform a bulk action, you MUST refuse and state that you can only update one specific item at a time. Do not try to be helpful by doing it one-by-one.
 When asked about revenue or profit, display it in Indian Rupees (₹).
 Do NOT use markdown tables. Format multiple records (like recent orders or low stock items) as clean, bulleted lists.`,
       messages: coreMessages,
@@ -344,6 +345,22 @@ Do NOT use markdown tables. Format multiple records (like recent orders or low s
                 
               if (error) return { error: error.message };
               return { customers: data || [] };
+            } catch (error: any) {
+              return { error: error.message };
+            }
+          }
+        }),
+        updatePurchaseStatus: tool({
+          description: 'Update the status of a specific purchase/order (e.g., PENDING, COMPLETED, CANCELLED). Automatically handles stock deduction/restoration in the backend.',
+          parameters: z.object({
+            purchaseId: z.string().describe('The UUID of the purchase/order to update'),
+            newStatus: z.enum(['PENDING', 'COMPLETED', 'CANCELLED']).describe('The new status for the order')
+          }),
+          execute: async ({ purchaseId, newStatus }) => {
+            try {
+              const { updatePurchaseStatus } = await import('@/actions/purchase.actions');
+              const result = await updatePurchaseStatus(purchaseId, newStatus as any);
+              return { success: !result.error, purchase: result.purchase, error: result.error };
             } catch (error: any) {
               return { error: error.message };
             }

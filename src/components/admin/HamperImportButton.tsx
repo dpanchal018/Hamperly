@@ -49,10 +49,9 @@ export function HamperImportButton() {
       const data: Partial<PreMadeHamper>[] = [];
 
       for (let i = 1; i < rows.length; i++) {
-        // Parse CSV robustly (handling quotes for commas inside strings if needed, though basic for now)
-        // Let's use a regex that handles quoted values correctly
-        const values = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || rows[i].split(',');
-        const cleanValues = values.map(v => v.replace(/^"|"$/g, '').trim());
+        // Robust CSV split: splits by commas not enclosed in quotes
+        const values = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        const cleanValues = values.map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
         
         const rowData: Record<string, any> = {};
         
