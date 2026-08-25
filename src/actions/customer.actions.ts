@@ -131,3 +131,42 @@ export async function getAllCustomers() {
 
   return { customers };
 }
+
+export async function updateCustomerProfile(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const fullName = formData.get("fullName") as string;
+    const mobileNumber = formData.get("mobileNumber") as string;
+
+    if (!fullName || fullName.trim().length < 2) {
+      return { success: false, error: "Please enter a valid full name." };
+    }
+
+    const { error } = await supabase
+      .from("customers")
+      .update({
+        full_name: fullName.trim(),
+        mobile_number: mobileNumber?.trim() || null
+      })
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Profile update error:", error);
+      return { success: false, error: "Failed to update profile." };
+    }
+
+    revalidatePath("/account/profile");
+    revalidatePath("/account/layout");
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Profile update exception:", error);
+    return { success: false, error: "An unexpected error occurred." };
+  }
+}

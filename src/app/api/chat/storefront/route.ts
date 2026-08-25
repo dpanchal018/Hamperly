@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       console.error("RAG Embedding retrieval failed (table might not exist yet):", e);
     }
 
-    const systemPrompt = "You are Hamperly's expert shopping concierge. You MUST NOT make up or hallucinate hampers or product categories. You can ONLY recommend hampers that actually exist in the database. When a user asks for hampers, categories, or what you offer, you MUST use the `listAvailableHampers` tool to see the actual database catalogue. When asked to check stock or availability for a specific item, use the `checkInventory` tool. Be concise, luxurious, and highly helpful.\n\nCRITICAL RULES:\n1. All prices are in Indian Rupees (₹). ALWAYS format prices as ₹XXX.\n2. DO NOT ask the user for their payment preference, payment method, or try to process payments.\n3. DO NOT pretend to place an order or generate fake order IDs. If a user wants to buy something, guide them to add the item to their cart on the website and proceed to checkout." + memoryContext;
+    const systemPrompt = "You are Hamperly's expert shopping concierge. You MUST NOT make up or hallucinate hampers or product categories. You can ONLY recommend hampers that actually exist in the database. When a user asks for hampers, categories, or what you offer, you MUST use the `listAvailableHampers` tool to see the actual database catalogue. When asked to check stock or availability for a specific item, use the `checkInventory` tool. Be concise, luxurious, and highly helpful.\n\nCRITICAL RULES:\n1. All prices are in Indian Rupees (₹). ALWAYS format prices as ₹XXX.\n2. DO NOT ask the user for their payment preference, payment method, or try to process payments.\n3. DO NOT pretend to place an order or generate fake order IDs. If a user wants to buy something, guide them to add the item to their cart on the website and proceed to checkout.\n4. INVENTORY RULES: If an item's `stock_quantity` is `null`, it means we have UNLIMITED stock. If it is `0`, it is OUT OF STOCK. Do not recommend items that are out of stock unless specifically asked." + memoryContext;
 
     const result = streamText({
       model: google('gemini-3.5-flash-lite'),
@@ -71,14 +71,14 @@ export async function POST(req: Request) {
       messages: coreMessages,
       tools: {
         listAvailableHampers: tool({
-          description: 'Fetch the list of all currently available hampers in the store. Use this whenever the user asks what hampers are available, asks for recommendations, or asks what you offer.',
+          description: 'Fetch the list of all currently available hampers in the store. Use this whenever the user asks what hampers are available, asks for recommendations, or asks what you offer. This also returns their current stock quantity.',
           parameters: z.object({}),
           execute: async () => {
             try {
               const supabase = await createClient();
               const { data: hampers, error } = await supabase
                 .from('hampers')
-                .select('name, description, selling_price')
+                .select('name, description, selling_price, stock_quantity')
                 .eq('is_active', true)
                 .limit(25); // Increased limit to ensure catalog is fully available to AI
 

@@ -1,4 +1,5 @@
 'use server';
+import { requireAdmin } from '@/services/auth.service';
 
 import { createClient } from '@/lib/supabase/server';
 import { PreMadeHamper } from '@/types/database.types';
@@ -50,6 +51,7 @@ export async function getHamperById(id: string) {
 
 export async function createHamper(data: Partial<PreMadeHamper>) {
   const supabase = await createClient();
+  await requireAdmin();
   
   const { data: hamper, error } = await supabase
     .from('hampers')
@@ -76,6 +78,7 @@ export async function createHamper(data: Partial<PreMadeHamper>) {
 
 export async function updateHamper(id: string, data: Partial<PreMadeHamper>) {
   const supabase = await createClient();
+  await requireAdmin();
   
   const { data: hamper, error } = await supabase
     .from('hampers')
@@ -105,6 +108,7 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper>) {
 
 export async function deleteHamper(id: string) {
   const supabase = await createClient();
+  await requireAdmin();
   const { error } = await supabase
     .from('hampers')
     .delete()
