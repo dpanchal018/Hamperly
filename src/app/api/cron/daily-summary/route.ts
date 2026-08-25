@@ -18,14 +18,19 @@ export async function GET(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY! // Need service role to bypass RLS for cron job
     );
 
-    // Calculate Today's Date boundaries (UTC or server time)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const startISO = startOfDay.toISOString();
-    const endISO = endOfDay.toISOString();
+    // Calculate Today's Date boundaries strictly for IST (UTC+5:30)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffset);
+    
+    const istStart = new Date(istNow);
+    istStart.setUTCHours(0, 0, 0, 0);
+    
+    const istEnd = new Date(istNow);
+    istEnd.setUTCHours(23, 59, 59, 999);
+    
+    const startISO = new Date(istStart.getTime() - istOffset).toISOString();
+    const endISO = new Date(istEnd.getTime() - istOffset).toISOString();
 
     // 1. Fetch Today's Purchases
     const { data: purchases, error: purchaseError } = await supabase
@@ -58,7 +63,7 @@ export async function GET(request: Request) {
     });
 
     // 4. Format Message
-    const dateStr = startOfDay.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const dateStr = istNow.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
     let message = `📊 <b>End of Day Summary</b> 📊\n📅 ${dateStr}\n\n`;
     message += `<b>💰 Revenue:</b> ₹${totalRevenue.toLocaleString('en-IN')}\n`;
