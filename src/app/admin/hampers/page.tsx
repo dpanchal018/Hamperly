@@ -1,8 +1,10 @@
 import { getHampers } from '@/actions/hamper.actions';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Gift } from 'lucide-react';
+import { Plus, Edit, Gift, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { HamperImportButton } from '@/components/admin/HamperImportButton';
+import { HamperExportButton } from '@/components/admin/HamperExportButton';
+import { DeleteHamperButton } from '@/components/admin/DeleteHamperButton';
 
 export default async function HampersPage() {
   const hampers = await getHampers();
@@ -19,6 +21,7 @@ export default async function HampersPage() {
           <p className="text-slate-500 mt-1">Manage pre-made hamper bundles.</p>
         </div>
         <div className="flex items-center space-x-3">
+          <HamperExportButton />
           <HamperImportButton />
           <Link href="/admin/hampers/new">
             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
@@ -93,11 +96,14 @@ export default async function HampersPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <Link href={`/admin/hampers/${hamper.id}`}>
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                      <div className="flex justify-end items-center gap-1">
+                        <Link href={`/admin/hampers/${hamper.id}`}>
+                          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-600" title="Edit Hamper">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                        <DeleteHamperButton id={hamper.id} name={hamper.name} />
+                      </div>
                     </td>
                   </tr>
                 );

@@ -291,27 +291,59 @@ export async function validateAndCalculateHamper(requestedItems: HamperItemReque
 
   return response;
 }
-export async function bulkCreateHampers(data: Partial<PreMadeHamper>[]) {
+export async function bulkUpsertHampers(data: Partial<PreMadeHamper>[]) {
   const supabase = await createClient();
   
-  // Format data for insertion
-  const hampersToInsert = data.map(item => ({
-    ...item,
-    is_active: item.is_active !== undefined ? item.is_active : true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }));
+  // Get existing hampers to check for updates by name (case-insensitive)
+  const { data: existingHampers } = await supabase.from('hampers').select('id, name');
+  const existingMap = new Map();
+  if (existingHampers) {
+    existingHampers.forEach(h => {
+      if (h.name) existingMap.set(h.name.toLowerCase(), h.id);
+    });
+  }
 
-  const { data: hampers, error } = await supabase
-    .from('hampers')
-    .insert(hampersToInsert)
-    .select();
+  let successCount = 0;
+  let errors = [];
 
-  if (error) {
-    console.error('Error bulk creating hampers:', error);
-    return { error: error.message };
+  for (const item of data) {
+    if (!item.name) continue;
+    
+    const existingId = existingMap.get(item.name.toLowerCase());
+    
+    const payload = {
+      name: item.name,
+      description: item.description,
+      image_url: item.image_url,
+      stock_quantity: item.stock_quantity,
+      selling_price: item.selling_price,
+      actual_cost: item.actual_cost,
+      is_active: item.is_active !== undefined ? item.is_active : true,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existingId) {
+      // Update
+      const { error } = await supabase.from('hampers').update(payload).eq('id', existingId);
+      if (error) errors.push(`Failed to update ${item.name}: ${error.message}`);
+      else successCount++;
+    } else {
+      // Insert
+      const { error } = await supabase.from('hampers').insert({
+        ...payload,
+        created_at: new Date().toISOString(),
+      });
+      if (error) errors.push(`Failed to insert ${item.name}: ${error.message}`);
+      else successCount++;
+    }
   }
 
   revalidatePath('/admin/hampers');
-  return { hampers };
+  
+  if (errors.length > 0) {
+    console.error('Errors during bulk upsert:', errors);
+    return { success: false, successCount, error: errors.join(', ') };
+  }
+  
+  return { success: true, successCount };
 }
