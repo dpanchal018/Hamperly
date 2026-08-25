@@ -89,9 +89,10 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
 
     // Process Hampers
     for (const item of hamperItems) {
+      if (item.quantity <= 0) throw new Error(`Invalid quantity for ${item.name}`);
       const dbHamper = dbHampers.find(h => h.id === item.id);
       if (!dbHamper) throw new Error(`Hamper ${item.name} is no longer available`);
-      if (dbHamper.stock_quantity < item.quantity) throw new Error(`Only ${dbHamper.stock_quantity} left for ${dbHamper.name}`);
+      if (dbHamper.stock_quantity !== null && dbHamper.stock_quantity < item.quantity) throw new Error(`Only ${dbHamper.stock_quantity} left for ${dbHamper.name}`);
 
       subtotal += (dbHamper.selling_price * item.quantity);
       totalCost += (dbHamper.actual_cost * item.quantity);
@@ -107,11 +108,11 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
       });
     }
 
-    // Process Products (Add-ons)
     for (const item of productItems) {
+      if (item.quantity <= 0) throw new Error(`Invalid quantity for ${item.name}`);
       const dbProduct = dbProducts.find(p => p.id === item.id);
       if (!dbProduct) throw new Error(`Add-on ${item.name} is no longer available`);
-      if (dbProduct.stock_quantity < item.quantity) throw new Error(`Only ${dbProduct.stock_quantity} left for ${dbProduct.name}`);
+      if (dbProduct.stock_quantity !== null && dbProduct.stock_quantity < item.quantity) throw new Error(`Only ${dbProduct.stock_quantity} left for ${dbProduct.name}`);
 
       subtotal += (dbProduct.selling_price * item.quantity);
       totalCost += (dbProduct.actual_cost * item.quantity);

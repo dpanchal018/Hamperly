@@ -116,11 +116,11 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
             <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
               {user ? (
                 <>
-                  <Link href={role === 'ADMIN' ? "/admin" : "/account"} className="text-base font-semibold text-foreground">
-                    {role === 'ADMIN' ? "Admin Dashboard" : "Account"}
+                  <Link href={role === 'ADMIN' ? "/admin" : "/account/orders"} className="text-base font-semibold text-foreground">
+                    {role === 'ADMIN' ? "Admin Dashboard" : "My Account"}
                   </Link>
                   <form action="/api/auth/logout" method="POST">
-                    <button type="submit" className="text-base font-semibold text-red-600">Sign Out</button>
+                    <button type="submit" className="text-base font-semibold text-red-600 text-left">Sign Out</button>
                   </form>
                 </>
               ) : (

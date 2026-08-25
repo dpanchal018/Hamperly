@@ -1,4 +1,5 @@
 'use server';
+import { requireAdmin } from '@/services/auth.service';
 
 import { createClient } from '@/lib/supabase/server';
 import { Purchase, PurchaseItem, PurchaseStatus } from '@/types/database.types';
@@ -121,8 +122,9 @@ export async function createPurchase(
 
 export async function updatePurchaseStatus(purchaseId: string, newStatus: PurchaseStatus) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Unauthorized' };
+  await requireAdmin();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
 
   const { data: purchase } = await supabase.from('purchases').select('*, purchase_items(*)').eq('id', purchaseId).single();
   if (!purchase) return { error: 'Purchase not found' };
@@ -136,28 +138,38 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
         // It's an individual Product add-on
         const { data: product } = await supabase.from('products').select('id, stock_quantity').eq('id', item.product_id).single();
         if (product) {
-          if (product.stock_quantity < item.quantity) {
-            return { error: `Insufficient stock for Product: ${item.product_name_snapshot}` };
-          }
-          const newStock = product.stock_quantity - item.quantity;
-          await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
-          
-          if (newStock <= 3) {
-            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nProduct: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+          // Treat null as unlimited stock
+          if (product.stock_quantity !== null) {
+            if (product.stock_quantity < item.quantity) {
+              // Send an alert that someone tried to buy an out-of-stock item
+              await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\nProduct: ${item.product_name_snapshot}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${product.stock_quantity}\n\nThe order could not be completed.`);
+              return { error: `Insufficient stock for Product: ${item.product_name_snapshot}` };
+            }
+            const newStock = product.stock_quantity - item.quantity;
+            await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+            
+            if (newStock <= 3) {
+              await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nProduct: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+            }
           }
         }
       } else if (item.product_name_snapshot) {
         // It's a Hamper (no product_id)
         const { data: hamper } = await supabase.from('hampers').select('id, stock_quantity').eq('name', item.product_name_snapshot).single();
         if (hamper) {
-          if (hamper.stock_quantity < item.quantity) {
-            return { error: `Insufficient stock for Hamper: ${item.product_name_snapshot}` };
-          }
-          const newStock = hamper.stock_quantity - item.quantity;
-          await supabase.from('hampers').update({ stock_quantity: newStock }).eq('id', hamper.id);
+          // Treat null as unlimited stock
+          if (hamper.stock_quantity !== null) {
+            if (hamper.stock_quantity < item.quantity) {
+              // Send an alert that someone tried to buy an out-of-stock item
+              await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\nHamper: ${item.product_name_snapshot}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${hamper.stock_quantity}\n\nThe order could not be completed.`);
+              return { error: `Insufficient stock for Hamper: ${item.product_name_snapshot}` };
+            }
+            const newStock = hamper.stock_quantity - item.quantity;
+            await supabase.from('hampers').update({ stock_quantity: newStock }).eq('id', hamper.id);
 
-          if (newStock <= 3) {
-            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nHamper: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+            if (newStock <= 3) {
+              await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nHamper: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
+            }
           }
         }
       }
@@ -220,8 +232,9 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
 
 export async function updatePaymentStatus(purchaseId: string, amountPaid: number, paymentStatus: 'PAID' | 'PARTIALLY_PAID' | 'PENDING', paymentMode: string = 'UPI') {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Unauthorized' };
+  await requireAdmin();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
 
   const { data: purchase } = await supabase.from('purchases').select('amount_paid, final_amount').eq('id', purchaseId).single();
   if (!purchase) return { error: 'Purchase not found' };

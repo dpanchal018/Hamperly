@@ -92,13 +92,22 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
       const existingItem = prevItems.find(item => item.id === newItem.id);
       
       if (existingItem) {
-        const newQuantity = Math.min(existingItem.quantity + quantity, existingItem.maxQuantity);
+        // If maxQuantity is null, it's unlimited. Otherwise, cap it.
+        const newQuantity = existingItem.maxQuantity !== null 
+          ? Math.min(existingItem.quantity + quantity, existingItem.maxQuantity)
+          : existingItem.quantity + quantity;
+          
         return prevItems.map(item => 
           item.id === newItem.id ? { ...item, quantity: newQuantity } : item
         );
       }
       
-      return [...prevItems, { ...newItem, quantity: Math.min(quantity, newItem.maxQuantity) }];
+      // If maxQuantity is null, it's unlimited. Otherwise, cap it.
+      const initialQuantity = newItem.maxQuantity !== null
+        ? Math.min(quantity, newItem.maxQuantity)
+        : quantity;
+
+      return [...prevItems, { ...newItem, quantity: initialQuantity }];
     });
   }, []);
 

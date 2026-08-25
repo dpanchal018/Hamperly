@@ -67,12 +67,12 @@ export function ProfileDropdown({ user, role }: { user?: any; role?: string | nu
             ) : (
               <>
                 <Link 
-                  href="/account" 
+                  href="/account/orders" 
                   onClick={() => setIsOpen(false)}
                   className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                 >
-                  <LayoutDashboard className="w-4 h-4 mr-3" />
-                  Overview
+                  <ShoppingBag className="w-4 h-4 mr-3" />
+                  My Orders
                 </Link>
                 <Link 
                   href="/account/profile" 
@@ -81,22 +81,6 @@ export function ProfileDropdown({ user, role }: { user?: any; role?: string | nu
                 >
                   <User className="w-4 h-4 mr-3" />
                   Profile Settings
-                </Link>
-                <Link 
-                  href="/account/purchases" 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                >
-                  <ShoppingBag className="w-4 h-4 mr-3" />
-                  Purchase History
-                </Link>
-                <Link 
-                  href="/account/hampers" 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                >
-                  <Package className="w-4 h-4 mr-3" />
-                  My Hampers
                 </Link>
               </>
             )}
