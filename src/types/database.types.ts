@@ -3,6 +3,7 @@ export type ProductStatus = 'draft' | 'active' | 'archived';
 export type HamperStatus = 'draft' | 'generated' | 'purchased';
 export type AIGenerationStatus = 'PENDING' | 'GENERATING' | 'COMPLETED' | 'FAILED' | 'REJECTED';
 export type AIValidationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface UserRoleRecord {
   id: string;
@@ -68,6 +69,23 @@ export interface PreMadeHamper {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Review {
+  id: string;
+  hamper_id: string;
+  user_id: string;
+  rating: number;
+  comment: string | null;
+  status: ReviewStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// Shape returned by list/read queries that join hamper + reviewer name
+export interface ReviewWithDetails extends Review {
+  hamper: { id: string; name: string; image_url: string | null };
+  reviewer_name: string;
 }
 
 export interface CustomHamper {

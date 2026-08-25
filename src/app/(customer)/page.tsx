@@ -1,7 +1,9 @@
 import { getPublicOccasions } from '@/services/catalog.service';
 import { getPublicHampers } from '@/actions/hamper.actions';
+import { getFeaturedReviews } from '@/actions/review.actions';
 import { HamperCard } from '@/components/customer/HamperCard';
 import { OccasionCard } from '@/components/customer/OccasionCard';
+import { ReviewsCarousel } from '@/components/customer/ReviewsCarousel';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, Gift, Heart, Sparkles, Star } from 'lucide-react';
@@ -11,6 +13,7 @@ import Image from 'next/image';
 export default async function HomePage() {
   const hampers = await getPublicHampers();
   const occasions = await getPublicOccasions();
+  const featuredReviews = await getFeaturedReviews();
 
   // Show only featured/first few hampers for homepage
   const featuredHampers = hampers.slice(0, 3);
@@ -79,6 +82,24 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Ratings & Reviews */}
+      {featuredReviews.length > 0 && (
+        <section className="py-24 relative z-10">
+          <div className="container mx-auto px-4">
+            <FadeInScroll>
+              <div className="text-center mb-16">
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">Loved by Our Customers</h2>
+                <p className="text-foreground/70">Real ratings and feedback from Hamperly shoppers.</p>
+              </div>
+            </FadeInScroll>
+
+            <FadeInScroll delay={0.1}>
+              <ReviewsCarousel reviews={featuredReviews} />
+            </FadeInScroll>
+          </div>
+        </section>
+      )}
 
       {/* Occasions */}
       <section className="py-24 relative z-10">
