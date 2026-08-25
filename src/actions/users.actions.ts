@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/services/auth.service";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { AdminPermission, UserRoleRecord } from "@/types/database.types";
 
 const getAdminClient = () => {
@@ -72,9 +73,14 @@ export async function inviteAdminUser(email: string, permissions: AdminPermissio
     }
 
     // 2. Generate Invite Link (This also creates the user and bypasses email rate limits)
+    const headersList = await headers();
+      const origin = headersList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://hamperly.vercel.app';
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'invite',
       email: email,
+      options: {
+        redirectTo: `${origin}/admin-setup`
+      }
     });
     
     if (linkError) throw new Error(linkError.message);
