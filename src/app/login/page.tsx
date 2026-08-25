@@ -44,6 +44,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               required
               className="w-full"
             />

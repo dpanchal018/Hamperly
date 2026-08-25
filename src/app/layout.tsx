@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 import {CartProvider} from "@/contexts/CartContext";
 import NextTopLoader from "nextjs-toploader";
 import {getCurrentUser} from "@/services/auth.service";
+import {InviteInterceptor} from "@/components/ui/InviteInterceptor";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
   const user = await getCurrentUser();
@@ -37,6 +38,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
       </head>
       <body className="min-h-full flex flex-col">
         <NextTopLoader color="#C04A7B" showSpinner={false} />
+        <InviteInterceptor />
         <CartProvider userId={userId}>{children}</CartProvider>
       </body>
     </html>
