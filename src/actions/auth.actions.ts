@@ -7,12 +7,13 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const keepLoggedIn = formData.get('keepLoggedIn') === 'on'
 
   if (!email || !password) {
     return { error: 'Email and password are required' }
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient(keepLoggedIn)
 
   const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
