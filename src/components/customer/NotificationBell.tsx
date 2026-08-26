@@ -55,7 +55,7 @@ export function NotificationBell() {
     if (notif.type === 'ACCOUNT_WELCOME') {
       router.push('/account');
     } else if (notif.purchase_id) {
-      router.push(`/account/purchases/${notif.purchase_id}`);
+      router.push('/account/orders');
     }
   };
 

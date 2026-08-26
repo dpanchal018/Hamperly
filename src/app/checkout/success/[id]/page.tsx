@@ -21,7 +21,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
     .single();
 
   if (!purchase) {
-    redirect('/account/purchases');
+    redirect('/account/orders');
   }
 
   return (
@@ -49,7 +49,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              href={`/account/purchases/${purchase.id}`}
+              href="/account/orders"
               className="flex items-center justify-center px-6 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-xl transition-colors"
             >
               <FileText className="w-4 h-4 mr-2" />

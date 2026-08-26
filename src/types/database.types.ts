@@ -165,6 +165,7 @@ export interface Customer {
   email: string | null;
   city: string | null;
   address: string | null;
+  pincode: string | null;
   notes: string | null;
   is_active: boolean;
   created_by: string | null;
