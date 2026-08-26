@@ -166,6 +166,7 @@ export interface Customer {
   city: string | null;
   address: string | null;
   pincode: string | null;
+    cart_state: any | null;
   notes: string | null;
   is_active: boolean;
   created_by: string | null;
