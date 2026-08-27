@@ -86,7 +86,7 @@ export default function ReviewPage() {
   if (successPayload) {
     return (
       <PageTransition>
-        <div className="max-w-3xl mx-auto px-4 py-32 text-center bg-background">
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center bg-background">
           <div className="bg-primary/5 p-12 border border-primary/10 inline-block w-full">
             <Sparkles className="w-12 h-12 mx-auto mb-6 text-primary" strokeWidth={1.5} />
             <h1 className="text-3xl font-serif font-bold text-foreground mb-4 font-bold text-primary">Ready for AI Generation</h1>
@@ -117,7 +117,7 @@ export default function ReviewPage() {
 
   return (
     <PageTransition>
-      <div className="bg-background min-h-screen pt-32 pb-24 border-t border-primary/10">
+      <div className="bg-background min-h-screen pt-24 pb-8 border-t border-primary/10">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center mb-16">
             <span className="text-gold font-bold tracking-[0.3em] uppercase text-xs mb-6 block">Step 03</span>

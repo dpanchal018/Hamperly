@@ -13,12 +13,12 @@ export default function BuildHamperPage() {
   if (items.length === 0) {
     return (
       <PageTransition>
-        <div className="container mx-auto px-4 py-32 min-h-[70vh] flex flex-col items-center justify-center text-center bg-background">
+        <div className="container mx-auto px-4 py-16 min-h-[70vh] flex flex-col items-center justify-center text-center bg-background">
           <div className="w-24 h-24 border border-primary/10 text-foreground/60 flex items-center justify-center mb-8 mx-auto">
             <Gift className="w-12 h-12" strokeWidth={1} />
           </div>
           <span className="text-foreground/60 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">The Studio</span>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground font-serif mb-6 tracking-tight">YOUR HAMPER IS EMPTY.</h1>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground font-serif mb-4 tracking-tight">YOUR HAMPER IS EMPTY.</h1>
           <p className="text-lg text-foreground/60 max-w-lg mx-auto mb-10 font-light">
             Begin selecting pieces to curate a thoughtful, bespoke gift.
           </p>
@@ -61,7 +61,7 @@ export default function BuildHamperPage() {
             </div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-16">
+          <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Items List */}
             <div className="lg:col-span-2 space-y-6">
               {items.map((item) => {
@@ -106,7 +106,7 @@ export default function BuildHamperPage() {
                         <h3 className="text-2xl font-serif font-bold text-foreground leading-tight mb-2 line-clamp-2">{item.product.name}</h3>
                       </Link>
                       
-                      <div className="text-lg font-medium text-foreground tracking-wide mb-6">
+                      <div className="text-lg font-medium text-foreground tracking-wide mb-4">
                         ?{item.product.selling_price?.toFixed(2) || (item.product as any).selling_price?.toFixed(2)}
                       </div>
 
