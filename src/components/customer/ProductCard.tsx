@@ -6,6 +6,7 @@ import { PublicProduct } from '@/services/catalog.service';
 import { useSelection } from '@/contexts/SelectionContext';
 import { Plus, Minus, Check } from 'lucide-react';
 import { getInventoryStatus } from '@/lib/inventory';
+import { WishlistButton } from '@/components/customer/WishlistButton';
 import { HoverCard } from '@/components/ui/AnimatedWrapper';
 
 interface ProductCardProps {

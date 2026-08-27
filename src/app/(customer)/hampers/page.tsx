@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'Browse our beautiful collection of ready-to-gift curated hampers.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublicHampersPage() {
   const hampers = await getPublicHampers();
 

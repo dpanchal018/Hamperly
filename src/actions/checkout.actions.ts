@@ -1,164 +1,190 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import { getCurrentUser } from '@/services/auth.service';
+import { revalidatePath } from 'next/cache';
 
-const supabaseAdmin = createSupabaseClient(
+// Admin client to bypass RLS for critical checkout operations like stock updates
+const supabaseAdmin = createSupabaseAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-import { requireCustomer, getCurrentUser } from '@/services/auth.service';
 
-export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: string, pincode?: string) {
+export interface GuestDetails {
+  fullName: string;
+  email: string;
+  phone: string;
+}
+
+export async function placeCustomerOrder(
+  cartItems: any[], 
+  deliveryAddress?: string, 
+  pincode?: string,
+  guestDetails?: GuestDetails
+) {
   try {
-    await requireCustomer();
     const user = await getCurrentUser();
-    if (!user) throw new Error("Not logged in");
-    const supabase = await createClient(); // for authenticated reads
-    
-    // 1. Get the customer ID and details
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('id, full_name, mobile_number')
-      .eq('user_id', user.id)
-      .single();
+    let finalCustomerId = '';
+    let finalCustomerName = '';
+    let finalCustomerPhone = '';
 
-    if (customerError || !customer) {
-      throw new Error("Customer profile not found");
-    }
-
-    // Update customer address and pincode if provided
-    const updateData: any = {};
-    if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
-    if (pincode !== undefined) updateData.pincode = pincode;
-    
-    if (Object.keys(updateData).length > 0) {
-      await supabaseAdmin
+    if (user) {
+      // LOGGED IN USER
+      const supabase = await createClient(); 
+      const { data: customer, error: customerError } = await supabase
         .from('customers')
-        .update(updateData)
-        .eq('id', customer.id);
+        .select('id, full_name, mobile_number')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (customerError || !customer) throw new Error("Customer profile not found");
+      
+      finalCustomerId = customer.id;
+      finalCustomerName = customer.full_name;
+      finalCustomerPhone = customer.mobile_number || '';
+
+      const updateData: any = {};
+      if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
+      if (pincode !== undefined) updateData.pincode = pincode;
+      
+      if (Object.keys(updateData).length > 0) {
+        await supabaseAdmin.from('customers').update(updateData).eq('id', finalCustomerId);
+      }
+    } else {
+      // GUEST USER
+      if (!guestDetails) throw new Error("Guest details required for unauthenticated checkout");
+      
+      const { data: existingGuest } = await supabaseAdmin
+        .from('customers')
+        .select('id, full_name, mobile_number')
+        .eq('email', guestDetails.email)
+        .limit(1)
+        .single();
+        
+      if (existingGuest) {
+        finalCustomerId = existingGuest.id;
+        finalCustomerName = existingGuest.full_name;
+        finalCustomerPhone = existingGuest.mobile_number || '';
+        
+        const updateData: any = {};
+        if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
+        if (pincode !== undefined) updateData.pincode = pincode;
+        if (Object.keys(updateData).length > 0) {
+          await supabaseAdmin.from('customers').update(updateData).eq('id', finalCustomerId);
+        }
+      } else {
+        const guestRef = 'GST-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const { data: newGuest, error: createError } = await supabaseAdmin
+          .from('customers')
+          .insert({
+            customer_reference: guestRef,
+            full_name: guestDetails.fullName,
+            email: guestDetails.email,
+            mobile_number: guestDetails.phone,
+            address: deliveryAddress,
+            pincode: pincode,
+            is_active: true
+          })
+          .select('id')
+          .single();
+          
+        if (createError || !newGuest) throw new Error("Failed to create guest profile");
+        finalCustomerId = newGuest.id;
+        finalCustomerName = guestDetails.fullName;
+        finalCustomerPhone = guestDetails.phone;
+      }
     }
 
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart is empty");
     }
 
-    // Separate hampers and products
     const hamperItems = cartItems.filter(i => i.itemType !== 'PRODUCT');
     const productItems = cartItems.filter(i => i.itemType === 'PRODUCT');
     
     const hamperIds = hamperItems.map(item => item.id);
     const productIds = productItems.map(item => item.id);
 
-    // Fetch Hampers if any
     let dbHampers: any[] = [];
     if (hamperIds.length > 0) {
       const { data, error } = await supabaseAdmin
         .from('hampers')
         .select('id, name, selling_price, actual_cost, stock_quantity')
         .in('id', hamperIds);
-      if (error) throw new Error("Failed to fetch hamper details");
+      if (error) throw new Error("Failed to validate hampers");
       dbHampers = data || [];
     }
 
-    // Fetch Products if any
     let dbProducts: any[] = [];
     if (productIds.length > 0) {
       const { data, error } = await supabaseAdmin
         .from('products')
-        .select('id, name, stock_quantity, product_pricing(cost_price, target_margin)')
+        .select('id, name, selling_price, actual_cost, stock_quantity, category:categories(name)')
         .in('id', productIds);
-      if (error) throw new Error("Failed to fetch product details");
+      if (error) throw new Error("Failed to validate products");
+      dbProducts = data || [];
+    }
+
+    for (const item of cartItems) {
+      const dbItem = item.itemType === 'PRODUCT' 
+        ? dbProducts.find(p => p.id === item.id) 
+        : dbHampers.find(h => h.id === item.id);
       
-      // Calculate selling price for products
-      dbProducts = (data || []).map(p => {
-        const pricing = p.product_pricing?.[0];
-        const cost = pricing?.cost_price || 0;
-        const margin = pricing?.target_margin || 0.5;
-        const sellingPrice = cost / (1 - margin);
-        return {
-          id: p.id,
-          name: p.name,
-          stock_quantity: p.stock_quantity,
-          actual_cost: cost,
-          selling_price: Math.ceil(sellingPrice)
-        };
-      });
+      if (!dbItem) throw new Error(`${item.name} is no longer available`);
+      if (dbItem.stock_quantity !== null && dbItem.stock_quantity < item.quantity) {
+        throw new Error(`Only ${dbItem.stock_quantity} units of ${item.name} are available`);
+      }
     }
 
-    // 3. Calculate totals using DB prices
     let subtotal = 0;
+    const purchaseItems = [];
     let totalCost = 0;
-    const finalItemsToInsert = [];
 
-    // Process Hampers
-    for (const item of hamperItems) {
-      if (item.quantity <= 0) throw new Error(`Invalid quantity for ${item.name}`);
-      const dbHamper = dbHampers.find(h => h.id === item.id);
-      if (!dbHamper) throw new Error(`Hamper ${item.name} is no longer available`);
-      if (dbHamper.stock_quantity !== null && dbHamper.stock_quantity < item.quantity) throw new Error(`Only ${dbHamper.stock_quantity} left for ${dbHamper.name}`);
+    for (const item of cartItems) {
+      const dbItem = item.itemType === 'PRODUCT' 
+        ? dbProducts.find(p => p.id === item.id) 
+        : dbHampers.find(h => h.id === item.id);
+        
+      const lineTotal = dbItem.selling_price * item.quantity;
+      const lineCost = (dbItem.actual_cost || 0) * item.quantity;
+      subtotal += lineTotal;
+      totalCost += lineCost;
 
-      subtotal += (dbHamper.selling_price * item.quantity);
-      totalCost += (dbHamper.actual_cost * item.quantity);
-
-      finalItemsToInsert.push({
-        product_id: null, // Hampers don't map to a specific individual product
-        product_name_snapshot: dbHamper.name,
-        category_snapshot: 'Pre-packaged Hamper',
+      purchaseItems.push({
+        product_id: item.itemType === 'PRODUCT' ? item.id : null,
+        product_name_snapshot: dbItem.name,
+        category_snapshot: item.itemType === 'PRODUCT' ? (dbItem.category as any)?.name || 'Uncategorized' : 'Pre-packaged Hamper',
         quantity: item.quantity,
-        catalog_unit_price: dbHamper.actual_cost, 
-        actual_unit_price: dbHamper.selling_price, 
-        line_total: dbHamper.selling_price * item.quantity
+        catalog_unit_price: dbItem.actual_cost || 0,
+        actual_unit_price: dbItem.selling_price,
+        line_total: lineTotal
       });
     }
 
-    for (const item of productItems) {
-      if (item.quantity <= 0) throw new Error(`Invalid quantity for ${item.name}`);
-      const dbProduct = dbProducts.find(p => p.id === item.id);
-      if (!dbProduct) throw new Error(`Add-on ${item.name} is no longer available`);
-      if (dbProduct.stock_quantity !== null && dbProduct.stock_quantity < item.quantity) throw new Error(`Only ${dbProduct.stock_quantity} left for ${dbProduct.name}`);
-
-      subtotal += (dbProduct.selling_price * item.quantity);
-      totalCost += (dbProduct.actual_cost * item.quantity);
-
-      finalItemsToInsert.push({
-        product_id: dbProduct.id, // Individual products map directly
-        product_name_snapshot: dbProduct.name,
-        category_snapshot: 'Add-on Customization',
-        quantity: item.quantity,
-        catalog_unit_price: dbProduct.actual_cost,
-        actual_unit_price: dbProduct.selling_price,
-        line_total: dbProduct.selling_price * item.quantity
-      });
-    }
-
-    // 4. Create the Purchase record
-    const { data: newPurchase, error: purchaseError } = await supabaseAdmin
+    const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from('purchases')
       .insert({
-        customer_id: customer.id,
-        purchase_date: new Date().toISOString(),
-        sale_source: 'WEBSITE',
-        subtotal: subtotal,
-        discount: 0, 
-        final_amount: subtotal,
-        amount_paid: 0,
+        customer_id: finalCustomerId,
         amount_due: subtotal,
-        status: 'CONFIRMED',
-        payment_status: 'PENDING'
+        amount_paid: 0,
+        status: 'PENDING',
+        payment_status: 'PENDING',
+        delivery_address: deliveryAddress || '',
+        notes: `Pincode: ${pincode || 'N/A'}`,
+        purchase_date: new Date().toISOString()
       })
-      .select()
+      .select('id')
       .single();
 
-    if (purchaseError || !newPurchase) {
-      console.error(purchaseError);
-      throw new Error("Failed to create purchase record");
+    if (purchaseError || !purchase) {
+      console.error("Purchase insert error:", purchaseError);
+      throw new Error("Failed to create order record");
     }
 
-    // 5. Create Purchase Items
-    const itemsWithPurchaseId = finalItemsToInsert.map(item => ({
+    const itemsWithPurchaseId = purchaseItems.map(item => ({
       ...item,
-      purchase_id: newPurchase.id
+      purchase_id: purchase.id
     }));
 
     const { error: itemsError } = await supabaseAdmin
@@ -166,52 +192,68 @@ export async function placeCustomerOrder(cartItems: any[], deliveryAddress?: str
       .insert(itemsWithPurchaseId);
 
     if (itemsError) {
-      console.error(itemsError);
-      // Rollback is usually best practice here
-      await supabaseAdmin.from('purchases').delete().eq('id', newPurchase.id);
-      throw new Error("Failed to link purchase items to order");
+      console.error("Items insert error:", itemsError);
+      await supabaseAdmin.from('purchases').delete().eq('id', purchase.id);
+      throw new Error("Failed to save order items");
     }
 
-    // 6. Generate Notification
-    const { createNotification } = await import('./notification.actions');
-    await createNotification({
-      customer_id: customer.id,
-      purchase_id: newPurchase.id,
-      type: 'PURCHASE_CREATED',
-      title: 'Your order has been received 🎉',
-      message: `Your Hamperly order ${newPurchase.id.split('-')[0]} has been successfully received.`
-    });
+    for (const item of cartItems) {
+      const table = item.itemType === 'PRODUCT' ? 'products' : 'hampers';
+      const dbItem = item.itemType === 'PRODUCT' 
+        ? dbProducts.find(p => p.id === item.id) 
+        : dbHampers.find(h => h.id === item.id);
+        
+      if (dbItem.stock_quantity !== null) {
+        const newStock = dbItem.stock_quantity - item.quantity;
+        await supabaseAdmin.from(table).update({ stock_quantity: newStock }).eq('id', item.id);
+      }
+    }
 
-    // 7. Send Telegram Alert
-    const { sendTelegramMessage } = await import('./telegram.actions');
-    const orderShortId = newPurchase.id.split('-')[0].toUpperCase();
+    // Try to notify admin
+    try {
+      await fetch(process.env.NEXT_PUBLIC_APP_URL + '/api/telegram/notify-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: purchase.id,
+          customerName: finalCustomerName,
+          customerPhone: finalCustomerPhone,
+          amount: subtotal,
+          itemsCount: cartItems.length
+        })
+      });
+    } catch (e) {
+      console.error("Telegram notification failed", e);
+    }
     
-    let itemsList = '';
-    finalItemsToInsert.forEach(item => {
-      itemsList += `- ${item.quantity}x ${item.product_name_snapshot}\n`;
-    });
+    // Create in-app notification
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        customer_id: finalCustomerId,
+        purchase_id: purchase.id,
+        type: 'ORDER_PLACED',
+        title: 'Order Confirmed! \uD83C\uDF89',
+        message: `Your order #${purchase.id.split('-')[0]} for \u20B9${subtotal.toLocaleString()} has been placed successfully.`,
+        is_read: false
+      });
+    } catch (e) {
+      console.error("In-app notification failed", e);
+    }
 
-    const telegramMessage = `
-🚨 <b>NEW ORDER RECEIVED!</b> 🚨
-<b>Order ID:</b> #${orderShortId}
-<b>Customer:</b> ${customer.full_name} (${customer.mobile_number || 'No Phone'})
-<b>Amount:</b> ₹${newPurchase.final_amount}
-<b>Order Status:</b> ${newPurchase.status}
-<b>Payment Status:</b> ${newPurchase.payment_status}
+    if (user) {
+      await supabaseAdmin.from('customers').update({ cart_state: [] }).eq('user_id', user.id);
+    }
 
-<b>Items Ordered:</b>
-${itemsList.trim()}
+    revalidatePath('/admin');
+    revalidatePath('/admin/customers-purchases');
+    revalidatePath('/admin/products');
+    revalidatePath('/admin/hampers');
+    revalidatePath('/account/orders');
 
-Please check the Admin Portal for details.
-    `.trim();
-    
-    await sendTelegramMessage(telegramMessage);
-
-    // TODO: Clear user's cart here when Cart feature is implemented.
-    return { success: true, purchaseId: newPurchase.id };
+    return { success: true, purchaseId: purchase.id };
 
   } catch (error: any) {
-    console.error('Checkout error:', error);
-    return { error: error.message || 'An unexpected error occurred during checkout' };
+    console.error("Order error:", error);
+    return { error: error.message || "An unexpected error occurred" };
   }
 }

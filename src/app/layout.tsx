@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 };
 
 import {CartProvider} from "@/contexts/CartContext";
+import {WishlistProvider} from "@/contexts/WishlistContext";
 import NextTopLoader from "nextjs-toploader";
 import {getCurrentUser} from "@/services/auth.service";
 import {InviteInterceptor} from "@/components/ui/InviteInterceptor";
@@ -39,7 +40,9 @@ export default async function RootLayout({children}: {children: React.ReactNode}
       <body className="min-h-full flex flex-col">
         <NextTopLoader color="#C04A7B" showSpinner={false} />
         <InviteInterceptor />
-        <CartProvider userId={userId}>{children}</CartProvider>
+        <WishlistProvider userId={userId}>
+          <CartProvider userId={userId}>{children}</CartProvider>
+        </WishlistProvider>
       </body>
     </html>
   );
