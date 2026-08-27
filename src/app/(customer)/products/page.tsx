@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'Select premium items to build your personalized hamper.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductsPage({
   searchParams,
 }: {

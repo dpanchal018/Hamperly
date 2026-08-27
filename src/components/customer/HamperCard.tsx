@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { Plus, Check, Gift } from 'lucide-react';
 import { useState } from 'react';
 import { getInventoryStatus } from '@/lib/inventory';
+import { WishlistButton } from '@/components/customer/WishlistButton';
 
 interface HamperCardProps {
   hamper: PreMadeHamper;

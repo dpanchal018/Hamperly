@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: 'Browse our curated themes and occasions for the perfect personalized hamper.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function OccasionsPage() {
   const occasions = await getPublicOccasions();
 

@@ -246,3 +246,11 @@ export interface FooterContent {
     links: { name: string; href: string }[];
   }[];
 }
+
+export interface Wishlist {
+  id: string;
+  user_id: string;
+  hamper_id: string | null;
+  product_id: string | null;
+  created_at: string;
+}

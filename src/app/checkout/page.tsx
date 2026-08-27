@@ -8,22 +8,17 @@ import { ChevronLeft } from 'lucide-react';
 
 export default async function CheckoutPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/login?error=Login+to+Proceed');
+  const role = user ? await getCurrentUserRole() : null;
   
-  const role = await getCurrentUserRole();
-  if (role !== 'CUSTOMER') {
-    redirect('/login?error=Please+login+with+a+customer+account+to+checkout');
-  }
-  
-  const supabase = await createClient();
-  const { data: customer } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!customer) {
-    redirect('/account/profile');
+  let customer = null;
+  if (user && role === 'CUSTOMER') {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    customer = data;
   }
 
   return (
