@@ -15,12 +15,12 @@ export default async function PublicHampersPage() {
   const hampers = await getPublicHampers();
 
   return (
-    <PageTransition className="min-h-screen pt-32 pb-24 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7]">
+    <PageTransition className="min-h-screen pt-24 pb-8 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7]">
       <div className="container mx-auto px-4">
         <FadeInScroll>
-          <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <span className="text-rose-600 font-semibold tracking-widest uppercase text-sm mb-4 block">Ready to Gift</span>
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-4">
               Curated Hampers
             </h1>
             <p className="text-lg md:text-xl text-slate-500 font-light max-w-2xl mx-auto">
@@ -41,8 +41,8 @@ export default async function PublicHampersPage() {
           </StaggerScrollContainer>
         ) : (
           <FadeInScroll>
-            <div className="text-center py-32 bg-white rounded-[3rem] shadow-sm border border-slate-100 max-w-3xl mx-auto">
-              <Gift className="w-16 h-16 text-slate-300 mx-auto mb-6" strokeWidth={1} />
+            <div className="text-center py-16 bg-white rounded-[3rem] shadow-sm border border-slate-100 max-w-3xl mx-auto">
+              <Gift className="w-16 h-16 text-slate-300 mx-auto mb-4" strokeWidth={1} />
               <h3 className="text-3xl font-bold font-serif text-slate-900 mb-4">No Hampers Available</h3>
               <p className="text-slate-500 font-light mb-8 text-lg">We are currently curating new premium hampers. Please check back later!</p>
               <Link href="/products">

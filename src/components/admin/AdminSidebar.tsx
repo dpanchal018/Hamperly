@@ -1,100 +1,112 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Package, Calendar, Folder, LayoutDashboard, Image as ImageIcon, Settings, Menu, X } from 'lucide-react';
-import { Logo } from '@/components/ui/Logo';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  Package, Calendar, Folder, LayoutDashboard, 
+  Image as ImageIcon, Settings, Star, Users, 
+  ShoppingBag, CheckCircle
+} from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
+import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 
-export function AdminSidebar() {
-  const [isDesktopOpen, setIsDesktopOpen] = useState(true);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+const NAV_ITEMS = [
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Products", href: "/admin/products", icon: Package },
+  { name: "Hampers", href: "/admin/hampers", icon: ShoppingBag },
+  { name: "Reviews", href: "/admin/reviews", icon: Star },
+  { name: "Occasions", href: "/admin/occasions", icon: Calendar },
+  { name: "Categories", href: "/admin/categories", icon: Folder },
+  { name: "Customers", href: "/admin/customers", icon: Users },
+  { name: "Purchases", href: "/admin/customers-purchases", icon: CheckCircle },
+  { name: "Content", href: "/admin/content", icon: ImageIcon },
+];
 
-  const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
-  const closeMobile = () => setIsMobileOpen(false);
-  const toggleDesktop = () => setIsDesktopOpen(!isDesktopOpen);
+export function AdminSidebar({ currentUser, initials }: { currentUser: any, initials: string }) {
+  const pathname = usePathname();
 
   return (
-    <>
-      {/* Mobile Burger Menu Button */}
-      <button 
-        onClick={toggleMobile}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50"
-      >
-        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
-      {/* Backdrop for mobile */}
-      {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 z-30 md:hidden backdrop-blur-sm"
-          onClick={closeMobile}
-        />
-      )}
-
-      {/* Sidebar Container */}
-      <aside className={`
-        fixed md:relative inset-y-0 left-0 z-40 flex flex-col
-        bg-white/90 md:bg-white/80 backdrop-blur-xl border-r border-slate-200 shadow-lg md:shadow-sm 
-        transition-all duration-300 ease-in-out
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        ${isDesktopOpen ? 'md:w-64' : 'md:w-20'}
-        w-64
-      `}>
-        {/* Sidebar Header */}
-        <div className={`p-6 md:pt-6 pt-16 flex items-center overflow-hidden h-24 ${isDesktopOpen ? 'justify-between' : 'justify-center'}`}>
-          <div className={`transition-opacity duration-300 whitespace-nowrap ${isDesktopOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden md:block'}`}>
-             <Logo className="scale-75 origin-left" />
+    <aside className="group flex flex-col h-full bg-white border-r border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-[width] duration-300 ease-in-out w-[80px] hover:w-[260px] relative z-50 overflow-hidden">
+      
+      {/* Top Logo Section */}
+      <div className="h-20 flex items-center justify-center shrink-0 border-b border-slate-50 relative">
+        {/* Collapsed Icon */}
+        <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-rose-500 flex items-center justify-center text-white font-serif font-bold text-xl shadow-sm">
+            H
           </div>
-          <button 
-            onClick={toggleDesktop}
-            className="hidden md:block p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        </div>
+        {/* Expanded Logo */}
+        <div className="absolute inset-0 flex items-center justify-start px-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100 whitespace-nowrap">
+          <Logo className="scale-[0.65] origin-left" />
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 py-6 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link 
+              key={item.name} 
+              href={item.href} 
+              className={`flex items-center px-4 mx-3 py-3 rounded-xl transition-all duration-200 relative
+                ${isActive 
+                  ? 'bg-indigo-50/80 text-indigo-700 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.1)]' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+            >
+              <div className="flex items-center justify-center shrink-0 w-6">
+                <item.icon className={`w-[18px] h-[18px] ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
+              </div>
+              <span className={`ml-3 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 ${isActive ? 'translate-x-0' : '-translate-x-2 group-hover:translate-x-0'}`}>
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+      
+      {/* Bottom Settings & User Profile */}
+      <div className="shrink-0 border-t border-slate-100 bg-white">
+        
+        {/* Settings Link */}
+        <div className="p-3 w-[260px]">
+          <Link href="/admin/settings" className="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-colors duration-200">
+            <div className="flex items-center justify-center shrink-0 w-6">
+              <Settings className="w-[18px] h-[18px] stroke-[2px]" />
+            </div>
+            <span className="ml-3 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Settings
+            </span>
+          </Link>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5 mt-2 overflow-y-auto overflow-x-hidden whitespace-nowrap">
-          <Link href="/admin" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <LayoutDashboard className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Dashboard</span>
-          </Link>
-          <Link href="/admin/products" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <Package className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Products</span>
-          </Link>
-          <Link href="/admin/hampers" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`}><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Hampers</span>
-          </Link>
-          <Link href="/admin/occasions" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <Calendar className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Occasions</span>
-          </Link>
-          <Link href="/admin/categories" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <Folder className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Categories</span>
-          </Link>
-          <Link href="/admin/customers" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Customers</span>
-          </Link>
-          <Link href="/admin/customers-purchases" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Purchases</span>
-          </Link>
-          <Link href="/admin/content" onClick={closeMobile} className={`flex items-center py-2.5 text-sm font-medium text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <ImageIcon className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Content</span>
-          </Link>
-        </nav>
-        
-        <div className="p-4 border-t border-slate-100 mt-auto">
-          <Link href="/admin/settings" onClick={closeMobile} className={`flex items-center w-full py-2.5 text-sm font-medium text-slate-500 rounded-lg hover:bg-slate-100 transition-colors duration-200 ${isDesktopOpen ? 'px-4' : 'justify-center'}`}>
-            <Settings className={`w-5 h-5 flex-shrink-0 ${isDesktopOpen ? 'mr-3' : ''}`} />
-            <span className={isDesktopOpen ? 'block' : 'hidden'}>Settings</span>
-          </Link>
+        {/* User Profile */}
+        <div className="p-4 border-t border-slate-50 flex items-center justify-between h-[72px] w-[260px]">
+          <div className="flex items-center overflow-hidden">
+            <div className="relative shrink-0 flex items-center justify-center w-12 h-12">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-100 to-rose-50 flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200/50 shadow-sm transition-transform duration-300 group-hover:scale-100">
+                {initials}
+              </div>
+              <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+            </div>
+            
+            <div className="ml-3 flex-1 flex flex-col justify-center whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-0 group-hover:w-auto">
+              <p className="text-sm font-bold text-slate-800 leading-tight">
+                {currentUser?.user_metadata?.full_name || 'Admin User'}
+              </p>
+              <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                {currentUser?.email}
+              </p>
+            </div>
+          </div>
+          
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0">
+            <AdminLogoutButton />
+          </div>
         </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 }

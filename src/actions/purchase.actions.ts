@@ -117,6 +117,7 @@ export async function createPurchase(
   }
 
   revalidatePath('/admin/customers-purchases');
+  revalidatePath('/admin');
   return { purchase };
 }
 
@@ -226,6 +227,7 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
   }
 
   revalidatePath('/admin/customers-purchases');
+  revalidatePath('/admin');
   revalidatePath(`/admin/customers-purchases/${purchaseId}`);
   return { purchase: updatedPurchase };
 }
@@ -300,6 +302,7 @@ export async function updatePaymentStatus(purchaseId: string, amountPaid: number
   }
 
   revalidatePath('/admin/customers-purchases');
+  revalidatePath('/admin');
   revalidatePath(`/admin/customers-purchases/${purchaseId}`);
   return { purchase: updatedPurchase };
 }

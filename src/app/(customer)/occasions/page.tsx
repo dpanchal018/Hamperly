@@ -12,12 +12,12 @@ export default async function OccasionsPage() {
   const occasions = await getPublicOccasions();
 
   return (
-    <PageTransition className="min-h-screen pt-32 pb-24 bg-gradient-to-tr from-[#F0F5FA] via-[#FDFDFD] to-[#F3F0FA]">
+    <PageTransition className="min-h-screen pt-24 pb-8 bg-gradient-to-tr from-[#F0F5FA] via-[#FDFDFD] to-[#F3F0FA]">
       <div className="container mx-auto px-4">
         <FadeInScroll>
-          <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <span className="text-rose-600 font-semibold tracking-widest uppercase text-sm mb-4 block">Our Collections</span>
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-4">
               Shop by Occasion
             </h1>
             <p className="text-lg md:text-xl text-slate-500 font-light">

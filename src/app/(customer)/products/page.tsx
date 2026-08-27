@@ -30,13 +30,13 @@ export default async function ProductsPage({
   });
 
   return (
-    <PageTransition className="min-h-screen pt-32 pb-24 bg-background relative overflow-hidden">
+    <PageTransition className="min-h-screen pt-24 pb-8 bg-background relative overflow-hidden">
       
       <div className="container mx-auto px-4 relative z-10">
         <FadeInScroll>
-          <div className="text-center max-w-4xl mx-auto mb-20 border-b border-primary/10 pb-16">
-            <span className="text-foreground/60 font-bold tracking-[0.3em] uppercase text-xs mb-6 block">Your Creative Studio</span>
-            <h1 className="text-5xl md:text-7xl font-extrabold font-serif tracking-tight text-foreground mb-6 leading-tight">
+          <div className="text-center max-w-4xl mx-auto mb-10 border-b border-primary/10 pb-8">
+            <span className="text-foreground/60 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">Your Creative Studio</span>
+            <h1 className="text-5xl md:text-7xl font-extrabold font-serif tracking-tight text-foreground mb-4 leading-tight">
               CRAFT YOUR HAMPER.
             </h1>
             <p className="text-lg md:text-xl text-foreground/60 font-light max-w-2xl mx-auto">
@@ -45,13 +45,13 @@ export default async function ProductsPage({
           </div>
         </FadeInScroll>
 
-        <div className="flex flex-col md:flex-row gap-16 items-start">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
           {/* Filters Sidebar */}
           <aside className="w-full md:w-64 flex-shrink-0 space-y-12 sticky top-32">
             <FadeInScroll delay={0.1}>
               <div className="space-y-12">
                 <div>
-                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
                     Search
                   </h3>
                   <form className="relative" method="GET">
@@ -72,7 +72,7 @@ export default async function ProductsPage({
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
                     Collections
                   </h3>
                   <div className="space-y-4">
@@ -95,14 +95,14 @@ export default async function ProductsPage({
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-foreground mb-6 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
                     Availability
                   </h3>
                   <form method="GET">
                     {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
                     {searchQuery && <input type="hidden" name="q" value={searchQuery} />}
                     
-                    <label className="flex items-center space-x-3 cursor-pointer mb-6 group">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-4 group">
                       <div className="relative flex items-center">
                         <input 
                           type="checkbox" 
@@ -129,7 +129,7 @@ export default async function ProductsPage({
           {/* Product Grid */}
           <div className="flex-1">
             <FadeInScroll delay={0.2}>
-              <div className="flex justify-between items-center mb-8 pb-4">
+              <div className="flex justify-between items-center mb-6 pb-2">
                 <div className="text-foreground/60 text-xs font-bold text-primary font-semibold">
                   <span className="text-foreground font-bold">{products.length}</span> items
                 </div>
@@ -154,8 +154,8 @@ export default async function ProductsPage({
               </StaggerScrollContainer>
             ) : (
               <FadeInScroll>
-                <div className="text-center py-32 bg-background border border-primary/10">
-                  <Search className="w-12 h-12 text-cream mx-auto mb-6" strokeWidth={1} />
+                <div className="text-center py-16 bg-background border border-primary/10">
+                  <Search className="w-12 h-12 text-cream mx-auto mb-4" strokeWidth={1} />
                   <h3 className="text-2xl font-bold font-serif text-foreground mb-4">No pieces found</h3>
                   <p className="text-foreground/60 font-light mb-8">Adjust your criteria to discover our collection.</p>
                   <Link href="/products">

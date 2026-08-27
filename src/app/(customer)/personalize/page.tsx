@@ -82,7 +82,7 @@ export default function PersonalizePage() {
   );
 
   return (
-    <PageTransition className="min-h-screen pt-32 pb-24 bg-background">
+    <PageTransition className="min-h-screen pt-24 pb-8 bg-background">
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-24">
           <span className="text-gold font-bold tracking-[0.3em] uppercase text-xs mb-6 block">Step 02</span>
