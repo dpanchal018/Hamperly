@@ -136,6 +136,12 @@ export async function placeCustomerOrder(
       
       if (!dbItem) throw new Error(`${item.name} is no longer available`);
       if (dbItem.stock_quantity !== null && dbItem.stock_quantity < item.quantity) {
+        const itemTypeLabel = item.itemType === 'PRODUCT' ? 'Product' : 'Hamper';
+        try {
+          await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\n${itemTypeLabel}: ${dbItem.name}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${dbItem.stock_quantity}\n\nThe order could not be completed.`, 'ALERT');
+        } catch (tgErr) {
+          console.error("Failed to send out of stock attempt alert:", tgErr);
+        }
         throw new Error(`Only ${dbItem.stock_quantity} units of ${item.name} are available`);
       }
     }
@@ -209,7 +215,7 @@ export async function placeCustomerOrder(
         : dbHampers.find(h => h.id === item.id);
         
       if (dbItem.stock_quantity !== null) {
-        const newStock = dbItem.stock_quantity - item.quantity;
+        const newStock = Math.max(0, dbItem.stock_quantity - item.quantity);
         await supabaseAdmin.from(table).update({ stock_quantity: newStock }).eq('id', item.id);
       }
     }
