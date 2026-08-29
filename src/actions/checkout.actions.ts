@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
+import { sendTelegramMessage } from './telegram.actions';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { getCurrentUser } from '@/services/auth.service';
 import { revalidatePath } from 'next/cache';
@@ -29,30 +30,31 @@ export async function placeCustomerOrder(
     let finalCustomerName = '';
     let finalCustomerPhone = '';
 
+    
     if (user) {
-      // LOGGED IN USER
       const supabase = await createClient(); 
-      const { data: customer, error: customerError } = await supabase
+      const { data: customer } = await supabase
         .from('customers')
         .select('id, full_name, mobile_number')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
         
-      if (customerError || !customer) throw new Error("Customer profile not found");
-      
-      finalCustomerId = customer.id;
-      finalCustomerName = customer.full_name;
-      finalCustomerPhone = customer.mobile_number || '';
+      if (customer) {
+        finalCustomerId = customer.id;
+        finalCustomerName = customer.full_name;
+        finalCustomerPhone = customer.mobile_number || '';
 
-      const updateData: any = {};
-      if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
-      if (pincode !== undefined) updateData.pincode = pincode;
-      
-      if (Object.keys(updateData).length > 0) {
-        await supabaseAdmin.from('customers').update(updateData).eq('id', finalCustomerId);
+        const updateData: any = {};
+        if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
+        if (pincode !== undefined) updateData.pincode = pincode;
+        
+        if (Object.keys(updateData).length > 0) {
+          await supabaseAdmin.from('customers').update(updateData).eq('id', finalCustomerId);
+        }
       }
-    } else {
-      // GUEST USER
+    }
+    
+    if (!finalCustomerId) {
       if (!guestDetails) throw new Error("Guest details required for unauthenticated checkout");
       
       const { data: existingGuest } = await supabaseAdmin
@@ -60,7 +62,7 @@ export async function placeCustomerOrder(
         .select('id, full_name, mobile_number')
         .eq('email', guestDetails.email)
         .limit(1)
-        .single();
+        .maybeSingle();
         
       if (existingGuest) {
         finalCustomerId = existingGuest.id;
@@ -84,7 +86,8 @@ export async function placeCustomerOrder(
             mobile_number: guestDetails.phone,
             address: deliveryAddress,
             pincode: pincode,
-            is_active: true
+            is_active: true,
+            user_id: null // Never link user_id here to avoid UNIQUE constraint violations if Admins test multiple guest emails
           })
           .select('id')
           .single();
@@ -166,15 +169,17 @@ export async function placeCustomerOrder(
       .from('purchases')
       .insert({
         customer_id: finalCustomerId,
+        subtotal: subtotal,
+        final_amount: subtotal,
         amount_due: subtotal,
         amount_paid: 0,
-        status: 'PENDING',
+        status: 'CONFIRMED',
         payment_status: 'PENDING',
-        delivery_address: deliveryAddress || '',
-        notes: `Pincode: ${pincode || 'N/A'}`,
+        sale_source: 'WEBSITE',
+        notes: `Delivery: ${deliveryAddress || 'N/A'}\nPincode: ${pincode || 'N/A'}`,
         purchase_date: new Date().toISOString()
       })
-      .select('id')
+      .select('id, status, payment_status')
       .single();
 
     if (purchaseError || !purchase) {
@@ -211,17 +216,30 @@ export async function placeCustomerOrder(
 
     // Try to notify admin
     try {
-      await fetch(process.env.NEXT_PUBLIC_APP_URL + '/api/telegram/notify-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: purchase.id,
-          customerName: finalCustomerName,
-          customerPhone: finalCustomerPhone,
-          amount: subtotal,
-          itemsCount: cartItems.length
-        })
+      const orderShortId = purchase.id.split('-')[0].toUpperCase();
+      
+      let itemsList = '';
+      purchaseItems.forEach(item => {
+        itemsList += `- ${item.quantity}x ${item.product_name_snapshot}\n`;
       });
+
+      const customerPhoneDisplay = finalCustomerPhone ? ` (${finalCustomerPhone})` : ' (No Phone)';
+
+      const telegramMessage = `
+🚨 <b>NEW ORDER RECEIVED!</b> 🚨
+<b>Order ID:</b> #${orderShortId}
+<b>Customer:</b> ${finalCustomerName}${customerPhoneDisplay}
+<b>Amount:</b> ₹${subtotal}
+<b>Order Status:</b> ${purchase.status || 'CONFIRMED'}
+<b>Payment Status:</b> ${purchase.payment_status || 'PENDING'}
+
+<b>Items Ordered:</b>
+${itemsList.trim()}
+
+Please check the Admin Portal for details.
+      `.trim();
+
+      await sendTelegramMessage(telegramMessage, 'ALERT');
     } catch (e) {
       console.error("Telegram notification failed", e);
     }

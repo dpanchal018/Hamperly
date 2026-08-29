@@ -47,6 +47,9 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
         
         <Link href={`/products/${product.slug}`} className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-primary/5 to-transparent flex items-center justify-center">
+          <div className="absolute top-3 right-3 z-20 flex">
+            <WishlistButton itemId={product.id} itemType="PRODUCT" className="!relative !top-0 !right-0" />
+          </div>
           {product.primary_image_url ? (
             <Image 
               src={product.primary_image_url} 

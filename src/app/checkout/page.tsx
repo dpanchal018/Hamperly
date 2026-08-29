@@ -17,7 +17,7 @@ export default async function CheckoutPage() {
       .from('customers')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     customer = data;
   }
 

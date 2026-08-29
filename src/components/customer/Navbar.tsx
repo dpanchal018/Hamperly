@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { Search, Menu, X, Heart, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,27 @@ import { NotificationBell } from './NotificationBell';
 import { ProfileDropdown } from './ProfileDropdown';
 
 import { HeaderContent } from '@/types/database.types';
+
+
+function WishlistNavButton() {
+  const { wishlistedHampers, wishlistedProducts, isLoaded } = useWishlist();
+  const totalItems = wishlistedHampers.size + wishlistedProducts.size;
+  
+  return (
+    <Link 
+      href="/account/wishlist"
+      className="hidden md:flex relative text-foreground/70 hover:text-primary transition-colors p-2"
+    >
+      <Heart className="w-5 h-5" strokeWidth={1.5} />
+      {isLoaded && totalItems > 0 && (
+        <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+          {totalItems}
+        </span>
+      )}
+      <span className="sr-only">Wishlist</span>
+    </Link>
+  );
+}
 
 function CartButton() {
   const { isCartOpen, setIsCartOpen, totalItems } = useCart();
@@ -70,6 +92,7 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
             <span className="sr-only">Search</span>
           </Link>
 
+          <WishlistNavButton />
           <CartButton />
 
           <div className="hidden md:flex items-center gap-3 ml-2">

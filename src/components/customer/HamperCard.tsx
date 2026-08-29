@@ -63,6 +63,9 @@ export function HamperCard({ hamper }: HamperCardProps) {
         )}
 
         <Link href={`/hampers/${hamper.id}`} className="relative aspect-[4/3] overflow-hidden bg-primary/5 flex items-center justify-center">
+          <div className="absolute top-3 right-3 z-20 flex">
+            <WishlistButton itemId={hamper.id} itemType="HAMPER" className="!relative !top-0 !right-0" />
+          </div>
           {hamper.image_url ? (
             <Image 
               src={hamper.image_url} 

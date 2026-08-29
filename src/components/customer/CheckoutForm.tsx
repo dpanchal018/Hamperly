@@ -116,7 +116,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
       } else {
         clearCart();
         toast.success('Order placed successfully!');
-        router.push(`/checkout/success?id=${result.purchaseId}`);
+        router.push(`/checkout/success/${result.purchaseId}`);
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to place order');
@@ -285,7 +285,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
                   <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{item.name}</p>
                   <p className="text-foreground/50 mt-0.5">Qty: {item.quantity}</p>
                 </div>
-                <p className="font-medium text-foreground whitespace-nowrap">?{(item.price * item.quantity).toLocaleString()}</p>
+                <p className="font-medium text-foreground whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString()}</p>
               </div>
             ))}
           </div>
@@ -293,7 +293,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
           <div className="border-t border-primary/10 pt-4 mb-8 space-y-3">
             <div className="flex justify-between text-sm text-foreground/70">
               <p>Subtotal</p>
-              <p>?{subtotal.toLocaleString()}</p>
+              <p>₹{subtotal.toLocaleString()}</p>
             </div>
             <div className="flex justify-between text-sm text-foreground/70">
               <p>Shipping</p>
@@ -304,7 +304,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
                 <p className="text-lg font-bold text-foreground">Total Due</p>
                 <p className="text-xs text-foreground/50">Includes all taxes</p>
               </div>
-              <p className="text-2xl font-serif font-bold text-primary">?{subtotal.toLocaleString()}</p>
+              <p className="text-2xl font-serif font-bold text-primary">₹{subtotal.toLocaleString()}</p>
             </div>
           </div>
 
