@@ -17,7 +17,7 @@ export async function toggleWishlistItem(itemId: string, itemType: 'HAMPER' | 'P
     .select('id')
     .eq('user_id', user.id)
     .eq(column, itemId)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     // Remove it
