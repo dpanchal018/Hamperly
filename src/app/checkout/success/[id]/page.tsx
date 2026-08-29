@@ -47,11 +47,9 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
     redirect('/');
   }
 
-  // If order is bound to a user_id, ensure the active user matches
-  if (purchase.customers?.user_id) {
-    if (!user || user.id !== purchase.customers.user_id) {
-      redirect('/login');
-    }
+  // If a different logged-in user tries to view someone else's order, redirect them away
+  if (user && purchase.customers?.user_id && user.id !== purchase.customers.user_id) {
+    redirect('/');
   }
 
   const customer = purchase.customers;
