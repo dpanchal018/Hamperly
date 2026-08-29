@@ -133,62 +133,63 @@ export async function updatePurchaseStatus(purchaseId: string, newStatus: Purcha
 
   if (purchase.status !== 'COMPLETED' && newStatus === 'COMPLETED') {
     const { sendTelegramMessage } = await import('./telegram.actions');
+    const isWebsiteOrder = purchase.sale_source === 'WEBSITE';
 
     for (const item of purchase.purchase_items) {
       if (item.product_id) {
         // It's an individual Product add-on
         const { data: product } = await supabase.from('products').select('id, stock_quantity').eq('id', item.product_id).single();
-        if (product) {
-          // Treat null as unlimited stock
-          if (product.stock_quantity !== null) {
+        if (product && product.stock_quantity !== null) {
+          let currentStock = product.stock_quantity;
+          if (!isWebsiteOrder) {
+            // For in-store / admin orders, deduct stock now
             if (product.stock_quantity < item.quantity) {
-              // Send an alert that someone tried to buy an out-of-stock item
               await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\nProduct: ${item.product_name_snapshot}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${product.stock_quantity}\n\nThe order could not be completed.`);
               return { error: `Insufficient stock for Product: ${item.product_name_snapshot}` };
             }
-            const newStock = product.stock_quantity - item.quantity;
-            await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
-            
-            if (newStock <= 3) {
-              await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nProduct: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
-            }
+            currentStock = product.stock_quantity - item.quantity;
+            await supabase.from('products').update({ stock_quantity: currentStock }).eq('id', product.id);
+          }
+
+          if (currentStock <= 3) {
+            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nProduct: ${item.product_name_snapshot}\nRemaining Stock: ${currentStock}`);
           }
         }
       } else if (item.product_name_snapshot) {
         // It's a Hamper (no product_id)
         const { data: hamper } = await supabase.from('hampers').select('id, stock_quantity').eq('name', item.product_name_snapshot).single();
-        if (hamper) {
-          // Treat null as unlimited stock
-          if (hamper.stock_quantity !== null) {
+        if (hamper && hamper.stock_quantity !== null) {
+          let currentStock = hamper.stock_quantity;
+          if (!isWebsiteOrder) {
+            // For in-store / admin orders, deduct stock now
             if (hamper.stock_quantity < item.quantity) {
-              // Send an alert that someone tried to buy an out-of-stock item
               await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\nHamper: ${item.product_name_snapshot}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${hamper.stock_quantity}\n\nThe order could not be completed.`);
               return { error: `Insufficient stock for Hamper: ${item.product_name_snapshot}` };
             }
-            const newStock = hamper.stock_quantity - item.quantity;
-            await supabase.from('hampers').update({ stock_quantity: newStock }).eq('id', hamper.id);
+            currentStock = hamper.stock_quantity - item.quantity;
+            await supabase.from('hampers').update({ stock_quantity: currentStock }).eq('id', hamper.id);
+          }
 
-            if (newStock <= 3) {
-              await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nHamper: ${item.product_name_snapshot}\nRemaining Stock: ${newStock}`);
-            }
+          if (currentStock <= 3) {
+            await sendTelegramMessage(`⚠️ <b>LOW STOCK ALERT</b>\nHamper: ${item.product_name_snapshot}\nRemaining Stock: ${currentStock}`);
           }
         }
       }
     }
     revalidatePath('/admin/hampers');
     revalidatePath('/admin/products');
-  } else if (purchase.status === 'COMPLETED' && newStatus === 'CANCELLED') {
+  } else if (newStatus === 'CANCELLED' && (purchase.status === 'COMPLETED' || purchase.sale_source === 'WEBSITE')) {
     for (const item of purchase.purchase_items) {
       if (item.product_id) {
         // It's an individual Product add-on
         const { data: product } = await supabase.from('products').select('id, stock_quantity').eq('id', item.product_id).single();
-        if (product) {
+        if (product && product.stock_quantity !== null) {
           await supabase.from('products').update({ stock_quantity: product.stock_quantity + item.quantity }).eq('id', product.id);
         }
       } else if (item.product_name_snapshot) {
         // It's a Hamper
         const { data: hamper } = await supabase.from('hampers').select('id, stock_quantity').eq('name', item.product_name_snapshot).single();
-        if (hamper) {
+        if (hamper && hamper.stock_quantity !== null) {
           await supabase.from('hampers').update({ stock_quantity: hamper.stock_quantity + item.quantity }).eq('id', hamper.id);
         }
       }
@@ -238,10 +239,21 @@ export async function updatePaymentStatus(purchaseId: string, amountPaid: number
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-  const { data: purchase } = await supabase.from('purchases').select('amount_paid, final_amount').eq('id', purchaseId).single();
+  const { data: purchase } = await supabase.from('purchases').select('amount_paid, final_amount, amount_due, payment_status').eq('id', purchaseId).single();
   if (!purchase) return { error: 'Purchase not found' };
 
-  const newAmountPaid = Number(purchase.amount_paid) + amountPaid;
+  if (purchase.payment_status === 'PAID' || Number(purchase.amount_due) <= 0) {
+    return { error: 'This purchase is already fully paid.' };
+  }
+
+  const remainingDue = Math.max(0, Number(purchase.final_amount) - Number(purchase.amount_paid));
+  const validAmount = Math.min(amountPaid, remainingDue);
+
+  if (validAmount <= 0) {
+    return { error: 'Invalid payment amount or balance already cleared.' };
+  }
+
+  const newAmountPaid = Number(purchase.amount_paid) + validAmount;
   let newStatus = paymentStatus;
   
   if (newAmountPaid >= Number(purchase.final_amount)) {
@@ -268,7 +280,7 @@ export async function updatePaymentStatus(purchaseId: string, amountPaid: number
   // Log the payment
   await supabase.from('payment_logs').insert({
     purchase_id: purchaseId,
-    amount: amountPaid,
+    amount: validAmount,
     payment_mode: paymentMode as any,
     created_by: user.id
   });

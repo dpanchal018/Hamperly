@@ -11,26 +11,35 @@ export function RecordPaymentButton({ purchaseId, balanceDue }: { purchaseId: st
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState(balanceDue);
   const [paymentMode, setPaymentMode] = useState('UPI');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (balanceDue <= 0) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (amount <= 0 || amount > balanceDue) {
       toast.error('Please enter a valid amount');
       return;
     }
     
-    const promise = updatePaymentStatus(purchaseId, amount, amount >= balanceDue ? 'PAID' : 'PARTIALLY_PAID', paymentMode);
-    
-    toast.promise(promise, {
-      loading: 'Recording payment...',
-      success: (res) => {
-        if ('error' in res && res.error) throw new Error(res.error);
+    setIsSubmitting(true);
+    try {
+      const res = await updatePaymentStatus(purchaseId, amount, amount >= balanceDue ? 'PAID' : 'PARTIALLY_PAID', paymentMode);
+      if ('error' in res && res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success('Payment recorded successfully!');
         setIsOpen(false);
         router.refresh();
-        return 'Payment recorded successfully!';
-      },
-      error: (err) => err.message || 'Failed to record payment'
-    });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to record payment');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) {
@@ -48,19 +57,21 @@ export function RecordPaymentButton({ purchaseId, balanceDue }: { purchaseId: st
         <input
           type="number"
           required
+          disabled={isSubmitting}
           min="1"
           max={balanceDue}
           value={amount}
           onChange={e => setAmount(Number(e.target.value))}
-          className="w-full rounded-md border-emerald-200 px-3 py-2 text-sm bg-white"
+          className="w-full rounded-md border-emerald-200 px-3 py-2 text-sm bg-white disabled:opacity-50"
         />
       </div>
       <div>
         <label className="block text-xs font-medium text-emerald-800 mb-1">Payment Mode</label>
         <select
+          disabled={isSubmitting}
           value={paymentMode}
           onChange={e => setPaymentMode(e.target.value)}
-          className="w-full rounded-md border-emerald-200 px-3 py-2 text-sm bg-white"
+          className="w-full rounded-md border-emerald-200 px-3 py-2 text-sm bg-white disabled:opacity-50"
         >
           <option value="UPI">UPI</option>
           <option value="CASH">Cash</option>
@@ -69,11 +80,11 @@ export function RecordPaymentButton({ purchaseId, balanceDue }: { purchaseId: st
         </select>
       </div>
       <div className="flex space-x-2 pt-2">
-        <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1 text-slate-600">
+        <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => setIsOpen(false)} className="flex-1 text-slate-600">
           Cancel
         </Button>
-        <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-          Save
+        <Button type="submit" disabled={isSubmitting} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+          {isSubmitting ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </form>
