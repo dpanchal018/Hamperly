@@ -137,12 +137,28 @@ export async function placeCustomerOrder(
       if (!dbItem) throw new Error(`${item.name} is no longer available`);
       if (dbItem.stock_quantity !== null && dbItem.stock_quantity < item.quantity) {
         const itemTypeLabel = item.itemType === 'PRODUCT' ? 'Product' : 'Hamper';
+        const customerInfo = finalCustomerName ? `${finalCustomerName}${finalCustomerPhone ? ` (${finalCustomerPhone})` : ''}` : 'Customer';
+        
         try {
-          await sendTelegramMessage(`🚨 <b>OUT OF STOCK ATTEMPT</b>\n${itemTypeLabel}: ${dbItem.name}\nAttempted Order Qty: ${item.quantity}\nActual Stock: ${dbItem.stock_quantity}\n\nThe order could not be completed.`, 'ALERT');
+          const outOfStockMsg = `
+🚨 <b>IMMEDIATE STOCK REQUIRED!</b> 🚨
+<b>Item:</b> ${dbItem.name} (${itemTypeLabel})
+<b>Attempted Order Qty:</b> ${item.quantity}
+<b>Current Stock:</b> ${dbItem.stock_quantity}
+<b>Customer:</b> ${customerInfo}
+
+⚠️ <i>A customer tried to place an order, but this item went out of stock due to a recent purchase. Immediate inventory replenishment required!</i>
+          `.trim();
+          await sendTelegramMessage(outOfStockMsg, 'ALERT');
         } catch (tgErr) {
           console.error("Failed to send out of stock attempt alert:", tgErr);
         }
-        throw new Error(`Only ${dbItem.stock_quantity} units of ${item.name} are available`);
+
+        if (dbItem.stock_quantity <= 0) {
+          throw new Error(`"${dbItem.name}" is now out of stock! Another customer just purchased the remaining inventory. Please remove it from your cart to proceed.`);
+        } else {
+          throw new Error(`Only ${dbItem.stock_quantity} unit(s) of "${dbItem.name}" are currently available. Please adjust your cart quantity to proceed.`);
+        }
       }
     }
 
