@@ -1,4 +1,5 @@
-﻿import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { Package, ExternalLink, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +12,9 @@ export default async function OrdersPage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user) {
+    redirect("/login?redirect=/account/orders");
+  }
 
   // First fetch the customer record to get the customer.id
   const { data: customer } = await supabase
