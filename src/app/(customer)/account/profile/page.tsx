@@ -1,4 +1,5 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { User, Phone, Mail, ShieldCheck } from "lucide-react";
 import { ProfileForm } from "./ProfileForm";
 
@@ -10,7 +11,9 @@ export default async function ProfilePage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user) {
+    redirect("/login?redirect=/account/profile");
+  }
 
   const { data: customer } = await supabase
     .from("customers")
