@@ -1,10 +1,10 @@
 import { getPublicHampers } from '@/actions/hamper.actions';
-import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
+import { PageTransition, FadeInScroll } from '@/components/ui/AnimatedWrapper';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Gift, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { HamperCard } from '@/components/customer/HamperCard';
+import { HampersCatalog } from '@/components/customer/HampersCatalog';
 
 export const metadata: Metadata = {
   title: 'Curated Hampers',
@@ -13,34 +13,31 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function PublicHampersPage() {
+export default async function PublicHampersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const resolvedParams = await searchParams;
   const hampers = await getPublicHampers();
 
   return (
-    <PageTransition className="min-h-screen pt-24 pb-8 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7]">
+    <PageTransition className="min-h-screen pt-24 pb-16 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7]">
       <div className="container mx-auto px-4">
         <FadeInScroll>
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <span className="text-rose-600 font-semibold tracking-widest uppercase text-sm mb-4 block">Ready to Gift</span>
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-4">
+          <div className="text-center max-w-3xl mx-auto mb-8">
+            <span className="text-rose-600 font-semibold tracking-widest uppercase text-sm mb-3 block">Ready to Gift</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 font-serif tracking-tight leading-tight mb-3">
               Curated Hampers
             </h1>
-            <p className="text-lg md:text-xl text-slate-500 font-light max-w-2xl mx-auto">
-              Hand-picked and beautifully arranged by our experts. Ready to delight your loved ones instantly.
+            <p className="text-base md:text-lg text-slate-500 font-light max-w-2xl mx-auto">
+              Hand-picked and beautifully arranged by our gifting experts. Ready to delight instantly.
             </p>
           </div>
         </FadeInScroll>
 
         {hampers.length > 0 ? (
-          <StaggerScrollContainer>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {hampers.map((hamper) => (
-                <div key={hamper.id} className="h-full">
-                  <HamperCard hamper={hamper} />
-                </div>
-              ))}
-            </div>
-          </StaggerScrollContainer>
+          <HampersCatalog initialHampers={hampers} initialQuery={resolvedParams?.q} />
         ) : (
           <FadeInScroll>
             <div className="text-center py-16 bg-white rounded-[3rem] shadow-sm border border-slate-100 max-w-3xl mx-auto">
