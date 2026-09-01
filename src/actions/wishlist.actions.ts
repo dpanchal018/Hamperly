@@ -35,9 +35,19 @@ export async function toggleWishlistItem(itemId: string, itemType: 'HAMPER' | 'P
   return { success: true, isWishlisted: !existing };
 }
 
-export async function getUserWishlistIds() {
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/services/auth.service';
+
+const getAdminClient = () => {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+};
+
+export async function getUserWishlistIds(): Promise<{ hampers: string[]; products: string[] }> {
   const user = await getCurrentUser();
-  if (!user) return { hampers: new Set<string>(), products: new Set<string>() };
+  if (!user) return { hampers: [], products: [] };
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -45,17 +55,41 @@ export async function getUserWishlistIds() {
     .select('hamper_id, product_id')
     .eq('user_id', user.id);
 
-  const hampers = new Set<string>();
-  const products = new Set<string>();
+  const hampers: string[] = [];
+  const products: string[] = [];
 
   if (data) {
     data.forEach(item => {
-      if (item.hamper_id) hampers.add(item.hamper_id);
-      if (item.product_id) products.add(item.product_id);
+      if (item.hamper_id) hampers.push(item.hamper_id);
+      if (item.product_id) products.push(item.product_id);
     });
   }
 
   return { hampers, products };
+}
+
+export async function getAdminCustomerWishlists(): Promise<Record<string, string[]>> {
+  await requireAdmin();
+  const adminClient = getAdminClient();
+
+  const { data: wishlists, error } = await adminClient
+    .from('wishlists')
+    .select('user_id, hamper:hampers(name), product:products(name)');
+
+  if (error) {
+    console.error('Error fetching customer wishlists for admin:', error);
+    return {};
+  }
+
+  const userWishlists: Record<string, string[]> = {};
+  wishlists?.forEach((w: any) => {
+    if (!w.user_id) return;
+    if (!userWishlists[w.user_id]) userWishlists[w.user_id] = [];
+    const name = w.hamper?.name || w.product?.name;
+    if (name) userWishlists[w.user_id].push(name);
+  });
+
+  return userWishlists;
 }
 
 export async function getFullUserWishlist(userId: string) {

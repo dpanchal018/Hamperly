@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { SiteContent, HeaderContent, FooterContent } from '@/types/database.types';
 
 export async function getSiteContent<T>(sectionId: string, defaultContent: T): Promise<T> {
@@ -30,7 +30,6 @@ export const defaultHeaderContent: HeaderContent = {
   logoText: 'Hamperly',
   navLinks: [
     { name: 'Shop', href: '/products' },
-    { name: 'Occasions', href: '/occasions' },
     { name: 'Hampers', href: '/hampers' },
     { name: 'Exhibitions', href: '/exhibitions' }
   ]
@@ -48,9 +47,8 @@ export const defaultFooterContent: FooterContent = {
     {
       title: 'Shop',
       links: [
-        { name: 'Build a Hamper', href: '/products' },
+        { name: 'Build a Hamper', href: '/build' },
         { name: 'Pre-made Hampers', href: '/hampers' },
-        { name: 'Shop by Occasion', href: '/occasions' },
         { name: 'Exhibitions', href: '/exhibitions' }
       ]
     },
@@ -59,8 +57,8 @@ export const defaultFooterContent: FooterContent = {
       links: [
         { name: 'About Us', href: '/about' },
         { name: 'Contact', href: '/contact' },
-        { name: 'Shipping & Returns', href: '/shipping' },
-        { name: 'FAQ', href: '/faq' }
+        { name: 'FAQ', href: '/faq' },
+        { name: 'Terms of Service', href: '/terms' }
       ]
     }
   ]

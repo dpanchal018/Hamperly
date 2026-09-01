@@ -5,8 +5,8 @@ test.describe('Domain 4 & 5: Cart Management, Cross-Device Sync & Wishlist', () 
   test('Positive: Cart persists items added from Hampers catalog', async ({ page }) => {
     await page.goto('/hampers');
 
-    // Click 'Add to Cart' or 'Select' on first available hamper
-    const addBtn = page.getByRole('button', { name: /add to cart|quick add|buy now/i }).first();
+    // Click 'Add to Cart' on first in-stock available hamper
+    const addBtn = page.locator('button:not([disabled])').filter({ hasText: /add to cart|quick add|buy now/i }).or(page.locator('button[aria-label="Add to Cart"]:not([disabled])')).first();
     if (await addBtn.isVisible()) {
       await addBtn.click();
       // Ensure cart count badge updates or drawer appears
@@ -29,10 +29,42 @@ test.describe('Domain 4 & 5: Cart Management, Cross-Device Sync & Wishlist', () 
 
   test('Positive: Wishlist heart icon renders on hamper cards', async ({ page }) => {
     await page.goto('/hampers');
-    // Check if heart icon / button is rendered on cards
-    const heartBtn = page.locator('button:has(svg.lucide-heart), [aria-label*="wishlist" i]').first();
-    if (await heartBtn.isVisible()) {
-      await expect(heartBtn).toBeVisible();
+    // Ensure wishlist button renders on hamper cards
+    const wishlistBtn = page.locator('button[aria-label="Toggle Wishlist"]').first();
+    await expect(wishlistBtn).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Positive: Wishlisting is non-blocking and permits rapid successive clicks across items', async ({ page }) => {
+    await page.goto('/hampers');
+    const wishlistBtns = page.locator('button[aria-label="Toggle Wishlist"]');
+    await expect(wishlistBtns.first()).toBeVisible({ timeout: 10000 });
+    const count = await wishlistBtns.count();
+    
+    if (count >= 2) {
+      // Rapid clicks should not freeze or disable the page
+      await wishlistBtns.nth(0).click();
+      await wishlistBtns.nth(1).click();
+      
+      // Page remains responsive and non-blocking
+      await expect(wishlistBtns.nth(0)).toBeEnabled();
+      await expect(wishlistBtns.nth(1)).toBeEnabled();
+    }
+  });
+
+  test('Positive: Wishlist heart icon renders on hamper detail page and in header', async ({ page }) => {
+    // Navigate to a hamper detail page
+    await page.goto('/hampers');
+    const firstHamperLink = page.locator('a[href*="/hampers/"]').first();
+    if (await firstHamperLink.isVisible()) {
+      await firstHamperLink.click();
+      
+      // Check for wishlist icon beside Add to Cart
+      const detailWishlistBtn = page.locator('button[aria-label="Toggle Wishlist"]');
+      await expect(detailWishlistBtn.first()).toBeVisible({ timeout: 10000 });
+
+      // Check header wishlist icon link
+      const headerWishlist = page.locator('a[href="/account/wishlist"]');
+      await expect(headerWishlist).toBeVisible({ timeout: 10000 });
     }
   });
 

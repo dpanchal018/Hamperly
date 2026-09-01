@@ -1,9 +1,9 @@
 'use server';
 import { requireAdmin } from '@/services/auth.service';
-
 import { createClient } from '@/lib/supabase/server';
 import { PreMadeHamper } from '@/types/database.types';
 import { revalidatePath } from 'next/cache';
+import { PublicProduct } from '@/services/catalog.service';
 
 export async function getHampers() {
   const supabase = await createClient();
@@ -28,25 +28,31 @@ export async function getPublicHampers() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching public hampers:', error.message || error, error.details, error.hint, error.code);
+    console.error('Error fetching public hampers:', error.message || error);
     return [];
   }
   return hampers as PreMadeHamper[];
 }
 
 export async function getHamperById(id: string) {
+  if (!id) return null;
   const supabase = await createClient();
-  const { data: hamper, error } = await supabase
-    .from('hampers')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  let query = supabase.from('hampers').select('*, occasion:occasions(name, slug)');
+  if (isUuid) {
+    query = query.eq('id', id);
+  } else {
+    query = query.eq('slug', id);
+  }
+
+  const { data: hamper, error } = await query.maybeSingle();
 
   if (error) {
-    console.error('Error fetching hamper:', error);
+    console.error('Error fetching hamper:', error.message || error);
     return null;
   }
-  return hamper as PreMadeHamper;
+  return hamper as PreMadeHamper | null;
 }
 
 export async function createHamper(data: Partial<PreMadeHamper>) {
@@ -123,8 +129,6 @@ export async function deleteHamper(id: string) {
   return { success: true };
 }
 
-import { PublicProduct } from '@/services/catalog.service';
-
 export interface HamperItemRequest {
   productId: string;
   quantity: number;
@@ -193,7 +197,6 @@ export async function validateAndCalculateHamper(requestedItems: HamperItemReque
 
   if (error) {
     console.error('Error fetching products for hamper validation:', error);
-    // Return empty state if we can't fetch, avoid exposing DB errors
     return response;
   }
 
@@ -295,10 +298,10 @@ export async function validateAndCalculateHamper(requestedItems: HamperItemReque
 
   return response;
 }
+
 export async function bulkUpsertHampers(data: Partial<PreMadeHamper>[]) {
   const supabase = await createClient();
   
-  // Get existing hampers to check for updates by name (case-insensitive)
   const { data: existingHampers } = await supabase.from('hampers').select('id, name');
   const existingMap = new Map();
   if (existingHampers) {
@@ -327,12 +330,10 @@ export async function bulkUpsertHampers(data: Partial<PreMadeHamper>[]) {
     };
 
     if (existingId) {
-      // Update
       const { error } = await supabase.from('hampers').update(payload).eq('id', existingId);
       if (error) errors.push(`Failed to update ${item.name}: ${error.message}`);
       else successCount++;
     } else {
-      // Insert
       const { error } = await supabase.from('hampers').insert({
         ...payload,
         created_at: new Date().toISOString(),

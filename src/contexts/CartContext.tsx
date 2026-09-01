@@ -4,20 +4,44 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { fetchCartFromCloud, saveCartToCloud } from '@/actions/cart.actions';
 
 export interface CartItem {
-  id: string; // Hamper ID or Product ID
+  id: string; // Unique instance ID for personalized hamper or pre-made / product id
   name: string;
   price: number;
   imageUrl: string | null;
   quantity: number;
   maxQuantity: number;
-  itemType?: 'HAMPER' | 'PRODUCT'; // Default is HAMPER if undefined
+  itemType?: 'HAMPER' | 'PRODUCT' | 'PERSONALIZED_HAMPER';
+
+  // Specific to PERSONALIZED_HAMPER
+  occasion?: { id: string; name: string; slug?: string };
+  products?: {
+    id: string;
+    name: string;
+    price: number;
+    actualCost?: number;
+    quantity: number;
+    imageUrl?: string | null;
+    categoryName?: string;
+  }[];
+  customizations?: {
+    categoryId: string;
+    categoryName: string;
+    optionId: string;
+    optionName: string;
+    price: number;
+  }[];
+  personalMessage?: string;
+  recipient?: string;
+  productsSubtotal?: number;
+  customizationsSubtotal?: number;
 }
 
 interface CartContextType {
   items: CartItem[];
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
-  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }, quantity?: number) => void;
+  updateItem: (id: string, updatedFields: Partial<CartItem>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -51,15 +75,12 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
 
       // 2. If logged in, fetch cloud cart and merge guest cart
       if (userId !== 'guest') {
-        // Fetch cloud cart
         const cloudRes = await fetchCartFromCloud();
         const cloudItems = (cloudRes.success && cloudRes.items) ? cloudRes.items : [];
         
         const mergedMap = new Map<string, CartItem>();
-        // Add cloud items first
         cloudItems.forEach((item: CartItem) => mergedMap.set(item.id, item));
         
-        // Add local items (if any exist before login that weren't caught by guest cart)
         currentItems.forEach(item => {
           if (!mergedMap.has(item.id)) {
              mergedMap.set(item.id, item);
@@ -80,7 +101,6 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
                   mergedMap.set(guestItem.id, guestItem);
                 }
               });
-              // Clear the guest cart after merging
               localStorage.removeItem('hamperly_cart_guest');
             }
           } catch (e) {
@@ -103,34 +123,36 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
     if (isInitialized) {
       localStorage.setItem(storageKey, JSON.stringify(items));
       if (userId !== 'guest') {
-        // Fire & forget cloud sync
         saveCartToCloud(items).catch(err => console.error('Cloud sync failed:', err));
       }
     }
   }, [items, isInitialized, storageKey, userId]);
 
-  const addItem = useCallback((newItem: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
+  const addItem = useCallback((newItem: Omit<CartItem, 'quantity'> & { quantity?: number }, quantity: number = 1) => {
+    const qty = newItem.quantity || quantity || 1;
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === newItem.id);
       
       if (existingItem) {
-        // If maxQuantity is null, it's unlimited. Otherwise, cap it.
         const newQuantity = existingItem.maxQuantity !== null 
-          ? Math.min(existingItem.quantity + quantity, existingItem.maxQuantity)
-          : existingItem.quantity + quantity;
+          ? Math.min(existingItem.quantity + qty, existingItem.maxQuantity)
+          : existingItem.quantity + qty;
           
         return prevItems.map(item => 
-          item.id === newItem.id ? { ...item, quantity: newQuantity } : item
+          item.id === newItem.id ? { ...item, ...newItem, quantity: newQuantity } : item
         );
       }
       
-      // If maxQuantity is null, it's unlimited. Otherwise, cap it.
       const initialQuantity = newItem.maxQuantity !== null
-        ? Math.min(quantity, newItem.maxQuantity)
-        : quantity;
+        ? Math.min(qty, newItem.maxQuantity)
+        : qty;
 
       return [...prevItems, { ...newItem, quantity: initialQuantity }];
     });
+  }, []);
+
+  const updateItem = useCallback((id: string, updatedFields: Partial<CartItem>) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, ...updatedFields } : item));
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -144,7 +166,7 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
       }
       return prevItems.map(item => {
         if (item.id === id) {
-          const validQuantity = Math.min(quantity, item.maxQuantity);
+          const validQuantity = item.maxQuantity ? Math.min(quantity, item.maxQuantity) : quantity;
           return { ...item, quantity: validQuantity };
         }
         return item;
@@ -165,6 +187,7 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
       isCartOpen,
       setIsCartOpen,
       addItem,
+      updateItem,
       removeItem,
       updateQuantity,
       clearCart,

@@ -1,6 +1,5 @@
 'use client';
 
-import { useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { toggleWishlistItem } from '@/actions/wishlist.actions';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -14,31 +13,32 @@ interface WishlistButtonProps {
 
 export function WishlistButton({ itemId, itemType, className = '' }: WishlistButtonProps) {
   const { wishlistedHampers, wishlistedProducts, toggleLocalState, isLoaded } = useWishlist();
-  const [isPending, startTransition] = useTransition();
 
   const isWishlisted = itemType === 'HAMPER' 
     ? wishlistedHampers.has(itemId) 
     : wishlistedProducts.has(itemId);
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     e.stopPropagation();
 
-    // Optimistic update
+    // Instant optimistic update (0ms feedback)
     toggleLocalState(itemId, itemType);
 
-    startTransition(async () => {
+    try {
       const res = await toggleWishlistItem(itemId, itemType);
-      if (res.error) {
+      if (res?.error) {
         // Revert on error
         toggleLocalState(itemId, itemType);
         toast.error(res.error);
-      } else {
-        if (res.isWishlisted) {
-          toast.success('Saved to wishlist \u2764\uFE0F', { icon: '\u2764\uFE0F' });
-        }
+      } else if (res?.isWishlisted) {
+        toast.success('Saved to wishlist ❤️', { icon: '❤️' });
       }
-    });
+    } catch {
+      // Revert on unexpected network failure
+      toggleLocalState(itemId, itemType);
+      toast.error('Unable to update wishlist. Please try again.');
+    }
   };
 
   if (!isLoaded) return null; // Prevent hydration mismatch flash
@@ -46,8 +46,7 @@ export function WishlistButton({ itemId, itemType, className = '' }: WishlistBut
   return (
     <button
       onClick={handleToggle}
-      disabled={isPending}
-      className={`absolute top-3 right-3 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-slate-100 hover:scale-110 transition-transform z-20 ${className}`}
+      className={`absolute top-3 right-3 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm border border-slate-100 hover:scale-110 active:scale-95 transition-transform z-20 ${className}`}
       aria-label="Toggle Wishlist"
     >
       <Heart 
