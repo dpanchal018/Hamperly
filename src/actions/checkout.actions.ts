@@ -372,7 +372,7 @@ export async function placeCustomerOrder(
 ${itemsList}
       `.trim();
 
-      await sendTelegramMessage(tgMsg, 'ORDER');
+      await sendTelegramMessage(tgMsg, 'ALERT');
     } catch (tgErr) {
       console.error("Telegram notification error:", tgErr);
     }

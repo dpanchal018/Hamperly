@@ -83,7 +83,7 @@ export function HamperCard({ hamper }: HamperCardProps) {
         ) : null}
 
         {/* Media / Image Container */}
-        <Link href={`/hampers/${hamper.slug}`} className="relative aspect-[4/5] overflow-hidden bg-primary/5 flex items-center justify-center">
+        <Link href={`/hampers/${hamper.id}`} className="relative aspect-[4/5] overflow-hidden bg-primary/5 flex items-center justify-center">
           <div className="absolute top-3 right-3 z-20 flex">
             <WishlistButton itemId={hamper.id} itemType="HAMPER" className="!relative !top-0 !right-0" />
           </div>
@@ -110,14 +110,14 @@ export function HamperCard({ hamper }: HamperCardProps) {
         <div className="p-6 flex flex-col flex-1">
           <div className="flex justify-between items-start mb-3">
             <div className="text-xs font-semibold text-primary/70 bg-primary/5 px-3 py-1 rounded-full">
-              {hamper.occasion ? hamper.occasion.name : 'Exclusive Collection'}
+              {'Exclusive Collection'}
             </div>
             <div className={`text-[10px] font-bold px-2 py-1 rounded-full ${getStatusColor(status)}`}>
               {customerStatus}
             </div>
           </div>
           
-          <Link href={`/hampers/${hamper.slug}`} className="hover:text-primary transition-colors mb-2">
+          <Link href={`/hampers/${hamper.id}`} className="hover:text-primary transition-colors mb-2">
             <h3 className="font-serif font-bold text-foreground text-xl leading-snug line-clamp-2" title={hamper.name}>
               {hamper.name}
             </h3>

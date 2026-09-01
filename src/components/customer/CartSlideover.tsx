@@ -244,7 +244,6 @@ export function CartSlideover({ user }: { user?: any }) {
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
-        onSuccess={() => setShowAuthModal(false)}
       />
     </>
   );
