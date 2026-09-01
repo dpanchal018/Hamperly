@@ -2,7 +2,7 @@
 
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, X, Minus, Plus, PackageOpen } from 'lucide-react';
+import { ShoppingBag, X, Minus, Plus, PackageOpen, Sparkles, Edit3, Heart, Sliders, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -29,10 +29,11 @@ export function CartSlideover({ user }: { user?: any }) {
   return (
     <>
       <div 
-        className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-[100] transition-opacity"
+        className="fixed inset-0 bg-foreground/20 backdrop-blur-xs z-[100] transition-opacity"
         onClick={() => setIsCartOpen(false)}
       />
-      <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-[101] flex flex-col transform transition-transform rounded-l-3xl">
+      <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-white shadow-2xl z-[101] flex flex-col transform transition-transform rounded-l-3xl">
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-primary/10">
           <div className="flex items-center space-x-2 text-primary">
             <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
@@ -49,148 +50,201 @@ export function CartSlideover({ user }: { user?: any }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-background/50">
+        {/* Cart Items List */}
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-4">
           {items.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-12">
               <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-primary/40">
                 <ShoppingBag className="w-12 h-12" strokeWidth={1.5} />
               </div>
-              <p className="text-foreground/70 font-light text-lg">Your bag is empty.</p>
-              <Button 
-                onClick={() => setIsCartOpen(false)}
-                className="mt-4 rounded-full px-8 h-12 text-sm font-semibold bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
-              >
-                Browse Collection
-              </Button>
+              <div>
+                <p className="text-foreground font-semibold text-lg">Your bag is empty.</p>
+                <p className="text-slate-500 text-sm mt-1">Explore our collection or create a bespoke hamper.</p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs">
+                <Button 
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    router.push('/build');
+                  }}
+                  className="rounded-full h-12 text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" /> Create a Hamper
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    router.push('/hampers');
+                  }}
+                  variant="outline"
+                  className="rounded-full h-12 text-sm font-semibold border-slate-200 text-slate-700"
+                >
+                  Browse Hampers
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              {items.map((item) => (
-                <div key={item.id} className="flex space-x-4 bg-white p-4 rounded-3xl shadow-sm border border-primary/5">
-                  <div className="w-20 h-20 bg-primary/5 rounded-2xl flex items-center justify-center relative flex-shrink-0 overflow-hidden">
-                    {item.imageUrl ? (
-                      <Image 
-                        src={item.imageUrl} 
-                        alt={item.name} 
-                        fill
-                        sizes="80px"
-                        className="object-cover" 
-                      />
-                    ) : (
-                      <div className="text-primary/30">
-                        {item.itemType === 'PRODUCT' ? <PackageOpen className="w-8 h-8" strokeWidth={1.5} /> : <ShoppingBag className="w-8 h-8" strokeWidth={1.5} />}
+            <div className="space-y-4">
+              {items.map((item) => {
+                const isPersonalized = item.itemType === 'PERSONALIZED_HAMPER';
+
+                return (
+                  <div key={item.id} className="bg-white p-5 rounded-3xl shadow-xs border border-slate-200/80 space-y-3">
+                    {/* Item Top Info */}
+                    <div className="flex space-x-4">
+                      <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center relative shrink-0 overflow-hidden border border-slate-100">
+                        {item.imageUrl ? (
+                          <Image 
+                            src={item.imageUrl} 
+                            alt={item.name} 
+                            fill
+                            sizes="80px"
+                            className="object-cover" 
+                          />
+                        ) : (
+                          <div className="text-rose-400">
+                            {isPersonalized ? <Sparkles className="w-8 h-8" /> : item.itemType === 'PRODUCT' ? <PackageOpen className="w-8 h-8" /> : <ShoppingBag className="w-8 h-8" />}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col flex-1 min-w-0 justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-1 gap-2">
+                            <div>
+                              {isPersonalized && item.occasion && (
+                                <span className="inline-block text-[10px] font-bold text-rose-600 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded-full mb-1">
+                                  {item.occasion.name}
+                                </span>
+                              )}
+                              <h3 className="font-bold text-slate-900 pr-2 text-sm leading-tight line-clamp-2">
+                                {item.name}
+                              </h3>
+                            </div>
+                            <button 
+                              onClick={() => removeItem(item.id)}
+                              className="text-slate-400 hover:text-red-500 transition-colors shrink-0 p-1"
+                              title="Remove item"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <p className="text-slate-900 font-bold text-sm">₹{item.price.toFixed(2)}</p>
+                        </div>
+                        
+                        {/* Quantity controls */}
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
+                          <div className="flex items-center border border-slate-200 rounded-full w-fit bg-slate-50">
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              aria-label="Decrease quantity"
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="w-6 text-center text-xs font-bold text-slate-900">
+                              {item.quantity}
+                            </span>
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              aria-label="Increase quantity"
+                              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                              disabled={item.maxQuantity ? item.quantity >= item.maxQuantity : false}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Edit button for Personalized Hampers */}
+                          {isPersonalized && (
+                            <button
+                              onClick={() => {
+                                setIsCartOpen(false);
+                                router.push(`/build?editCartId=${item.id}`);
+                              }}
+                              className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-full transition-colors"
+                            >
+                              <Edit3 className="w-3 h-3" /> Edit Hamper
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Breakdown list for Personalized Hamper */}
+                    {isPersonalized && item.products && item.products.length > 0 && (
+                      <div className="bg-slate-50 p-3 rounded-2xl space-y-2 text-xs border border-slate-100">
+                        <div className="text-slate-500 font-semibold">
+                          Products ({item.products.reduce((acc, p) => acc + p.quantity, 0)}):
+                        </div>
+                        <div className="space-y-1 text-slate-700">
+                          {item.products.map((p, pIdx) => (
+                            <div key={pIdx} className="flex justify-between">
+                              <span className="truncate pr-2">• {p.name} × {p.quantity}</span>
+                              <span className="shrink-0 font-medium">₹{(p.price * p.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {item.customizations && item.customizations.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200/60 space-y-1">
+                            <div className="text-slate-500 font-semibold">Customizations:</div>
+                            {item.customizations.map((c, cIdx) => (
+                              <div key={cIdx} className="flex justify-between text-slate-700">
+                                <span className="truncate pr-2">• {c.categoryName}: {c.optionName}</span>
+                                <span className="shrink-0 font-medium">{c.price > 0 ? `+₹${c.price.toFixed(2)}` : 'Included'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {item.personalMessage && (
+                          <div className="pt-2 border-t border-slate-200/60 text-slate-600 italic">
+                            Message: "{item.personalMessage}"
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                  
-                  <div className="flex flex-col flex-1 min-w-0 justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-bold text-foreground pr-4 text-sm leading-tight">{item.name}</h3>
-                        <button 
-                          onClick={() => removeItem(item.id)}
-                          className="text-foreground/40 hover:text-red-500 transition-colors shrink-0"
-                        >
-                          <X className="w-4 h-4" strokeWidth={1.5} />
-                        </button>
-                      </div>
-                      <p className="text-primary font-bold text-sm">₹{item.price.toFixed(2)}</p>
-                    </div>
-                    
-                    <div className="flex items-center mt-2 border border-primary/10 rounded-full w-fit bg-primary/5">
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        aria-label="Decrease quantity"
-                        className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors disabled:opacity-50"
-                      >
-                        <Minus className="w-3 h-3" strokeWidth={2} />
-                      </button>
-                      <span className="w-6 text-center text-sm font-bold text-primary">
-                        {item.quantity}
-                      </span>
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        aria-label="Increase quantity"
-                        className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors disabled:opacity-50"
-                        disabled={item.quantity >= item.maxQuantity}
-                      >
-                        <Plus className="w-3 h-3" strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Add-on Customizations Section */}
-              <div className="mt-8 pt-6 border-t border-primary/10">
-                <h4 className="text-sm font-bold text-foreground mb-4">
-                  Add Extras & Treats
-                </h4>
-                <div>
-                  <select 
-                    className="w-full text-sm border border-primary/20 focus:border-primary focus:ring-1 focus:ring-primary bg-white p-4 font-light text-foreground rounded-2xl outline-none shadow-sm"
-                    onChange={(e) => {
-                      const prodId = e.target.value;
-                      if (!prodId) return;
-                      const product = products.find(p => p.id === prodId);
-                      if (product) {
-                        addItem({
-                          id: product.id,
-                          name: product.name,
-                          price: product.selling_price,
-                          imageUrl: product.image_url,
-                          maxQuantity: product.stock_quantity,
-                          itemType: 'PRODUCT'
-                        });
-                      }
-                      e.target.value = ''; // Reset select
-                    }}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Select an extra item...</option>
-                    {products.map(p => {
-                      const inCart = items.find(i => i.id === p.id);
-                      if (inCart) return null; // hide if already in cart
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {p.name} — ₹{p.selling_price.toFixed(2)}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           )}
         </div>
 
+        {/* Footer Checkout Bar */}
         {items.length > 0 && (
-          <div className="border-t border-primary/10 p-6 bg-white rounded-bl-3xl">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-foreground/70 font-bold">Subtotal</span>
-              <span className="text-2xl font-serif font-bold text-primary">₹{subtotal.toFixed(2)}</span>
+          <div className="p-6 bg-white border-t border-slate-100 shadow-lg space-y-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between text-slate-500 font-light">
+                <span>Subtotal</span>
+                <span className="font-bold text-slate-900 text-base">₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-slate-400 text-xs font-light">
+                <span>Shipping & Delivery</span>
+                <span>Calculated at checkout</span>
+              </div>
             </div>
-            <p className="text-xs text-foreground/50 font-light mb-6 text-center">
-              Shipping & taxes calculated at checkout.
-            </p>
-            <button 
+
+            <Button 
               onClick={() => {
-                if (!user) {
-                  setShowAuthModal(true);
-                } else {
-                  setIsCartOpen(false);
-                  router.push('/checkout');
-                }
+                setIsCartOpen(false);
+                router.push('/checkout');
               }}
-              className="w-full flex items-center justify-center h-14 bg-primary hover:bg-primary/90 text-white rounded-full font-bold shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02]"
+              className="w-full rounded-full py-4 h-14 bg-rose-600 hover:bg-rose-700 text-white font-bold text-base shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2"
             >
-              Proceed to Checkout
-            </button>
+              <span>Proceed to Checkout</span>
+              <span className="font-mono font-normal">|</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </Button>
           </div>
         )}
       </div>
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </>
   );
 }

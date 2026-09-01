@@ -1,16 +1,15 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { PublicProduct } from '@/services/catalog.service';
-import { validateAndCalculateHamper, HamperValidationIssue, ValidatedHamperItem } from '@/actions/hamper.actions';
-
+import { validateAndCalculateHamper, HamperValidationIssue } from '@/actions/hamper.actions';
 import { PersonalizationData } from '@/types/personalization.types';
 import { DEFAULT_PERSONALIZATION } from '@/config/personalization.config';
 
 export interface SelectedItem {
   product: PublicProduct;
   quantity: number;
-  lineTotal?: number; // Added from validation
+  lineTotal?: number;
 }
 
 interface SelectionContextType {
@@ -36,36 +35,72 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [totalPrice, setTotalPrice] = useState(0);
   const [isValidating, setIsValidating] = useState(false);
   const [issues, setIssues] = useState<HamperValidationIssue[]>([]);
+  const isMountedRef = useRef(true);
 
-  // Load from local storage on mount
   useEffect(() => {
-    const savedItems = localStorage.getItem('hamperly_selection');
-    const savedPersonalization = localStorage.getItem('hamperly_personalization');
-    
-    if (savedItems) {
-      try {
-        setItems(JSON.parse(savedItems));
-      } catch (e) {
-        console.error('Failed to parse selection from local storage', e);
-      }
-    }
-    
-    if (savedPersonalization) {
-      try {
-        setPersonalizationState(JSON.parse(savedPersonalization));
-      } catch (e) {
-        console.error('Failed to parse personalization from local storage', e);
-      }
-    }
-    
-    setIsInitialized(true);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
-  // Save to local storage on change
+  // Load from local storage on mount (checking both hamperly_selection and hamperly_builder_draft_v2)
   useEffect(() => {
-    if (isInitialized) {
+    let initialItems: SelectedItem[] = [];
+
+    const savedDraft = localStorage.getItem('hamperly_builder_draft_v2');
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (Array.isArray(parsedDraft.selectedProducts) && parsedDraft.selectedProducts.length > 0) {
+          initialItems = parsedDraft.selectedProducts;
+        }
+      } catch (e) {
+        console.error('Failed to parse builder draft', e);
+      }
+    }
+
+    if (initialItems.length === 0) {
+      const savedItems = localStorage.getItem('hamperly_selection');
+      if (savedItems) {
+        try {
+          initialItems = JSON.parse(savedItems);
+        } catch (e) {
+          console.error('Failed to parse selection', e);
+        }
+      }
+    }
+
+    if (isMountedRef.current) {
+      setItems(initialItems);
+
+      const savedPersonalization = localStorage.getItem('hamperly_personalization');
+      if (savedPersonalization) {
+        try {
+          setPersonalizationState(JSON.parse(savedPersonalization));
+        } catch (e) {
+          console.error('Failed to parse personalization', e);
+        }
+      }
+      
+      setIsInitialized(true);
+    }
+  }, []);
+
+  // Save to local storage on change and sync with hamperly_builder_draft_v2
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
       localStorage.setItem('hamperly_selection', JSON.stringify(items));
       localStorage.setItem('hamperly_personalization', JSON.stringify(personalization));
+
+      // Sync into builder draft
+      const currentDraftRaw = localStorage.getItem('hamperly_builder_draft_v2');
+      let currentDraft = currentDraftRaw ? JSON.parse(currentDraftRaw) : {};
+      currentDraft.selectedProducts = items;
+      localStorage.setItem('hamperly_builder_draft_v2', JSON.stringify(currentDraft));
+    } catch (e) {
+      console.error('Failed to sync selection storage', e);
     }
   }, [items, personalization, isInitialized]);
 
@@ -76,19 +111,28 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   // Sync with backend validation whenever items change
   useEffect(() => {
     if (!isInitialized) return;
+    let isActive = true;
 
     const syncWithBackend = async () => {
+      if (!isActive || !isMountedRef.current) return;
       setIsValidating(true);
       try {
         const requestItems = items.map(i => ({ productId: i.product.id, quantity: i.quantity }));
+        if (requestItems.length === 0) {
+          if (isActive && isMountedRef.current) {
+            setTotalPrice(0);
+            setIssues([]);
+          }
+          return;
+        }
+
         const response = await validateAndCalculateHamper(requestItems);
-        
+        if (!isActive || !isMountedRef.current) return;
+
         setTotalPrice(response.subtotal);
         setIssues(response.issues);
         
         let needsUpdate = false;
-        
-        // Check if we need to update the local state to match authoritative state
         const newItems: SelectedItem[] = [];
         for (const item of items) {
           const validated = response.items.find(v => v.product.id === item.product.id);
@@ -99,29 +143,31 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
               quantity: validated.validatedQuantity,
               lineTotal: validated.lineTotal
             });
-            // If quantity changed due to stock limits or line total wasn't set, we need to update
             if (validated.validatedQuantity !== item.quantity || validated.lineTotal !== item.lineTotal || validated.product.selling_price !== item.product.selling_price) {
               needsUpdate = true;
             }
           } else {
-            // Item was removed by backend
             needsUpdate = true;
           }
         }
 
-        if (needsUpdate || newItems.length !== items.length) {
+        if (isActive && isMountedRef.current && (needsUpdate || newItems.length !== items.length)) {
           setItems(newItems);
         }
-
       } catch (error) {
         console.error('Failed to validate hamper', error);
       } finally {
-        setIsValidating(false);
+        if (isActive && isMountedRef.current) {
+          setIsValidating(false);
+        }
       }
     };
 
     const timeoutId = setTimeout(syncWithBackend, 300);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+    };
   }, [items, isInitialized]);
 
   const addItem = (product: PublicProduct) => {
@@ -186,4 +232,3 @@ export function useSelection() {
   }
   return context;
 }
-

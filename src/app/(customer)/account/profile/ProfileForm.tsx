@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { updateCustomerProfile } from "@/actions/customer.actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -9,6 +9,13 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,7 +30,8 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
       setError(result.error || "An error occurred");
     } else {
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setSuccess(false), 3000);
     }
     setLoading(false);
   };
@@ -59,32 +67,34 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
       </div>
 
       <div>
-        <label htmlFor="mobileNumber" className="block text-sm font-medium text-slate-700 mb-2">
-          Mobile Number (Optional)
+        <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-2">
+          Phone Number
         </label>
         <input
           type="tel"
-          id="mobileNumber"
-          name="mobileNumber"
+          id="phone"
+          name="phone"
           defaultValue={initialPhone}
+          required
           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all outline-none"
           placeholder="+91 98765 43210"
         />
       </div>
 
-      <div className="pt-2">
-        <Button 
-          type="submit" 
-          disabled={loading}
-          className="bg-slate-900 hover:bg-rose-600 text-white rounded-xl px-8 h-12 transition-all duration-300 min-w-[160px]"
-        >
-          {loading ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
-      </div>
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full py-3 h-12 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-lg shadow-rose-200 transition-all"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            Saving Changes...
+          </>
+        ) : (
+          "Save Changes"
+        )}
+      </Button>
     </form>
   );
 }

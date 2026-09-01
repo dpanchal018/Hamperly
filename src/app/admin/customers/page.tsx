@@ -1,5 +1,5 @@
 import { getAllCustomers } from '@/actions/customer.actions';
-import { createClient } from '@/lib/supabase/server';
+import { getAdminCustomerWishlists } from '@/actions/wishlist.actions';
 import { Users, Mail, Phone, Lock, Calendar, Heart } from 'lucide-react';
 import { AutoRefresh } from '@/components/admin/AutoRefresh';
 import { BroadcastButton } from '@/components/admin/BroadcastButton';
@@ -8,18 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function CustomersPage() {
   const { customers } = await getAllCustomers();
-  const supabase = await createClient();
-
-  // Fetch wishlists
-  const { data: wishlists } = await supabase.from('wishlists').select('*, hamper:hampers(name), product:products(name)');
-
-  // Group by user_id
-  const userWishlists = wishlists?.reduce((acc: any, w: any) => {
-    if (!acc[w.user_id]) acc[w.user_id] = [];
-    const name = w.hamper?.name || w.product?.name;
-    if (name) acc[w.user_id].push(name);
-    return acc;
-  }, {}) || {};
+  const userWishlists = await getAdminCustomerWishlists();
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">

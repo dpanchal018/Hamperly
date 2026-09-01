@@ -70,11 +70,11 @@ export default async function HomePage() {
           <h1 className="text-5xl md:text-7xl font-extrabold font-serif text-foreground mb-4 max-w-4xl tracking-tight leading-tight">
             Gifting made <span className="font-script text-primary font-normal text-6xl md:text-8xl lowercase">beautiful</span>
           </h1>
-          <p className="text-lg md:text-xl text-foreground/70 font-light max-w-2xl mx-auto mb-4 leading-relaxed">
+          <p className="text-lg md:text-xl text-foreground/70 font-light max-w-2xl mx-auto mb-6 leading-relaxed">
             Curate the perfect present with our exquisite selection of premium goods, stunning floral arrangements, and personalized touches.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/products">
+            <Link href="/build">
               <Button size="lg" className="rounded-full px-8 h-14 text-lg bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all hover:scale-105">
                 Build Your Hamper
               </Button>
@@ -141,19 +141,19 @@ export default async function HomePage() {
           <FadeInScroll>
             <div className="flex justify-between items-end mb-8">
               <div>
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-3">Shop by Occasion</h2>
-                <p className="text-foreground/70">Find the perfect gift for every celebration.</p>
+                <span className="text-xs font-semibold tracking-wider text-primary uppercase">Celebrate Every Moment</span>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mt-1">Shop by Occasion</h2>
               </div>
-              <Link href="/occasions" className="hidden md:flex items-center text-primary font-bold hover:text-primary/80 transition-colors">
-                View all <ArrowRight className="w-4 h-4 ml-2" />
+              <Link href="/occasions" className="hidden sm:inline-flex items-center text-primary font-semibold hover:underline">
+                View All Collections <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </FadeInScroll>
 
           <StaggerScrollContainer>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {featuredOccasions.map((occasion) => (
-                <div key={occasion.id} className="h-[300px]">
+                <div key={occasion.id} className="h-72">
                   <OccasionCard occasion={occasion} />
                 </div>
               ))}
@@ -162,60 +162,36 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Builder CTA */}
-      <section className="py-12 md:py-16 relative z-10">
-        <div className="container mx-auto px-4">
-          <FadeInScroll>
-            <div className="bg-gradient-to-r from-primary to-[#D44D87] rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-primary/20">
-              {/* Soft decorative circles inside CTA */}
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4 relative z-10">
-                Design Your Masterpiece
-              </h2>
-              <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto mb-4 relative z-10">
-                Choose the perfect box, add premium products, select a beautiful ribbon, and write a personalized note. We'll handle the rest.
-              </p>
-              <Link href="/products" className="relative z-10">
-                <Button size="lg" className="rounded-full px-10 h-16 text-lg bg-white text-primary hover:bg-white/90 hover:scale-105 transition-all shadow-lg text-bold">
-                  Start Crafting <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </FadeInScroll>
-        </div>
-      </section>
-
-      {/* Featured Pre-made Hampers */}
+      {/* Featured Hampers */}
       <section className="py-12 md:py-16 relative z-10 bg-white/50 backdrop-blur-sm border-t border-primary/10">
         <div className="container mx-auto px-4">
           <FadeInScroll>
-            <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">Curated Collections</h2>
-              <p className="text-foreground/70">Beautifully pre-designed hampers ready to be gifted.</p>
-            </div>
-          </FadeInScroll>
-
-          <StaggerScrollContainer>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredHampers.map((hamper) => (
-                <div key={hamper.id} className="h-full">
-                  <HamperCard hamper={hamper} />
-                </div>
-              ))}
-            </div>
-          </StaggerScrollContainer>
-
-          <FadeInScroll delay={0.3}>
-            <div className="text-center mt-8">
-              <Link href="/hampers">
-                <Button variant="outline" size="lg" className="rounded-full px-8 border-primary/20 text-primary hover:bg-primary/5">
-                  View All Hampers
-                </Button>
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <span className="text-xs font-semibold tracking-wider text-primary uppercase">Bestsellers</span>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mt-1">Featured Hampers</h2>
+              </div>
+              <Link href="/hampers" className="hidden sm:inline-flex items-center text-primary font-semibold hover:underline">
+                View All Hampers <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </FadeInScroll>
+
+          {featuredHampers.length > 0 ? (
+            <StaggerScrollContainer>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredHampers.map((hamper) => (
+                  <div key={hamper.id} className="h-[460px]">
+                    <HamperCard hamper={hamper} />
+                  </div>
+                ))}
+              </div>
+            </StaggerScrollContainer>
+          ) : (
+            <div className="text-center py-12 text-foreground/50">
+              No featured hampers available at the moment.
+            </div>
+          )}
         </div>
       </section>
 

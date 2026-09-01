@@ -41,17 +41,18 @@ async function sendTelegram(text) {
 }
 
 // 2. Server Ping
-function pingServer(url, timeoutMs = 2000) {
-  return new Promise((resolve) => {
-    const req = http.get(url, { timeout: timeoutMs }, (res) => {
-      resolve(res.statusCode >= 200 && res.statusCode < 400);
-    });
-    req.on('error', () => resolve(false));
-    req.on('timeout', () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
+async function pingServer(url, timeoutMs = 3000) {
+  try {
+    const res = await fetch('http://127.0.0.1:3000/', { signal: AbortSignal.timeout(timeoutMs) });
+    return res.status >= 200 && res.status < 500;
+  } catch {
+    try {
+      const res2 = await fetch('http://localhost:3000/', { signal: AbortSignal.timeout(timeoutMs) });
+      return res2.status >= 200 && res2.status < 500;
+    } catch {
+      return false;
+    }
+  }
 }
 
 // 3. Ensure Server is Running
@@ -77,8 +78,8 @@ async function ensureServerRunning() {
     detached: false
   });
 
-  // Poll until server responds (up to 45 seconds)
-  const maxAttempts = 45;
+  // Poll until server responds (up to 60 seconds)
+  const maxAttempts = 60;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     await new Promise(r => setTimeout(r, 1000));
     const ready = await pingServer(baseUrl);
@@ -96,7 +97,7 @@ async function ensureServerRunning() {
     }
   }
 
-  throw new Error('Failed to start Next.js dev server within 45 seconds.');
+  throw new Error('Failed to start Next.js dev server within 60 seconds.');
 }
 
 // 4. Test Database Cleanup
@@ -162,7 +163,7 @@ async function main() {
         'tests/e2e/07-concurrency-alerts'
       ].join(' ');
 
-      rawJsonOutput = execSync(`npx playwright test ${testPaths} --reporter=json`, {
+      rawJsonOutput = execSync(`npx playwright test ${testPaths} --workers=1 --reporter=json`, {
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe']
       });
@@ -241,6 +242,18 @@ async function main() {
   // Step H: Generate Markdown QA Report
   const reportsDir = path.join(process.cwd(), 'reports');
   if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+
+  // Clean old reports: keep only the latest one
+  try {
+    const existingReports = fs.readdirSync(reportsDir);
+    for (const file of existingReports) {
+      if (file.startsWith('qa-report-') && file.endsWith('.md')) {
+        fs.unlinkSync(path.join(reportsDir, file));
+      }
+    }
+  } catch (err) {
+    console.error('Failed to clean old reports:', err.message);
+  }
 
   const reportFileName = `qa-report-${dateString}-${timeString.replace(':', '')}.md`;
   const reportPath = path.join(reportsDir, reportFileName);

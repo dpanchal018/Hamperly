@@ -4,7 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { placeCustomerOrder } from '@/actions/checkout.actions';
-import { ShoppingBag, MapPin, Phone, User, Mail, Check, PackageOpen, Truck, Clock } from 'lucide-react';
+import { ShoppingBag, MapPin, Phone, User, Mail, Check, PackageOpen, Truck, Clock, Sparkles, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import vadodaraPincodes from '@/data/vadodara_pincodes.json';
@@ -110,8 +110,8 @@ export function CheckoutForm({ customer }: { customer: any }) {
 
       const result = await placeCustomerOrder(items, finalAddress, pincode, guestDetails);
       
-      if (result.error) {
-        toast.error(result.error);
+      if (!result.success || result.error) {
+        toast.error(result.error || 'Failed to place order');
         setIsSubmitting(false);
       } else {
         clearCart();
@@ -278,16 +278,49 @@ export function CheckoutForm({ customer }: { customer: any }) {
       <div className="lg:col-span-5 relative">
         <div className="sticky top-24 bg-white rounded-3xl p-8 border border-primary/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <h3 className="text-xl font-serif font-bold text-foreground mb-6 border-b border-primary/10 pb-4">Order Summary</h3>
-          <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-            {items.map((item, index) => (
-              <div key={index} className="flex justify-between items-start text-sm group">
-                <div className="flex-1 pr-4">
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{item.name}</p>
-                  <p className="text-foreground/50 mt-0.5">Qty: {item.quantity}</p>
+          <div className="space-y-4 mb-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            {items.map((item, index) => {
+              const isPersonalized = item.itemType === 'PERSONALIZED_HAMPER';
+
+              return (
+                <div key={index} className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+                  <div className="flex justify-between items-start text-sm">
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center gap-2">
+                        {isPersonalized && (
+                          <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> Bespoke Hamper
+                          </span>
+                        )}
+                        <p className="font-serif font-bold text-foreground">{item.name}</p>
+                      </div>
+                      <p className="text-foreground/50 text-xs mt-0.5">Qty: {item.quantity}</p>
+                    </div>
+                    <p className="font-semibold text-foreground whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString()}</p>
+                  </div>
+
+                  {/* Personalized details breakdown */}
+                  {isPersonalized && (
+                    <div className="pt-2 border-t border-slate-200/60 space-y-1 text-xs text-slate-500">
+                      {item.occasion && (
+                        <p><span className="font-medium text-slate-700">Theme:</span> {item.occasion.name}</p>
+                      )}
+                      {Array.isArray(item.products) && item.products.length > 0 && (
+                        <p><span className="font-medium text-slate-700">Gifts:</span> {item.products.map((p: any) => `${p.name} (×${p.quantity})`).join(', ')}</p>
+                      )}
+                      {Array.isArray(item.customizations) && item.customizations.length > 0 && (
+                        <p><span className="font-medium text-slate-700">Style:</span> {item.customizations.map((c: any) => `${c.categoryName}: ${c.optionName}`).join(', ')}</p>
+                      )}
+                      {item.personalMessage && (
+                        <p className="italic text-rose-700 bg-rose-50/50 p-2 rounded-lg border border-rose-100">
+                          &ldquo;{item.personalMessage}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="font-medium text-foreground whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString()}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           <div className="border-t border-primary/10 pt-4 mb-8 space-y-3">

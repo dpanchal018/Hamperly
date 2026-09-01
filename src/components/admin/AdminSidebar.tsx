@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   Package, Calendar, Folder, LayoutDashboard, 
   Image as ImageIcon, Settings, Star, Users, 
-  ShoppingBag, CheckCircle
+  ShoppingBag, CheckCircle, Sliders
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Hampers", href: "/admin/hampers", icon: ShoppingBag },
+  { name: "Customizations", href: "/admin/customizations", icon: Sliders },
   { name: "Reviews", href: "/admin/reviews", icon: Star },
   { name: "Occasions", href: "/admin/occasions", icon: Calendar },
   { name: "Categories", href: "/admin/categories", icon: Folder },

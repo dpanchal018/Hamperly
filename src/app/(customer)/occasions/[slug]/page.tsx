@@ -56,10 +56,15 @@ export default async function OccasionDetailPage(props: Props) {
               {occasion.name}
             </h1>
             {occasion.description && (
-              <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed mb-6">
                 {occasion.description}
               </p>
             )}
+            <Link href={`/build?occasion=${occasion.slug}`}>
+              <Button size="lg" className="rounded-full px-8 h-12 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-lg shadow-rose-900/30">
+                Curate a {occasion.name} Hamper
+              </Button>
+            </Link>
           </FadeInScroll>
         </div>
       </div>

@@ -1,7 +1,8 @@
-"use client";
-
+'use client';
+ 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getUserWishlistIds } from '@/actions/wishlist.actions';
+import { createClient } from '@/lib/supabase/client';
 import { usePathname } from 'next/navigation';
 
 interface WishlistContextType {
@@ -22,10 +23,35 @@ export function WishlistProvider({ children, userId }: { children: React.ReactNo
   const [wishlistedHampers, setWishlistedHampers] = useState<Set<string>>(new Set());
   const [wishlistedProducts, setWishlistedProducts] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeUserId, setActiveUserId] = useState<string | undefined>(userId);
   const pathname = usePathname();
 
+  // Sync activeUserId when server prop updates
   useEffect(() => {
-    if (!userId || userId === 'guest') {
+    setActiveUserId(userId);
+  }, [userId]);
+
+  // Listen to Supabase client auth state changes (login / logout)
+  useEffect(() => {
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const newUid = session?.user?.id;
+      if (newUid) {
+        setActiveUserId(newUid);
+      } else {
+        setActiveUserId('guest');
+        setWishlistedHampers(new Set());
+        setWishlistedProducts(new Set());
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeUserId || activeUserId === 'guest') {
       setWishlistedHampers(new Set());
       setWishlistedProducts(new Set());
       setIsLoaded(true);
@@ -33,13 +59,18 @@ export function WishlistProvider({ children, userId }: { children: React.ReactNo
     }
 
     async function load() {
-      const res = await getUserWishlistIds();
-      setWishlistedHampers(res.hampers);
-      setWishlistedProducts(res.products);
-      setIsLoaded(true);
+      try {
+        const res = await getUserWishlistIds();
+        setWishlistedHampers(new Set(res?.hampers || []));
+        setWishlistedProducts(new Set(res?.products || []));
+      } catch (err) {
+        console.error('Failed to load wishlist items:', err);
+      } finally {
+        setIsLoaded(true);
+      }
     }
     load();
-  }, [userId, pathname]); // Re-fetch on nav in case it updated
+  }, [activeUserId, pathname]);
 
   const toggleLocalState = (id: string, type: 'HAMPER' | 'PRODUCT') => {
     if (type === 'HAMPER') {

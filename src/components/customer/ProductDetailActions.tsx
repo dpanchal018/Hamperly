@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelection } from '@/contexts/SelectionContext';
 import { PublicProduct } from '@/services/catalog.service';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,13 @@ interface Props {
 export function ProductDetailActions({ product }: Props) {
   const { items, addItem, updateQuantity } = useSelection();
   const [adding, setAdding] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
   
   const status = getInventoryStatus(product.stock_quantity);
   const isOutOfStock = status === 'OUT OF STOCK';
@@ -25,7 +32,8 @@ export function ProductDetailActions({ product }: Props) {
     if (isOutOfStock) return;
     setAdding(true);
     addItem(product);
-    setTimeout(() => setAdding(false), 500);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setAdding(false), 500);
   };
   
   const handleIncrease = () => {

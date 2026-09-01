@@ -21,7 +21,8 @@ function WishlistNavButton() {
   return (
     <Link 
       href="/account/wishlist"
-      className="hidden md:flex relative text-foreground/70 hover:text-primary transition-colors p-2"
+      className="relative text-foreground/70 hover:text-primary transition-colors p-2"
+      aria-label="Wishlist"
     >
       <Heart className="w-5 h-5" strokeWidth={1.5} />
       {isLoaded && totalItems > 0 && (
@@ -55,7 +56,8 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = content.navLinks;
+  // Filter out Occasions from header nav links
+  const navLinks = (content.navLinks || []).filter(link => link.href !== '/occasions');
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-primary/10 shadow-sm">
@@ -137,17 +139,20 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
               </Link>
             ))}
             <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
+              <Link href="/products" className="flex items-center text-foreground hover:text-primary py-2" onClick={() => setMobileMenuOpen(false)}>
+                <Search className="w-5 h-5 mr-3" strokeWidth={1.5} />
+                Search
+              </Link>
               {user ? (
-                <>
-                  <Link href={role === 'ADMIN' ? "/admin" : "/account/orders"} className="text-base font-semibold text-foreground">
-                    {role === 'ADMIN' ? "Admin Dashboard" : "My Account"}
-                  </Link>
-                  <form action="/api/auth/logout" method="POST">
-                    <button type="submit" className="text-base font-semibold text-red-600 text-left">Sign Out</button>
-                  </form>
-                </>
+                <Link href="/account" className="text-foreground hover:text-primary font-semibold py-2" onClick={() => setMobileMenuOpen(false)}>
+                  My Account
+                </Link>
               ) : (
-                <Link href="/login" className="text-base font-semibold text-primary">Sign In</Link>
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full rounded-full bg-primary text-white hover:bg-primary/90">
+                    Sign In
+                  </Button>
+                </Link>
               )}
             </div>
           </nav>
