@@ -1,7 +1,7 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { User, Package, LogOut } from "lucide-react";
+import { User, Package, LogOut, FileText } from "lucide-react";
 import { PageTransition } from "@/components/ui/AnimatedWrapper";
 
 export default async function AccountLayout({
@@ -43,6 +43,13 @@ export default async function AccountLayout({
                 >
                   <Package className="w-5 h-5" />
                   <span>My Orders</span>
+                </Link>
+                <Link 
+                  href="/account/invoices"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors font-medium"
+                >
+                  <FileText className="w-5 h-5" />
+                  <span>My Invoices</span>
                 </Link>
                 <Link 
                   href="/account/profile"

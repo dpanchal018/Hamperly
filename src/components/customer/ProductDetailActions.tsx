@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSelection } from '@/contexts/SelectionContext';
+import { useCart } from '@/contexts/CartContext';
 import { PublicProduct } from '@/services/catalog.service';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus, ShoppingBag, Check } from 'lucide-react';
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function ProductDetailActions({ product }: Props) {
-  const { items, addItem, updateQuantity } = useSelection();
+  const { items, addItem, updateQuantity, setIsCartOpen } = useCart();
   const [adding, setAdding] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -25,13 +25,21 @@ export function ProductDetailActions({ product }: Props) {
   const status = getInventoryStatus(product.stock_quantity);
   const isOutOfStock = status === 'OUT OF STOCK';
   
-  const selectedItem = items.find(i => i.product.id === product.id);
+  const selectedItem = items.find(i => i.id === product.id && i.itemType === 'PRODUCT');
   const currentQuantity = selectedItem ? selectedItem.quantity : 0;
   
   const handleAdd = () => {
     if (isOutOfStock) return;
     setAdding(true);
-    addItem(product);
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.selling_price,
+      imageUrl: product.primary_image_url,
+      maxQuantity: product.stock_quantity,
+      itemType: 'PRODUCT'
+    }, 1);
+    setIsCartOpen(true);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setAdding(false), 500);
   };
@@ -73,9 +81,9 @@ export function ProductDetailActions({ product }: Props) {
             <Plus className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
-        <div className="text-sm font-semibold font-bold text-primary text-primary flex items-center">
+        <div className="text-sm font-semibold font-bold text-primary flex items-center">
           <Check className="w-4 h-4 mr-2" strokeWidth={2} />
-          In your hamper
+          In your bag
         </div>
       </div>
     );
@@ -90,7 +98,7 @@ export function ProductDetailActions({ product }: Props) {
       {adding ? (
         <><Check className="w-4 h-4 mr-3" /> Added</>
       ) : (
-        <><Plus className="w-4 h-4 mr-3" /> Add to Hamper</>
+        <><ShoppingBag className="w-4 h-4 mr-3" /> Add to Bag</>
       )}
     </Button>
   );

@@ -50,6 +50,7 @@ interface HamperBuilderContextType {
   nextStep: () => void;
   prevStep: () => void;
   loadFromCartItem: (cartItem: any) => void;
+  loadFromCartLooseItems: (cartItems: any[], allProducts: any[]) => void;
   resetBuilder: () => void;
 }
 
@@ -229,6 +230,7 @@ export function HamperBuilderProvider({
           slug: '',
           description: null,
           category_id: '',
+          category: null,
           stock_quantity: 99,
           status: 'active' as any,
           selling_price: p.price,
@@ -253,6 +255,40 @@ export function HamperBuilderProvider({
     setPersonalMessageState(cartItem.personalMessage || '');
     setRecipientState(cartItem.recipient || '');
     setCurrentStep(5); // Land on review for quick confirmation
+  }, []);
+
+  const loadFromCartLooseItems = useCallback((cartItems: any[], allProducts: PublicProduct[]) => {
+    const looseItems = cartItems.filter(i => i.itemType === 'PRODUCT');
+    if (looseItems.length === 0) return;
+    
+    const reconstructed: SelectedHamperProduct[] = looseItems.map(item => {
+      const dbProduct = allProducts.find(p => p.id === item.id);
+      return {
+        product: dbProduct || {
+          id: item.id,
+          name: item.name,
+          slug: '',
+          description: null,
+          category_id: '',
+          category: null,
+          stock_quantity: item.maxQuantity,
+          status: 'active' as any,
+          selling_price: item.price,
+          created_at: '',
+          updated_at: '',
+          primary_image_url: item.imageUrl
+        },
+        quantity: item.quantity
+      };
+    });
+    
+    setSelectedProducts(prev => {
+      // Merge with existing avoiding duplicates
+      const existingIds = new Set(prev.map(p => p.product.id));
+      const newItems = reconstructed.filter(r => !existingIds.has(r.product.id));
+      return [...prev, ...newItems];
+    });
+    setCurrentStep(2); // Jump to products
   }, []);
 
   const resetBuilder = useCallback(() => {
@@ -318,6 +354,7 @@ export function HamperBuilderProvider({
       nextStep,
       prevStep,
       loadFromCartItem,
+      loadFromCartLooseItems,
       resetBuilder
     }}>
       {children}

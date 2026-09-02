@@ -32,16 +32,16 @@ export default async function ProductsPage({
   });
 
   return (
-    <PageTransition className="min-h-screen pt-24 pb-8 bg-background relative overflow-hidden">
+    <PageTransition className="min-h-screen pt-12 lg:pt-16 pb-12 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7] relative overflow-hidden">
       
       <div className="container mx-auto px-4 relative z-10">
         <FadeInScroll>
-          <div className="text-center max-w-4xl mx-auto mb-10 border-b border-primary/10 pb-8">
-            <span className="text-foreground/60 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">Your Creative Studio</span>
-            <h1 className="text-5xl md:text-7xl font-extrabold font-serif tracking-tight text-foreground mb-4 leading-tight">
+          <div className="text-center max-w-4xl mx-auto mb-8 border-b border-slate-200 pb-4">
+            <span className="text-rose-600 font-semibold tracking-widest uppercase text-sm mb-3 block">Your Creative Studio</span>
+            <h1 className="text-4xl md:text-6xl font-bold font-serif tracking-tight text-slate-900 mb-3 leading-tight">
               CRAFT YOUR HAMPER.
             </h1>
-            <p className="text-lg md:text-xl text-foreground/60 font-light max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-slate-500 font-light max-w-2xl mx-auto">
               Select from our curated collection of premium goods. Every detail considered.
             </p>
           </div>
@@ -53,7 +53,7 @@ export default async function ProductsPage({
             <FadeInScroll delay={0.1}>
               <div className="space-y-12">
                 <div>
-                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-slate-900 mb-4 flex items-center font-serif text-xl tracking-tight">
                     Search
                   </h3>
                   <form className="relative" method="GET">
@@ -65,22 +65,22 @@ export default async function ProductsPage({
                       name="q"
                       defaultValue={searchQuery || ''}
                       placeholder="Find an item..."
-                      className="w-full pl-4 pr-10 py-3 border-b border-primary/10 bg-transparent focus:outline-none focus:border-primary transition-all text-sm font-light rounded-3xl"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-200 bg-white focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all text-sm font-light rounded-3xl shadow-sm"
                     />
-                    <button type="submit" aria-label="Search" className="absolute right-2 top-3 text-foreground/60 hover:text-foreground transition-colors">
+                    <button type="submit" aria-label="Search" className="absolute right-3 top-3.5 text-slate-400 hover:text-rose-600 transition-colors">
                       <Search className="w-4 h-4" strokeWidth={1.5} />
                     </button>
                   </form>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-slate-900 mb-4 flex items-center font-serif text-xl tracking-tight">
                     Collections
                   </h3>
                   <div className="space-y-4">
                     <Link 
                       href={`/products?${new URLSearchParams({...resolvedParams, category: ''}).toString()}`}
-                      className={`block text-xs font-bold text-primary transition-colors ${!categoryFilter ? 'font-bold text-foreground' : 'text-foreground/60 hover:text-foreground font-semibold'}`}
+                      className={`block text-sm transition-colors ${!categoryFilter ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
                     >
                       All Items
                     </Link>
@@ -88,7 +88,7 @@ export default async function ProductsPage({
                       <Link 
                         key={cat.id}
                         href={`/products?${new URLSearchParams({...resolvedParams, category: cat.id}).toString()}`}
-                        className={`block text-xs font-bold text-primary transition-colors ${categoryFilter === cat.id ? 'font-bold text-foreground' : 'text-foreground/60 hover:text-foreground font-semibold'}`}
+                        className={`block text-sm transition-colors ${categoryFilter === cat.id ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
                       >
                         {cat.name}
                       </Link>
@@ -97,7 +97,7 @@ export default async function ProductsPage({
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-foreground mb-4 flex items-center font-serif text-xl tracking-tight">
+                  <h3 className="font-bold text-slate-900 mb-4 flex items-center font-serif text-xl tracking-tight">
                     Availability
                   </h3>
                   <form method="GET">
@@ -111,15 +111,15 @@ export default async function ProductsPage({
                           name="inStock" 
                           value="true" 
                           defaultChecked={inStockOnly}
-                          className="peer appearance-none w-4 h-4 border border-primary/10 checked:border-primary checked:bg-primary rounded-3xl transition-colors cursor-pointer"
+                          className="peer appearance-none w-4 h-4 border border-slate-200 checked:border-rose-600 checked:bg-rose-600 rounded shadow-sm bg-white transition-colors cursor-pointer"
                         />
                         <div className="absolute inset-0 pointer-events-none opacity-0 peer-checked:opacity-100 flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                       </div>
-                      <span className="text-foreground/60 text-sm font-light group-hover:text-foreground transition-colors">In Stock Only</span>
+                      <span className="text-slate-500 text-sm font-light group-hover:text-slate-900 transition-colors">In Stock Only</span>
                     </label>
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary text-white rounded-3xl h-12 font-bold text-primary text-xs font-semibold transition-all duration-300">
+                    <Button type="submit" className="w-full bg-slate-900 hover:bg-rose-600 text-white rounded-3xl h-12 text-sm font-semibold transition-all duration-300">
                       Apply Filters
                     </Button>
                   </form>
@@ -132,12 +132,12 @@ export default async function ProductsPage({
           <div className="flex-1">
             <FadeInScroll delay={0.2}>
               <div className="flex justify-between items-center mb-6 pb-2">
-                <div className="text-foreground/60 text-xs font-bold text-primary font-semibold">
-                  <span className="text-foreground font-bold">{products.length}</span> items
+                <div className="text-slate-500 text-sm">
+                  <span className="text-slate-900 font-bold">{products.length}</span> items
                 </div>
                 
                 {(categoryFilter || searchQuery || inStockOnly) && (
-                  <Link href="/products" className="text-primary hover:text-secondary text-xs font-bold text-primary font-semibold transition-colors flex items-center">
+                  <Link href="/products" className="text-rose-600 hover:text-rose-700 text-sm font-semibold transition-colors flex items-center">
                     Clear filters <ArrowRight className="w-3 h-3 ml-2" />
                   </Link>
                 )}
@@ -156,12 +156,12 @@ export default async function ProductsPage({
               </StaggerScrollContainer>
             ) : (
               <FadeInScroll>
-                <div className="text-center py-16 bg-background border border-primary/10">
-                  <Search className="w-12 h-12 text-cream mx-auto mb-4" strokeWidth={1} />
-                  <h3 className="text-2xl font-bold font-serif text-foreground mb-4">No pieces found</h3>
-                  <p className="text-foreground/60 font-light mb-8">Adjust your criteria to discover our collection.</p>
+                <div className="text-center py-16 bg-white rounded-[3rem] shadow-sm border border-slate-100">
+                  <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1} />
+                  <h3 className="text-2xl font-bold font-serif text-slate-900 mb-4">No pieces found</h3>
+                  <p className="text-slate-500 font-light mb-8 text-lg">Adjust your criteria to discover our collection.</p>
                   <Link href="/products">
-                    <Button variant="outline" className="border-primary text-foreground hover:bg-primary hover:text-white rounded-3xl px-8 h-12 font-bold text-primary text-xs font-semibold">
+                    <Button variant="outline" className="border-slate-200 text-slate-900 hover:bg-rose-600 hover:text-white hover:border-rose-600 rounded-3xl px-8 h-12 text-sm font-semibold transition-all duration-300">
                       Clear Filters
                     </Button>
                   </Link>

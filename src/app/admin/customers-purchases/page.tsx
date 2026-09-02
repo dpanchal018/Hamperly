@@ -117,10 +117,13 @@ export default async function CustomersPurchasesPage({
                             {purchase.payment_mode || 'N/A'}
                           </span>
                           <span className={`text-xs px-2 py-1 rounded ${
+                            purchase.status === 'CANCELLED' ? 'bg-slate-200 text-slate-700' :
                             purchase.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 
                             purchase.payment_status === 'PARTIALLY_PAID' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
                           }`}>
-                            {purchase.payment_status}
+                            {purchase.status === 'CANCELLED' 
+                              ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED') 
+                              : purchase.payment_status}
                           </span>
                         </td>
                         <td className="p-4">

@@ -9,12 +9,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStorefrontProducts } from '@/actions/storefront.actions';
 import { AuthModal } from './AuthModal';
+import { SmartBundlePrompt } from './SmartBundlePrompt';
 
 export function CartSlideover({ user }: { user?: any }) {
   const { isCartOpen, setIsCartOpen, items, removeItem, updateQuantity, subtotal, addItem } = useCart();
   const [products, setProducts] = useState<any[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
+
+  const hampersInCart = items.filter(i => i.itemType === 'PERSONALIZED_HAMPER' || i.itemType === 'HAMPER');
+  const looseItemsCount = items.filter(i => i.itemType === 'PRODUCT').reduce((acc, i) => acc + i.quantity, 0);
 
   useEffect(() => {
     if (isCartOpen && products.length === 0) {
@@ -85,6 +89,29 @@ export function CartSlideover({ user }: { user?: any }) {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Bundle loose products into Hamper CTA */}
+              {looseItemsCount > 0 && hampersInCart.length > 0 ? (
+                <SmartBundlePrompt hampers={hampersInCart} looseItemsCount={looseItemsCount} />
+              ) : looseItemsCount > 0 ? (
+                <div className="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200/60 rounded-3xl p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between shadow-sm shadow-rose-100/50">
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-rose-900 flex items-center">
+                      <Sparkles className="w-4 h-4 mr-1.5 text-rose-500" /> Bundle into a Hamper
+                    </h4>
+                    <p className="text-[11px] text-rose-700/80 mt-0.5 font-medium">Turn your loose bag items into a beautiful, personalized gift hamper.</p>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setIsCartOpen(false);
+                      router.push('/build?fromCart=true');
+                    }}
+                    size="sm"
+                    className="bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs px-4 h-9 shadow-md shadow-rose-200 shrink-0 w-full sm:w-auto"
+                  >
+                    Build Hamper
+                  </Button>
+                </div>
+              ) : null}
               {items.map((item) => {
                 const isPersonalized = item.itemType === 'PERSONALIZED_HAMPER';
 

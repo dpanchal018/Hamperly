@@ -123,7 +123,7 @@ export async function placeCustomerOrder(
     if (allProductIds.size > 0) {
       const { data, error } = await supabaseAdmin
         .from('products')
-        .select('id, name, selling_price, stock_quantity, status, category:categories(name)')
+        .select('id, name, selling_price, stock_quantity, status, category:categories(name), product_pricing(cost_price)')
         .in('id', Array.from(allProductIds));
       if (error) {
         console.error('Failed to validate products:', error);
@@ -211,7 +211,7 @@ export async function placeCustomerOrder(
         product_name_snapshot: dbProd.name,
         category_snapshot: (dbProd.category as any)?.name || 'Product',
         quantity: item.quantity,
-        catalog_unit_price: Number(dbProd.selling_price) || 0,
+        catalog_unit_price: Number(dbProd.product_pricing?.[0]?.cost_price || dbProd.product_pricing?.cost_price) || Number(dbProd.selling_price) || 0,
         actual_unit_price: unitPrice,
         line_total: lineTotal
       });
@@ -258,7 +258,7 @@ export async function placeCustomerOrder(
           product_name_snapshot: `${hamperPrefix} ${dbProd.name}`,
           category_snapshot: (dbProd.category as any)?.name || 'Hamper Item',
           quantity: totalProductQty,
-          catalog_unit_price: Number(dbProd.selling_price) || 0,
+          catalog_unit_price: Number(dbProd.product_pricing?.[0]?.cost_price || dbProd.product_pricing?.cost_price) || Number(dbProd.selling_price) || 0,
           actual_unit_price: unitPrice,
           line_total: lineTotal
         });
@@ -375,6 +375,19 @@ ${itemsList}
       await sendTelegramMessage(tgMsg, 'ALERT');
     } catch (tgErr) {
       console.error("Telegram notification error:", tgErr);
+    }
+
+    try {
+      const { createNotification } = await import('./notification.actions');
+      await createNotification({
+        customer_id: finalCustomerId,
+        purchase_id: purchase.id,
+        type: 'PURCHASE_CREATED',
+        title: 'Order Placed Successfully 🛍️',
+        message: `Your Hamperly order #${purchase.id.split('-')[0]} has been placed successfully and is currently pending.`
+      });
+    } catch (notifErr) {
+      console.error("Failed to create app notification:", notifErr);
     }
 
     revalidatePath('/admin/customers-purchases');

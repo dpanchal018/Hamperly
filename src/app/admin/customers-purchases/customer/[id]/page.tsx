@@ -148,12 +148,21 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
                           {new Date(purchase.purchase_date).toLocaleDateString()}
                         </td>
                         <td className="p-4 text-slate-600">
-                          {purchase.purchase_items?.[0]?.product_name_snapshot}
-                          {purchase.purchase_items?.length > 1 && (
-                            <span className="text-xs text-slate-400 ml-1">
-                              +{purchase.purchase_items.length - 1} more
-                            </span>
-                          )}
+                          {(() => {
+                            const firstItem = purchase.purchase_items?.[0]?.product_name_snapshot || '';
+                            const match = firstItem.match(/^\[(.*?)\] (.*)$/);
+                            const displayName = match ? `Custom Hamper (${match[1]})` : firstItem;
+                            return (
+                              <>
+                                {displayName}
+                                {purchase.purchase_items?.length > 1 && (
+                                  <span className="text-xs text-slate-400 ml-1">
+                                    +{purchase.purchase_items.length - 1} more
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="p-4 font-medium text-slate-900">
                           ₹{Number(purchase.final_amount).toLocaleString()}

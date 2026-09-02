@@ -56,9 +56,10 @@ export function RecordPaymentButton({ purchaseId, balanceDue }: { purchaseId: st
         <label className="block text-xs font-medium text-emerald-800 mb-1">Payment Amount (₹)</label>
         <input
           type="number"
+          step="0.01"
           required
           disabled={isSubmitting}
-          min="1"
+          min="0.01"
           max={balanceDue}
           value={amount}
           onChange={e => setAmount(Number(e.target.value))}
