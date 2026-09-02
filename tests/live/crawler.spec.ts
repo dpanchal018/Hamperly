@@ -68,9 +68,16 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     
     // 4. Fill out Delivery Details
     await page.waitForURL('**/checkout', { timeout: 15000 });
-    await expect(page.locator('h2:has-text("Contact Information")')).toBeVisible({ timeout: 15000 });
     
     const pincodeInput = page.locator('#delivery-pincode');
+    const changeBtn = page.locator('button:has-text("Change")');
+    
+    // Wait for the form to fully render. Either the pincode input is shown, or the saved address "Change" button is shown.
+    // If the cart accidentally emptied, this will timeout and fail.
+    await Promise.race([
+      pincodeInput.waitFor({ state: 'visible', timeout: 15000 }),
+      changeBtn.waitFor({ state: 'visible', timeout: 15000 })
+    ]);
     
     // If the pincode input is visible, it means no saved address is active
     if (await pincodeInput.isVisible()) {
