@@ -58,17 +58,17 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     // Crucial: Wait for the button state to change to "Added to Cart" to ensure React saved it to localStorage
     await expect(page.locator('button[aria-label="Added to Cart"]').first()).toBeVisible({ timeout: 10000 });
     
-    // 3. Open cart and proceed to checkout
-    await page.goto('/checkout');
-
-    // 4. Fill out Delivery Details (Auth users skip email/name)
-    await expect(page.url()).toContain('/checkout');
+    // 3. Open cart slideover and proceed to checkout (SPA transition preserves context)
+    const navCartBtn = page.locator('button').filter({ has: page.locator('.lucide-shopping-bag') }).first();
+    await navCartBtn.click();
+    
+    const proceedBtn = page.locator('button:has-text("Proceed to Checkout")');
+    await proceedBtn.waitFor({ state: 'visible' });
+    await proceedBtn.click();
+    
     // 4. Fill out Delivery Details
     await expect(page.url()).toContain('/checkout');
-    
-    // CRUCIAL: Wait for the CartContext to hydrate from localStorage. 
-    // Before hydration, the page briefly shows "Cart is empty".
-    await expect(page.getByText('Contact Information')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Contact Information")')).toBeVisible({ timeout: 15000 });
     
     const pincodeInput = page.locator('#delivery-pincode');
     
