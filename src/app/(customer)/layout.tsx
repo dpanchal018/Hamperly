@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
 import { Navbar } from '@/components/customer/Navbar';
 import { Footer } from '@/components/customer/Footer';
-import { SelectionProvider } from '@/contexts/SelectionContext';
-import { SelectionSummary } from '@/components/customer/SelectionSummary';
 import { CartSlideover } from '@/components/customer/CartSlideover';
 import { ChatWidget } from '@/components/customer/ChatWidget';
 
@@ -30,20 +28,17 @@ export default async function CustomerLayout({
   const footerContent = await getSiteContent('footer', defaultFooterContent);
 
   return (
-    <SelectionProvider>
-      <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
-        {settings?.store_announcement && (
-          <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
-            {settings.store_announcement}
-          </div>
-        )}
-        <Navbar user={user} role={role} content={headerContent} />
-        <main className="flex-1 bg-slate-50">{children}</main>
-        <Footer content={footerContent} />
-        <SelectionSummary />
-        <CartSlideover user={user} />
-        <ChatWidget />
-      </div>
-    </SelectionProvider>
+    <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
+      {settings?.store_announcement && (
+        <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
+          {settings.store_announcement}
+        </div>
+      )}
+      <Navbar user={user} role={role} content={headerContent} />
+      <main className="flex-1 bg-slate-50">{children}</main>
+      <Footer content={footerContent} />
+      <CartSlideover user={user} />
+      <ChatWidget />
+    </div>
   );
 }

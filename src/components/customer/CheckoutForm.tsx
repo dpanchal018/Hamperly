@@ -13,18 +13,25 @@ export function CheckoutForm({ customer }: { customer: any }) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasSavedAddress = !!(customer?.address && customer?.pincode);
+  const [useSavedAddress, setUseSavedAddress] = useState(hasSavedAddress);
+  
   const [address, setAddress] = useState(customer?.address || '');
   const [addressError, setAddressError] = useState(false);
-  const [pincode, setPincode] = useState('');
-  const [pincodeStatus, setPincodeStatus] = useState<'idle' | 'checking' | 'local' | 'national' | 'invalid'>('idle');
+  const [pincode, setPincode] = useState(customer?.pincode || '');
+  const [pincodeStatus, setPincodeStatus] = useState<'idle' | 'checking' | 'local' | 'national' | 'invalid' | 'saved'>(
+    hasSavedAddress ? 'saved' : 'idle'
+  );
+  
   const [postOffices, setPostOffices] = useState<any[]>([]);
   const [deliverToPO, setDeliverToPO] = useState(false);
   const [selectedPO, setSelectedPO] = useState('');
 
-  // Guest fields
+  // Guest fields & Errors
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
+  const [contactErrors, setContactErrors] = useState({ name: false, email: false, phone: false });
 
   if (items.length === 0) {
     return (
@@ -75,28 +82,37 @@ export function CheckoutForm({ customer }: { customer: any }) {
   };
 
   const handlePlaceOrder = async () => {
+    let hasError = false;
+
+    // Validate Guest Contact
     if (!customer) {
-      if (!guestName || !guestEmail || !guestPhone) {
-        return toast.error("Please fill in your contact details.");
-      }
-      if (!/^\S+@\S+\.\S+$/.test(guestEmail)) {
-        return toast.error("Please enter a valid email address.");
+      const cErrors = { name: !guestName.trim(), email: !/^\S+@\S+\.\S+$/.test(guestEmail), phone: !guestPhone.trim() };
+      setContactErrors(cErrors);
+      
+      if (cErrors.name || cErrors.email || cErrors.phone) {
+        toast.error("Please provide valid contact information.");
+        hasError = true;
       }
     }
 
-    if (['idle', 'invalid', 'checking'].includes(pincodeStatus) || pincode.length !== 6) {
-      toast.error('Please enter a valid 6-digit Pincode first.');
-      document.getElementById('delivery-pincode')?.focus();
-      return;
+    // Validate Delivery Address
+    if (!useSavedAddress) {
+      if (['idle', 'invalid', 'checking'].includes(pincodeStatus) || pincode.length !== 6) {
+        toast.error('Please enter a valid 6-digit Pincode first.');
+        document.getElementById('delivery-pincode')?.focus();
+        hasError = true;
+      } else if (!address.trim()) {
+        setAddressError(true);
+        toast.error('Please provide a delivery address.');
+        document.getElementById('delivery-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('delivery-address')?.focus();
+        hasError = true;
+      } else {
+        setAddressError(false);
+      }
     }
-    if (!address.trim()) {
-      setAddressError(true);
-      toast.error('Please provide a delivery address.');
-      document.getElementById('delivery-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      document.getElementById('delivery-address')?.focus();
-      return;
-    }
-    setAddressError(false);
+
+    if (hasError) return;
 
     setIsSubmitting(true);
     try {
@@ -160,16 +176,19 @@ export function CheckoutForm({ customer }: { customer: any }) {
               <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 mb-4">You are checking out as a Guest. We'll use these details to update you on your order.</p>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
-                <input type="text" required value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full rounded-xl border-slate-200 px-4 py-3" placeholder="John Doe" />
+                <input type="text" required value={guestName} onChange={e => { setGuestName(e.target.value); setContactErrors(p => ({...p, name: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.name ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="John Doe" />
+                {contactErrors.name && <p className="text-red-500 text-xs mt-1">Name is required.</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
-                  <input type="email" required value={guestEmail} onChange={e => setGuestEmail(e.target.value)} className="w-full rounded-xl border-slate-200 px-4 py-3" placeholder="john@example.com" />
+                  <input type="email" required value={guestEmail} onChange={e => { setGuestEmail(e.target.value); setContactErrors(p => ({...p, email: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.email ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="john@example.com" />
+                  {contactErrors.email && <p className="text-red-500 text-xs mt-1">Valid email is required.</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Phone Number</label>
-                  <input type="tel" required value={guestPhone} onChange={e => setGuestPhone(e.target.value)} className="w-full rounded-xl border-slate-200 px-4 py-3" placeholder="+91 9876543210" />
+                  <input type="tel" required value={guestPhone} onChange={e => { setGuestPhone(e.target.value); setContactErrors(p => ({...p, phone: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.phone ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="+91 9876543210" />
+                  {contactErrors.phone && <p className="text-red-500 text-xs mt-1">Phone number is required.</p>}
                 </div>
               </div>
             </div>
@@ -185,19 +204,39 @@ export function CheckoutForm({ customer }: { customer: any }) {
           </h2>
           <div className="space-y-6 pl-11">
             
-            {/* Pincode Input */}
-            <div className="relative">
-              <label htmlFor="delivery-pincode" className="block text-sm font-semibold text-foreground/60 mb-2">Delivery Pincode</label>
-              <div className="flex gap-4">
-                <input
-                  id="delivery-pincode"
-                  type="text"
-                  maxLength={6}
-                  value={pincode}
-                  onChange={(e) => validatePincode(e.target.value)}
-                  className={`flex-1 max-w-[200px] h-12 bg-white rounded-xl border px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono tracking-widest text-lg ${pincodeStatus === 'invalid' ? 'border-red-300' : 'border-primary/20'}`}
-                  placeholder="390001"
-                />
+            {useSavedAddress ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative">
+                <div className="absolute top-6 right-6">
+                  <Button variant="outline" size="sm" onClick={() => setUseSavedAddress(false)} className="h-8 text-xs bg-white">
+                    Change
+                  </Button>
+                </div>
+                <div className="flex items-start">
+                  <MapPin className="w-5 h-5 text-primary/60 mr-3 mt-0.5" />
+                  <div className="pr-16">
+                    <p className="font-semibold text-foreground mb-1">Saved Delivery Address</p>
+                    <p className="text-foreground/70 text-sm whitespace-pre-wrap leading-relaxed mb-2">{customer.address}</p>
+                    <span className="inline-block bg-white border border-slate-200 text-slate-600 text-xs px-2 py-1 rounded font-mono">
+                      PIN: {customer.pincode}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Pincode Input */}
+                <div className="relative">
+                  <label htmlFor="delivery-pincode" className="block text-sm font-semibold text-foreground/60 mb-2">Delivery Pincode</label>
+                  <div className="flex gap-4">
+                    <input
+                      id="delivery-pincode"
+                      type="text"
+                      maxLength={6}
+                      value={pincode}
+                      onChange={(e) => validatePincode(e.target.value)}
+                      className={`flex-1 max-w-[200px] h-12 bg-white rounded-xl border px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono tracking-widest text-lg ${pincodeStatus === 'invalid' || (addressError && pincode.length !== 6) ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-primary/20'}`}
+                      placeholder="390001"
+                    />
                 
                 {/* Status Badges */}
                 {pincodeStatus === 'checking' && (
@@ -270,7 +309,8 @@ export function CheckoutForm({ customer }: { customer: any }) {
               />
               {addressError && <p className="text-red-500 text-sm mt-2 flex items-center"><Check className="w-4 h-4 mr-1" /> Address is required.</p>}
             </div>
-            
+          </>
+        )}
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Package, ExternalLink, ArrowRight } from "lucide-react";
+import { Package, ExternalLink, ArrowRight, Ban } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { CancelOrderButton } from "@/components/customer/CancelOrderButton";
 
 export const metadata = {
   title: "My Orders | Hamperly",
@@ -107,26 +108,87 @@ export default async function OrdersPage() {
                 {/* Order Items */}
                 <div className="p-5">
                   <ul className="divide-y divide-slate-100">
-                    {order.purchase_items.map((item: any) => (
-                      <li key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
-                        <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
-                          <Package className="w-8 h-8 text-slate-300" strokeWidth={1} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-slate-900 line-clamp-2">{item.product_name_snapshot}</h4>
-                          <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity}</p>
-                          {item.category_snapshot && (
-                            <span className="inline-block mt-2 text-[10px] font-semibold text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">
-                              {item.category_snapshot}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-right font-semibold text-sm text-slate-900">
-                          ₹{item.line_total.toFixed(2)}
-                        </div>
-                      </li>
-                    ))}
+                    {(() => {
+                      const groupedItems: Record<string, any[]> = {};
+                      const standaloneItems: any[] = [];
+                      
+                      order.purchase_items.forEach((item: any) => {
+                        const match = item.product_name_snapshot.match(/^\[(.*?)\] (.*)$/);
+                        if (match) {
+                          const groupName = match[1];
+                          if (!groupedItems[groupName]) groupedItems[groupName] = [];
+                          groupedItems[groupName].push({ ...item, clean_name: match[2] });
+                        } else {
+                          standaloneItems.push({ ...item, clean_name: item.product_name_snapshot });
+                        }
+                      });
+
+                      return (
+                        <>
+                          {Object.entries(groupedItems).map(([groupName, groupItems]) => {
+                            const groupTotal = groupItems.reduce((acc, it) => acc + Number(it.line_total), 0);
+                            return (
+                              <li key={`group-${groupName}`} className="py-4 first:pt-0 last:pb-0">
+                                <div className="flex items-start gap-4 mb-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                                    <Package className="w-6 h-6 text-indigo-500" strokeWidth={1.5} />
+                                  </div>
+                                  <div className="flex-1 min-w-0 pt-1">
+                                    <h4 className="text-sm font-bold text-indigo-950 line-clamp-2">{groupName}</h4>
+                                    <p className="text-[11px] text-indigo-600/80 mt-0.5 font-medium uppercase tracking-wider">Custom Hamper</p>
+                                  </div>
+                                  <div className="text-right font-bold text-sm text-indigo-950 pt-1">
+                                    ₹{groupTotal.toFixed(2)}
+                                  </div>
+                                </div>
+                                <ul className="pl-16 space-y-3">
+                                  {groupItems.map((item) => (
+                                    <li key={item.id} className="flex justify-between items-start text-sm">
+                                      <div className="flex-1 pr-4">
+                                        <p className="font-semibold text-slate-800">{item.clean_name}</p>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">{item.category_snapshot}</p>
+                                      </div>
+                                      <div className="text-slate-500 text-xs mt-0.5 mr-6 text-center w-8">
+                                        x{item.quantity}
+                                      </div>
+                                      <div className="text-slate-600 font-medium">
+                                        ₹{Number(item.line_total).toFixed(2)}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </li>
+                            );
+                          })}
+                          {standaloneItems.map((item) => (
+                            <li key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
+                              <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+                                <Package className="w-8 h-8 text-slate-300" strokeWidth={1} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-slate-900 line-clamp-2">{item.clean_name}</h4>
+                                <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity}</p>
+                                {item.category_snapshot && (
+                                  <span className="inline-block mt-2 text-[10px] font-semibold text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full">
+                                    {item.category_snapshot}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-right font-semibold text-sm text-slate-900">
+                                ₹{Number(item.line_total).toFixed(2)}
+                              </div>
+                            </li>
+                          ))}
+                        </>
+                      );
+                    })()}
                   </ul>
+                  
+                  {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                      <CancelOrderButton orderId={order.id} />
+                    </div>
+                  )}
                 </div>
               </div>
             );

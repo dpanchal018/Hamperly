@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { PublicProduct } from '@/services/catalog.service';
-import { useSelection } from '@/contexts/SelectionContext';
+import { useCart } from '@/contexts/CartContext';
 import { Plus, Minus, Check } from 'lucide-react';
 import { getInventoryStatus } from '@/lib/inventory';
 import { WishlistButton } from '@/components/customer/WishlistButton';
@@ -14,11 +14,11 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { addItem, updateQuantity, removeItem, items } = useSelection();
+  const { addItem, updateQuantity, removeItem, items } = useCart();
   
   const status = getInventoryStatus(product.stock_quantity);
   const isOutOfStock = status === 'OUT OF STOCK';
-  const selectedItem = items.find(i => i.product.id === product.id);
+  const selectedItem = items.find(i => i.id === product.id && i.itemType === 'PRODUCT');
   const selectedCount = selectedItem ? selectedItem.quantity : 0;
   
   const getStatusColor = (s: string) => {
@@ -123,8 +123,15 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             ) : (
               <button 
-                onClick={() => addItem(product)}
-                aria-label="Add to selection"
+                onClick={() => addItem({
+                  id: product.id,
+                  name: product.name,
+                  price: product.selling_price,
+                  imageUrl: product.primary_image_url,
+                  maxQuantity: product.stock_quantity,
+                  itemType: 'PRODUCT'
+                }, 1)}
+                aria-label="Add to bag"
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all shadow-xs hover:shadow-md"
               >
                 <Plus className="w-5 h-5" strokeWidth={2.5} />

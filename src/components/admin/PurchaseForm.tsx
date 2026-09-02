@@ -249,7 +249,8 @@ export function PurchaseForm() {
               </div>
               <div className="col-span-2">
                 <input 
-                  type="number" 
+                  type="number"
+                  step="0.01"
                   className="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm text-slate-500"
                   value={item.catalog_unit_price}
                   onChange={e => {
@@ -262,7 +263,8 @@ export function PurchaseForm() {
               </div>
               <div className="col-span-2">
                 <input 
-                  type="number" 
+                  type="number"
+                  step="0.01"
                   className="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm font-medium text-slate-900"
                   value={item.actual_unit_price}
                   onChange={e => {
@@ -342,6 +344,7 @@ export function PurchaseForm() {
               <span className="text-sm font-medium text-slate-700">Global Discount (₹):</span>
               <input 
                 type="number"
+                step="0.01"
                 className="w-32 rounded-lg border-slate-300 border px-3 py-1.5 text-sm text-right"
                 value={discountAmount}
                 onChange={e => setDiscountAmount(Number(e.target.value))}
@@ -384,12 +387,13 @@ export function PurchaseForm() {
               {paymentStatus === 'PARTIALLY_PAID' && (
                 <input
                   type="number"
+                  step="0.01"
                   placeholder="Amount Paid"
                   required
                   className="w-32 rounded-lg border-slate-300 border px-3 py-2 text-sm bg-white text-right"
                   value={partialAmountPaid}
                   onChange={e => setPartialAmountPaid(Number(e.target.value))}
-                  min="1"
+                  min="0.01"
                   max={Math.max(0, items.reduce((acc, item) => acc + item.line_total, 0) - discountAmount)}
                 />
               )}

@@ -218,9 +218,15 @@ export async function getProductMetrics() {
       const type = item.product_id ? 'PRODUCT' : 'HAMPER';
       const key = item.product_id ? `p_${item.product_id}` : `h_${item.product_name_snapshot}`;
       
+      let cleanName = item.product_name_snapshot;
+      if (type === 'PRODUCT') {
+        const match = cleanName.match(/^\[(.*?)\] (.*)$/);
+        if (match) cleanName = match[2];
+      }
+      
       if (!productSales[key]) {
         productSales[key] = {
-          name: item.product_name_snapshot,
+          name: cleanName,
           type: type,
           qty: 0
         };

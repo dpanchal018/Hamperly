@@ -75,7 +75,10 @@ export function Footer({ content }: { content: FooterContent }) {
           <p className="flex items-center">
             Made with <Heart className="w-4 h-4 mx-1 text-primary" fill="currentColor" /> by Hamperly
           </p>
-          <p className="mt-4 md:mt-0">&copy; {new Date().getFullYear()} Hamperly. All rights reserved.</p>
+          <div className="mt-4 md:mt-0 flex items-center space-x-4">
+            <Link href="/policies/cancellation-return" className="hover:text-primary transition-colors">Cancellation & Return Policy</Link>
+            <span>&copy; {new Date().getFullYear()} Hamperly. All rights reserved.</span>
+          </div>
         </div>
       </div>
     </footer>

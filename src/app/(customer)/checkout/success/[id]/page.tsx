@@ -1,3 +1,4 @@
+import React from 'react';
 import { Logo } from '@/components/ui/Logo';
 import Link from 'next/link';
 import { CheckCircle2, ChevronRight, Package, MapPin, Phone, Mail, Calendar, CreditCard, ShoppingBag } from 'lucide-react';
@@ -80,18 +81,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC] py-8 px-4 sm:px-6 print:bg-white print:p-0">
-      {/* Header - Hidden during print */}
-      <header className="max-w-4xl mx-auto w-full mb-8 flex items-center justify-between print:hidden">
-        <Logo className="scale-90 origin-left" withTagline={false} />
-        <Link 
-          href="/hampers" 
-          className="text-sm font-medium text-slate-600 hover:text-rose-600 flex items-center gap-1 transition-colors"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          Continue Shopping
-        </Link>
-      </header>
+    <div className="w-full bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC] py-8 px-4 sm:px-6 print:bg-white print:p-0">
 
       <main className="flex-1 max-w-4xl mx-auto w-full space-y-8">
         {/* Success Confirmation Banner - Hidden during print */}
@@ -153,8 +143,13 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                   Order: {purchase.status === 'CANCELLED' ? 'CANCELLED' : purchase.status === 'COMPLETED' ? 'COMPLETED' : 'CONFIRMED'}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                  Payment: {purchase.payment_status === 'PAID' ? 'PAID' : 'PENDING'}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                  purchase.status === 'CANCELLED' ? 'bg-slate-100 text-slate-800 border-slate-200' :
+                  purchase.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'
+                }`}>
+                  Payment: {purchase.status === 'CANCELLED' 
+                    ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED') 
+                    : (purchase.payment_status === 'PAID' ? 'PAID' : 'PENDING')}
                 </span>
               </div>
             </div>
@@ -207,23 +202,76 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {items.map((item: any) => (
-                  <tr key={item.id}>
-                    <td className="py-4 pr-4">
-                      <p className="font-semibold text-slate-900">{item.product_name_snapshot}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.category_snapshot || 'Gift Hamper'}</p>
-                    </td>
-                    <td className="py-4 px-2 text-center text-slate-700 font-medium">
-                      {item.quantity}
-                    </td>
-                    <td className="py-4 px-2 text-right text-slate-600">
-                      ₹{Number(item.actual_unit_price).toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-4 pl-2 text-right font-bold text-slate-900">
-                      ₹{Number(item.line_total).toLocaleString('en-IN')}
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const groupedItems: Record<string, any[]> = {};
+                  const standaloneItems: any[] = [];
+                  
+                  items.forEach((item: any) => {
+                    const match = item.product_name_snapshot.match(/^\[(.*?)\] (.*)$/);
+                    if (match) {
+                      const groupName = match[1];
+                      if (!groupedItems[groupName]) groupedItems[groupName] = [];
+                      groupedItems[groupName].push({ ...item, clean_name: match[2] });
+                    } else {
+                      standaloneItems.push({ ...item, clean_name: item.product_name_snapshot });
+                    }
+                  });
+
+                  return (
+                    <>
+                      {Object.entries(groupedItems).map(([groupName, groupItems]) => {
+                        const groupTotal = groupItems.reduce((acc, it) => acc + Number(it.line_total), 0);
+                        return (
+                          <React.Fragment key={`group-${groupName}`}>
+                            <tr className="bg-slate-50/80">
+                              <td colSpan={3} className="py-3 px-4 font-bold text-slate-800">
+                                <Package className="w-4 h-4 inline mr-2 text-slate-500 mb-0.5" />
+                                {groupName}
+                              </td>
+                              <td className="py-3 pl-2 text-right font-bold text-slate-900 pr-4">
+                                ₹{groupTotal.toLocaleString('en-IN')}
+                              </td>
+                            </tr>
+                            {groupItems.map((item) => (
+                              <tr key={item.id}>
+                                <td className="py-3 pl-10 pr-4 border-l-2 border-slate-200">
+                                  <p className="font-semibold text-slate-700 text-sm">{item.clean_name}</p>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">{item.category_snapshot || 'Component'}</p>
+                                </td>
+                                <td className="py-3 px-2 text-center text-slate-600 font-medium text-sm">
+                                  {item.quantity}
+                                </td>
+                                <td className="py-3 px-2 text-right text-slate-500 text-sm">
+                                  ₹{Number(item.actual_unit_price).toLocaleString('en-IN')}
+                                </td>
+                                <td className="py-3 pl-2 text-right font-medium text-slate-600 text-sm">
+                                  ₹{Number(item.line_total).toLocaleString('en-IN')}
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        );
+                      })}
+                      {standaloneItems.map((item) => (
+                        <tr key={item.id}>
+                          <td className="py-4 pr-4">
+                            <p className="font-semibold text-slate-900">{item.clean_name}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{item.category_snapshot || 'Gift Hamper'}</p>
+                          </td>
+                          <td className="py-4 px-2 text-center text-slate-700 font-medium">
+                            {item.quantity}
+                          </td>
+                          <td className="py-4 px-2 text-right text-slate-600">
+                            ₹{Number(item.actual_unit_price).toLocaleString('en-IN')}
+                          </td>
+                          <td className="py-4 pl-2 text-right font-bold text-slate-900">
+                            ₹{Number(item.line_total).toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
           </div>
@@ -248,11 +296,12 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
               <div className="flex justify-between text-xs text-slate-600 items-center">
                 <span>Payment Status:</span>
                 <span className={`font-bold px-2.5 py-0.5 rounded text-[11px] border ${
-                  purchase.payment_status === 'PAID' 
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-                    : 'bg-amber-100 text-amber-800 border-amber-200'
+                  purchase.status === 'CANCELLED' ? 'bg-slate-100 text-slate-800 border-slate-200' :
+                  purchase.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'
                 }`}>
-                  {purchase.payment_status === 'PAID' ? 'PAID' : 'PENDING'}
+                  {purchase.status === 'CANCELLED' 
+                    ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED') 
+                    : (purchase.payment_status === 'PAID' ? 'PAID' : 'PENDING')}
                 </span>
               </div>
             </div>

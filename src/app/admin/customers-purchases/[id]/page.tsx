@@ -1,3 +1,4 @@
+import React from 'react';
 import { getPurchaseDetails } from '@/actions/purchase.actions';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -87,11 +88,14 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Payment</span>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                  purchase.status === 'CANCELLED' ? 'bg-slate-100 text-slate-700' :
                   purchase.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
                   purchase.payment_status === 'PARTIALLY_PAID' ? 'bg-blue-100 text-blue-700' :
                   'bg-amber-100 text-amber-700'
                 }`}>
-                  {purchase.payment_status}
+                  {purchase.status === 'CANCELLED' 
+                    ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED') 
+                    : purchase.payment_status}
                 </span>
               </div>
 
@@ -150,20 +154,70 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {items.map((item: any) => (
-                  <tr key={item.id}>
-                    <td className="p-4">
-                      <div className="font-medium text-slate-900">{item.product_name_snapshot}</div>
-                      <div className="text-xs text-slate-500">{item.category_snapshot}</div>
-                    </td>
-                    <td className="p-4 text-slate-500 text-right">
-                      {item.catalog_unit_price ? `₹${Number(item.catalog_unit_price).toLocaleString()}` : '-'}
-                    </td>
-                    <td className="p-4 text-slate-900 font-medium text-right">₹{Number(item.actual_unit_price).toLocaleString()}</td>
-                    <td className="p-4 font-medium text-slate-900 text-right">{item.quantity}</td>
-                    <td className="p-4 font-medium text-slate-900 text-right">₹{Number(item.line_total).toLocaleString()}</td>
-                  </tr>
-                ))}
+                {(() => {
+                  const groupedItems: Record<string, any[]> = {};
+                  const standaloneItems: any[] = [];
+                  
+                  items.forEach((item: any) => {
+                    const match = item.product_name_snapshot.match(/^\[(.*?)\] (.*)$/);
+                    if (match) {
+                      const groupName = match[1];
+                      if (!groupedItems[groupName]) groupedItems[groupName] = [];
+                      groupedItems[groupName].push({ ...item, clean_name: match[2] });
+                    } else {
+                      standaloneItems.push({ ...item, clean_name: item.product_name_snapshot });
+                    }
+                  });
+
+                  return (
+                    <>
+                      {Object.entries(groupedItems).map(([groupName, groupItems]) => {
+                        const groupTotal = groupItems.reduce((acc, it) => acc + Number(it.line_total), 0);
+                        return (
+                          <React.Fragment key={`group-${groupName}`}>
+                            <tr className="bg-indigo-50/50 border-y border-indigo-100">
+                              <td colSpan={4} className="p-4 pl-4 font-bold text-indigo-900">
+                                <Package className="w-5 h-5 inline mr-2 text-indigo-500 mb-0.5" />
+                                {groupName}
+                              </td>
+                              <td className="p-4 font-bold text-indigo-900 text-right">
+                                ₹{groupTotal.toLocaleString()}
+                              </td>
+                            </tr>
+                            {groupItems.map((item) => (
+                              <tr key={item.id} className="bg-white hover:bg-slate-50 transition-colors">
+                                <td className="p-4 pl-12 border-l-2 border-indigo-100">
+                                  <div className="font-medium text-slate-800">{item.clean_name}</div>
+                                  <div className="text-xs text-slate-500">{item.category_snapshot}</div>
+                                </td>
+                                <td className="p-4 text-slate-500 text-right">
+                                  {item.catalog_unit_price ? `₹${Number(item.catalog_unit_price).toLocaleString()}` : '-'}
+                                </td>
+                                <td className="p-4 text-slate-900 font-medium text-right">₹{Number(item.actual_unit_price).toLocaleString()}</td>
+                                <td className="p-4 font-medium text-slate-900 text-right">{item.quantity}</td>
+                                <td className="p-4 text-slate-600 font-medium text-right">₹{Number(item.line_total).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        );
+                      })}
+                      {standaloneItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4">
+                            <div className="font-medium text-slate-900">{item.clean_name}</div>
+                            <div className="text-xs text-slate-500">{item.category_snapshot}</div>
+                          </td>
+                          <td className="p-4 text-slate-500 text-right">
+                            {item.catalog_unit_price ? `₹${Number(item.catalog_unit_price).toLocaleString()}` : '-'}
+                          </td>
+                          <td className="p-4 text-slate-900 font-medium text-right">₹{Number(item.actual_unit_price).toLocaleString()}</td>
+                          <td className="p-4 font-medium text-slate-900 text-right">{item.quantity}</td>
+                          <td className="p-4 font-medium text-slate-900 text-right">₹{Number(item.line_total).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
           </div>
@@ -229,6 +283,18 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
           </div>
         </div>
       </div>
+
+      {purchase.notes && (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center">
+            <FileText className="w-5 h-5 text-indigo-500 mr-2" />
+            Order Notes & Cancellation Reasons
+          </h3>
+          <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-700 whitespace-pre-wrap font-mono leading-relaxed border border-slate-100">
+            {purchase.notes}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

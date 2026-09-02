@@ -45,6 +45,7 @@ interface CartContextType {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  mergeLooseItemsIntoHamper: (hamperId: string) => void;
   totalItems: number;
   subtotal: number;
 }
@@ -178,6 +179,60 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
     setItems([]);
   }, []);
 
+  const mergeLooseItemsIntoHamper = useCallback((hamperId: string) => {
+    setItems(prevItems => {
+      const hamper = prevItems.find(i => i.id === hamperId && (i.itemType === 'PERSONALIZED_HAMPER' || i.itemType === 'HAMPER'));
+      if (!hamper) return prevItems;
+
+      const looseItems = prevItems.filter(i => i.itemType === 'PRODUCT');
+      if (looseItems.length === 0) return prevItems;
+
+      // Calculate total added price from all loose items (price * quantity)
+      let addedPrice = 0;
+      let addedProductsSubtotal = 0;
+      const newProducts = [...(hamper.products || [])];
+
+      looseItems.forEach(loose => {
+        addedPrice += (loose.price * loose.quantity);
+        addedProductsSubtotal += (loose.price * loose.quantity);
+        
+        // Check if product already exists in the hamper
+        const existingIdx = newProducts.findIndex(p => p.id === loose.id);
+        if (existingIdx >= 0) {
+          newProducts[existingIdx] = {
+            ...newProducts[existingIdx],
+            quantity: newProducts[existingIdx].quantity + loose.quantity
+          };
+        } else {
+          newProducts.push({
+            id: loose.id,
+            name: loose.name,
+            price: loose.price,
+            quantity: loose.quantity,
+            imageUrl: loose.imageUrl,
+            categoryName: 'Added from Bag'
+          });
+        }
+      });
+
+      // Remove loose items and update the hamper
+      return prevItems
+        .filter(i => i.itemType !== 'PRODUCT')
+        .map(i => {
+          if (i.id === hamperId) {
+            return {
+              ...i,
+              itemType: 'PERSONALIZED_HAMPER', // Upgrade pre-made to personalized if items are added
+              price: i.price + addedPrice,
+              productsSubtotal: (i.productsSubtotal || 0) + addedProductsSubtotal,
+              products: newProducts
+            };
+          }
+          return i;
+        });
+    });
+  }, []);
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -191,6 +246,7 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
       removeItem,
       updateQuantity,
       clearCart,
+      mergeLooseItemsIntoHamper,
       totalItems,
       subtotal
     }}>

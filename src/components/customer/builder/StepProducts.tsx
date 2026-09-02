@@ -105,6 +105,37 @@ export function StepProducts({ products, categories }: Props) {
         </div>
       </div>
 
+      {/* Action/Navigation Bar - Moved to top per request */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm sticky top-24 z-30">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          className="rounded-full px-6 h-12 text-slate-600 flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <span className="text-xs text-slate-500 block font-light">
+              {totalProductsCount} item{totalProductsCount !== 1 ? 's' : ''} added
+            </span>
+            <span className="text-base font-bold text-slate-900">
+              Subtotal: ₹{productsSubtotal.toFixed(2)}
+            </span>
+          </div>
+
+          <Button
+            onClick={nextStep}
+            disabled={totalProductsCount === 0}
+            className="rounded-full px-8 h-12 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 disabled:opacity-50 transition-all flex items-center gap-2"
+          >
+            <span>Customize Hamper</span>
+            <ArrowRight className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
+
       {/* Product Cards Grid */}
       {filteredProducts.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
@@ -225,37 +256,6 @@ export function StepProducts({ products, categories }: Props) {
           })}
         </div>
       )}
-
-      {/* Navigation Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          className="rounded-full px-8 h-12 text-slate-600 flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Occasion
-        </Button>
-
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <span className="text-xs text-slate-500 block font-light">
-              {totalProductsCount} item{totalProductsCount !== 1 ? 's' : ''} in hamper
-            </span>
-            <span className="text-base font-bold text-slate-900">
-              Subtotal: ₹{productsSubtotal.toFixed(2)}
-            </span>
-          </div>
-
-          <Button
-            onClick={nextStep}
-            disabled={totalProductsCount === 0}
-            className="rounded-full px-10 h-14 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 disabled:opacity-50 transition-all flex items-center gap-2"
-          >
-            <span>Customize Hamper</span>
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

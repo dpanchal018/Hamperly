@@ -42,10 +42,11 @@ export function HamperStudio({ occasions, products, categories, customizationCat
     editingCartId,
     resetBuilder,
     totalPrice,
-    totalProductsCount
+    totalProductsCount,
+    loadFromCartLooseItems
   } = useHamperBuilder();
 
-  const { items: cartItems } = useCart();
+  const { items: cartItems, removeItem: removeCartItem } = useCart();
   const searchParams = useSearchParams();
   const loadedEditIdRef = useRef<string | null>(null);
   const loadedOccasionRef = useRef<string | null>(null);
@@ -112,7 +113,22 @@ export function HamperStudio({ occasions, products, categories, customizationCat
         loadFromCartItem(cartItem);
       }
     }
-  }, [isMounted, searchParams, occasions, occasion, setOccasion, setCurrentStep, cartItems, loadFromCartItem]);
+
+    const fromCart = searchParams.get('fromCart');
+    if (fromCart === 'true' && cartItems.some(i => i.itemType === 'PRODUCT')) {
+      // Only do this once
+      if (loadedEditIdRef.current !== 'fromCart') {
+        loadedEditIdRef.current = 'fromCart';
+        // Delay slightly to ensure context is ready
+        setTimeout(() => {
+           loadFromCartLooseItems(cartItems, products);
+           cartItems.forEach(i => {
+             if (i.itemType === 'PRODUCT') removeCartItem(i.id);
+           });
+        }, 50);
+      }
+    }
+  }, [isMounted, searchParams, occasions, occasion, setOccasion, setCurrentStep, cartItems, loadFromCartItem, loadFromCartLooseItems, products, removeCartItem]);
 
   const displayStep = isMounted ? currentStep : 1;
 

@@ -95,14 +95,12 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
           </Link>
 
           <WishlistNavButton />
+          {user && <NotificationBell />}
           <CartButton />
 
           <div className="hidden md:flex items-center gap-3 ml-2">
             {user ? (
-              <>
-                <NotificationBell />
-                <ProfileDropdown user={user} role={role} />
-              </>
+              <ProfileDropdown user={user} role={role} />
             ) : (
               <Link href="/login">
                 <Button variant="outline" className="rounded-full border-primary/20 text-primary hover:bg-primary/5">
