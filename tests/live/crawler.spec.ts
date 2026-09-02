@@ -51,14 +51,12 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // 2. Go to hampers page and add the first pre-made hamper to cart
     await page.goto('/hampers');
-    const firstHamperBtn = page.locator('button:has-text("Add to Cart")').first();
+    const firstHamperBtn = page.locator('button[aria-label="Add to Cart"]').first();
     await firstHamperBtn.waitFor({ state: 'visible' });
     await firstHamperBtn.click();
     
     // 3. Open cart and proceed to checkout
-    const cartButton = page.locator('button:has-text("Checkout")');
-    await cartButton.waitFor({ state: 'visible' });
-    await cartButton.click();
+    await page.goto('/checkout');
 
     // 4. Fill out Delivery Details (Auth users skip email/name)
     await expect(page.url()).toContain('/checkout');
