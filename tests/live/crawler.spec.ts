@@ -46,8 +46,8 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     await page.fill('input[name="password"]', 'HamperlyQA123!');
     await page.getByRole('button', { name: /sign in|log in/i }).click();
 
-    // Verify successful login by checking for the account/orders redirect
-    await page.waitForURL('**/account/orders', { timeout: 10000 });
+    // Verify successful login by checking for the redirect to homepage
+    await page.waitForURL(url => url.pathname === '/', { timeout: 10000 });
 
     // 2. Go to hampers page and add the first pre-made hamper to cart
     await page.goto('/hampers');
