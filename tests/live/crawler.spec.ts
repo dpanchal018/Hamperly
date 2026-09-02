@@ -67,7 +67,7 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     await proceedBtn.click();
     
     // 4. Fill out Delivery Details
-    await expect(page.url()).toContain('/checkout');
+    await page.waitForURL('**/checkout', { timeout: 15000 });
     await expect(page.locator('h2:has-text("Contact Information")')).toBeVisible({ timeout: 15000 });
     
     const pincodeInput = page.locator('#delivery-pincode');
