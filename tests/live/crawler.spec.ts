@@ -60,8 +60,20 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // 4. Fill out Delivery Details (Auth users skip email/name)
     await expect(page.url()).toContain('/checkout');
-    await page.fill('textarea[name="deliveryAddress"]', '123 Automated Testing St');
-    await page.fill('input[name="pincode"]', '123456');
+    // 4. Fill out Delivery Details
+    await expect(page.url()).toContain('/checkout');
+    
+    // The user might have a saved address from a previous QA run.
+    const changeBtn = page.locator('button:has-text("Change")');
+    const hasSavedAddress = await changeBtn.isVisible();
+    
+    if (!hasSavedAddress) {
+      // Must type pincode first to unlock the address textarea
+      await page.fill('#delivery-pincode', '390001');
+      // Wait for validation to complete (it shows Checking... then Local/National)
+      await expect(page.locator('text=Checking...')).not.toBeVisible();
+      await page.fill('#delivery-address', '123 Automated Testing St');
+    }
 
     // 5. Confirm Order
     const confirmBtn = page.locator('button:has-text("Confirm Order")');
