@@ -10,7 +10,9 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "hamperly-qa": "node scripts/run-hamperly-qa.js"
+    "hamperly-qa": "node scripts/run-hamperly-qa.js",
+    "test:live": "playwright test -c playwright.live.config.ts",
+    "qa:pipeline": "node scripts/run-validation-pipeline.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.43",

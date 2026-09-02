@@ -70,14 +70,16 @@ export async function cancelCustomerOrder(purchaseId: string, reason: string) {
 
     // Dispatch a Telegram notification
     try {
-      const { sendTelegramMessage } = await import('./telegram.actions');
-      const tgMsg = `
+      if (user?.email !== 'qa-crawler@hamperly.com') {
+        const { sendTelegramMessage } = await import('./telegram.actions');
+        const tgMsg = `
 🚫 <b>ORDER CANCELLED BY CUSTOMER</b>
 <b>Order ID:</b> #${purchase.id.split('-')[0]}
 <b>Amount:</b> ₹${purchase.final_amount.toFixed(2)}
 <b>Reason:</b> ${reason}
-      `.trim();
-      await sendTelegramMessage(tgMsg, 'ALERT');
+        `.trim();
+        await sendTelegramMessage(tgMsg, 'ALERT');
+      }
     } catch (e) {
       console.error("Failed to send telegram alert for cancellation", e);
     }
