@@ -66,16 +66,18 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     // 4. Fill out Delivery Details
     await expect(page.url()).toContain('/checkout');
     
-    // The user might have a saved address from a previous QA run.
-    const changeBtn = page.locator('button:has-text("Change")');
-    const hasSavedAddress = await changeBtn.isVisible();
+    // CRUCIAL: Wait for the CartContext to hydrate from localStorage. 
+    // Before hydration, the page briefly shows "Cart is empty".
+    await expect(page.getByText('Contact Information')).toBeVisible({ timeout: 15000 });
     
-    if (!hasSavedAddress) {
-      // Must type pincode first to unlock the address textarea
-      await page.fill('#delivery-pincode', '390001');
+    const pincodeInput = page.locator('#delivery-pincode');
+    
+    // If the pincode input is visible, it means no saved address is active
+    if (await pincodeInput.isVisible()) {
+      await pincodeInput.fill('390001');
       // Wait for validation to complete (address field becomes enabled)
       await expect(page.locator('#delivery-address')).toBeEnabled({ timeout: 10000 });
-      await page.fill('#delivery-address', '123 Automated Testing St');
+      await page.locator('#delivery-address').fill('123 Automated Testing St');
     }
 
     // 5. Confirm Order
