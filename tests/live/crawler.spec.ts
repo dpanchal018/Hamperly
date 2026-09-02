@@ -51,6 +51,13 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // 2. Go to hampers page and add the first pre-made hamper to cart
     await page.goto('/hampers');
+    
+    // CRITICAL: Next.js CartProvider fetches the cart from the cloud database on mount.
+    // If Playwright clicks "Add to Cart" before this fetch completes, the cloud fetch 
+    // will resolve and overwrite the newly added item with an empty cart!
+    // We must wait for network idle to ensure loadCart() has completely finished.
+    await page.waitForLoadState('networkidle');
+    
     const firstHamperBtn = page.locator('button[aria-label="Add to Cart"]').first();
     await firstHamperBtn.waitFor({ state: 'visible' });
     await firstHamperBtn.click();
