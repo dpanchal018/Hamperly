@@ -55,6 +55,9 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     await firstHamperBtn.waitFor({ state: 'visible' });
     await firstHamperBtn.click();
     
+    // Crucial: Wait for the button state to change to "Added to Cart" to ensure React saved it to localStorage
+    await expect(page.locator('button[aria-label="Added to Cart"]').first()).toBeVisible({ timeout: 10000 });
+    
     // 3. Open cart and proceed to checkout
     await page.goto('/checkout');
 
@@ -70,8 +73,8 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     if (!hasSavedAddress) {
       // Must type pincode first to unlock the address textarea
       await page.fill('#delivery-pincode', '390001');
-      // Wait for validation to complete (it shows Checking... then Local/National)
-      await expect(page.locator('text=Checking...')).not.toBeVisible();
+      // Wait for validation to complete (address field becomes enabled)
+      await expect(page.locator('#delivery-address')).toBeEnabled({ timeout: 10000 });
       await page.fill('#delivery-address', '123 Automated Testing St');
     }
 
