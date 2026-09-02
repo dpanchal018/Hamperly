@@ -356,12 +356,15 @@ export async function placeCustomerOrder(
 
     // 8. Dispatch Telegram Notification
     try {
-      const customerInfo = finalCustomerName ? `${finalCustomerName}${finalCustomerPhone ? ` (${finalCustomerPhone})` : ''}` : 'Storefront Customer';
-      const itemsList = purchaseItems
-        .map(i => `• <b>${i.product_name_snapshot}</b> × ${i.quantity} — ₹${i.line_total.toFixed(2)}`)
-        .join('\n');
+      const isQATest = user?.email === 'qa-crawler@hamperly.com' || guestDetails?.email === 'qa-crawler@hamperly.com';
+      
+      if (!isQATest) {
+        const customerInfo = finalCustomerName ? `${finalCustomerName}${finalCustomerPhone ? ` (${finalCustomerPhone})` : ''}` : 'Storefront Customer';
+        const itemsList = purchaseItems
+          .map(i => `• <b>${i.product_name_snapshot}</b> × ${i.quantity} — ₹${i.line_total.toFixed(2)}`)
+          .join('\n');
 
-      const tgMsg = `
+        const tgMsg = `
 🛍️ <b>NEW ORDER CONFIRMED!</b>
 <b>Order ID:</b> #${purchase.id.split('-')[0]}
 <b>Customer:</b> ${customerInfo}
@@ -370,9 +373,10 @@ export async function placeCustomerOrder(
 
 <b>Order Contents:</b>
 ${itemsList}
-      `.trim();
+        `.trim();
 
-      await sendTelegramMessage(tgMsg, 'ALERT');
+        await sendTelegramMessage(tgMsg, 'ALERT');
+      }
     } catch (tgErr) {
       console.error("Telegram notification error:", tgErr);
     }
