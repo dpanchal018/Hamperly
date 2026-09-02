@@ -69,20 +69,22 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     // 4. Fill out Delivery Details
     await page.waitForURL('**/checkout', { timeout: 15000 });
     
+    // Check if the form rendered, or if the cart mysteriously emptied
+    await expect(async () => {
+      const hasDelivery = await page.locator('text=Delivery Details').isVisible();
+      const isEmpty = await page.locator('text=Your cart is empty').isVisible();
+      expect(hasDelivery || isEmpty).toBeTruthy();
+    }).toPass({ timeout: 15000 });
+
+    if (await page.locator('text=Your cart is empty').isVisible()) {
+      throw new Error("Cart was mysteriously empty on the checkout page. SPA state loss occurred.");
+    }
+    
+    // If we have a saved address, the pincode input will be hidden
     const pincodeInput = page.locator('#delivery-pincode');
-    const changeBtn = page.locator('button:has-text("Change")');
     
-    // Wait for the form to fully render. Either the pincode input is shown, or the saved address "Change" button is shown.
-    // If the cart accidentally emptied, this will timeout and fail.
-    await Promise.race([
-      pincodeInput.waitFor({ state: 'visible', timeout: 15000 }),
-      changeBtn.waitFor({ state: 'visible', timeout: 15000 })
-    ]);
-    
-    // If the pincode input is visible, it means no saved address is active
     if (await pincodeInput.isVisible()) {
       await pincodeInput.fill('390001');
-      // Wait for validation to complete (address field becomes enabled)
       await expect(page.locator('#delivery-address')).toBeEnabled({ timeout: 10000 });
       await page.locator('#delivery-address').fill('123 Automated Testing St');
     }
