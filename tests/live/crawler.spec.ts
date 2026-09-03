@@ -98,29 +98,35 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // 5. Confirm Order
     const confirmBtn = page.locator('button:has-text("Confirm Order")');
+    await confirmBtn.waitFor({ state: 'visible' });
     await confirmBtn.click();
 
-    // 6. Verify Success Page
-    await page.waitForURL('**/checkout/success/**', { timeout: 15000 });
-    await expect(page.locator('text=Order Confirmed')).toBeVisible();
+    // 6. Verify Success Page (Vercel can be slow — use generous timeout)
+    await page.waitForURL('**/checkout/success/**', { timeout: 30000 });
+    await expect(page.locator('text=Order Confirmed')).toBeVisible({ timeout: 10000 });
     
     // 7. Teardown: Navigate to My Orders and Cancel
-    await page.goto('/account/orders');
+    await page.goto('/account/orders', { waitUntil: 'domcontentloaded', timeout: 30000 });
     
     // Click the first "Cancel Order" button
     const cancelBtn = page.locator('button:has-text("Cancel Order")').first();
-    await cancelBtn.waitFor({ state: 'visible' });
+    await cancelBtn.waitFor({ state: 'visible', timeout: 15000 });
     await cancelBtn.click();
 
-    // Select reason and confirm in the dialog
-    const reasonBtn = page.locator('button:has-text("Other")');
-    await reasonBtn.click();
-    await page.fill('textarea', 'Automated QA Teardown - Do Not Process');
+    // The cancel dialog has reason buttons — click "Other"
+    const otherReasonBtn = page.locator('button:has-text("Other")');
+    await otherReasonBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await otherReasonBtn.click();
+    
+    // Fill in the textarea that appears after clicking "Other"
+    const cancelTextarea = page.locator('textarea[placeholder="Please tell us why..."]');
+    await cancelTextarea.waitFor({ state: 'visible', timeout: 5000 });
+    await cancelTextarea.fill('Automated QA Teardown - Do Not Process');
     
     const confirmCancelBtn = page.locator('button:has-text("Confirm Cancellation")');
     await confirmCancelBtn.click();
 
-    // Verify it cancelled successfully (toast appears or button disappears)
-    await expect(page.locator('text=Order cancelled successfully')).toBeVisible();
+    // Verify it cancelled successfully
+    await expect(page.locator('text=Order cancelled successfully.')).toBeVisible({ timeout: 10000 });
   });
 });
