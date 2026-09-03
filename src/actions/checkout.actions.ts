@@ -6,6 +6,7 @@ import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { getCurrentUser } from '@/services/auth.service';
 import { getPublicCustomizations } from './customization.actions';
 import { revalidatePath } from 'next/cache';
+import { validatePhoneNumber } from '@/lib/phone';
 
 const supabaseAdmin = createSupabaseAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,10 +57,11 @@ export async function placeCustomerOrder(
     if (!finalCustomerId) {
       if (!guestDetails) throw new Error("Guest details required for unauthenticated checkout");
       
-      const strippedPhone = guestDetails.phone?.replace(/\D/g, '');
-      if (!strippedPhone || strippedPhone.length !== 10) {
-        throw new Error("Guest phone number must be exactly 10 digits.");
+      const phoneValidation = validatePhoneNumber(guestDetails.phone);
+      if (!phoneValidation.isValid || !phoneValidation.normalized) {
+        throw new Error(phoneValidation.error || "Please provide a valid phone number.");
       }
+      const strippedPhone = phoneValidation.normalized;
 
       const { data: existingGuest } = await supabaseAdmin
         .from('customers')
