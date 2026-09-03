@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { createPurchase } from '@/actions/purchase.actions';
 import { searchCustomers, createCustomer } from '@/actions/customer.actions';
 import { getHampers } from '@/actions/hamper.actions';
-import { Search, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PhoneField } from '@/components/ui/PhoneField';
+import { validatePhoneNumber } from '@/lib/phone';
 import { toast } from 'react-hot-toast';
 
 export function PurchaseForm() {
@@ -52,7 +54,23 @@ export function PurchaseForm() {
   };
 
   const handleCreateCustomer = async () => {
-    const { customer: data, error } = await createCustomer(newCustomer);
+    if (!newCustomer.full_name) {
+      toast.error('Customer name is required.');
+      return;
+    }
+    
+    let normalizedPhone = newCustomer.mobile_number;
+    if (newCustomer.mobile_number) {
+      const phoneValidation = validatePhoneNumber(newCustomer.mobile_number);
+      if (!phoneValidation.isValid) {
+        toast.error(phoneValidation.error || 'Please enter a valid phone number.');
+        return;
+      }
+      normalizedPhone = phoneValidation.normalized || newCustomer.mobile_number;
+    }
+
+    const payload = { ...newCustomer, mobile_number: normalizedPhone };
+    const { customer: data, error } = await createCustomer(payload);
     if (data) {
       setSelectedCustomer(data);
       setNewCustomer({ full_name: '', mobile_number: '' });
@@ -170,12 +188,10 @@ export function PurchaseForm() {
                 value={newCustomer.full_name}
                 onChange={e => setNewCustomer({...newCustomer, full_name: e.target.value})}
               />
-              <input 
-                type="text" 
-                className="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm" 
+              <PhoneField
                 placeholder="Mobile Number"
                 value={newCustomer.mobile_number}
-                onChange={e => setNewCustomer({...newCustomer, mobile_number: e.target.value})}
+                onChange={val => setNewCustomer({...newCustomer, mobile_number: val || ''})}
               />
               <Button type="button" onClick={handleCreateCustomer} className="w-full" variant="outline">
                 Save & Select Customer

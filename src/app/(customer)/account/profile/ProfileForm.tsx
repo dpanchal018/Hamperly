@@ -4,11 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { updateCustomerProfile } from "@/actions/customer.actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { PhoneField } from "@/components/ui/PhoneField";
+import { validatePhoneNumber } from "@/lib/phone";
 
 export function ProfileForm({ initialName, initialPhone }: { initialName: string, initialPhone: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [phone, setPhone] = useState(initialPhone);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -23,7 +26,15 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
     setError("");
     setSuccess(false);
 
+    const phoneValidation = validatePhoneNumber(phone);
+    if (!phoneValidation.isValid) {
+      setError(phoneValidation.error || "Invalid phone number");
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
+    formData.set("mobileNumber", phoneValidation.normalized!);
     const result = await updateCustomerProfile(formData);
 
     if (!result.success) {
@@ -70,20 +81,12 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
         <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-2">
           Phone Number
         </label>
-        <input
-          type="tel"
+        <PhoneField
           id="phone"
           name="mobileNumber"
-          defaultValue={initialPhone}
+          value={phone}
+          onChange={(val) => setPhone(val || "")}
           required
-          maxLength={10}
-          pattern="[0-9]{10}"
-          title="Please enter exactly 10 digits"
-          onInput={(e) => {
-            e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '').slice(0, 10);
-          }}
-          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all outline-none"
-          placeholder="9876543210"
         />
       </div>
 

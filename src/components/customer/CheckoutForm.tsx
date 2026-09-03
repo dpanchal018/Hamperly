@@ -7,6 +7,8 @@ import { placeCustomerOrder } from '@/actions/checkout.actions';
 import { ShoppingBag, MapPin, Phone, User, Mail, Check, PackageOpen, Truck, Clock, Sparkles, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import { PhoneField } from '@/components/ui/PhoneField';
+import { validatePhoneNumber } from '@/lib/phone';
 import vadodaraPincodes from '@/data/vadodara_pincodes.json';
 
 export function CheckoutForm({ customer }: { customer: any }) {
@@ -89,7 +91,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
       const cErrors = { 
         name: !guestName.trim(), 
         email: !/^\S+@\S+\.\S+$/.test(guestEmail), 
-        phone: guestPhone.replace(/\D/g, '').length !== 10 
+        phone: !validatePhoneNumber(guestPhone).isValid 
       };
       setContactErrors(cErrors);
       
@@ -191,22 +193,20 @@ export function CheckoutForm({ customer }: { customer: any }) {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    required 
-                    maxLength={10}
-                    pattern="[0-9]{10}"
-                    title="Please enter exactly 10 digits"
-                    value={guestPhone} 
-                    onChange={e => { 
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setGuestPhone(val); 
-                      setContactErrors(p => ({...p, phone: false}));
-                    }} 
-                    className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.phone ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} 
-                    placeholder="9876543210" 
+                  <PhoneField
+                    value={guestPhone}
+                    onChange={(val) => {
+                      setGuestPhone(val || '');
+                      setContactErrors(p => ({ ...p, phone: false }));
+                    }}
+                    required
+                    error={contactErrors.phone}
                   />
-                  {contactErrors.phone && <p className="text-red-500 text-xs mt-1">10-digit phone number is required.</p>}
+                  {contactErrors.phone && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {validatePhoneNumber(guestPhone).error || "Valid phone number is required."}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

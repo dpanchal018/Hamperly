@@ -3,8 +3,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { Customer } from '@/types/database.types';
 import { revalidatePath } from 'next/cache';
+import { validatePhoneNumber } from '@/lib/phone';
 
 export async function createCustomer(data: Partial<Customer>) {
+  if (data.mobile_number) {
+    const phoneValidation = validatePhoneNumber(data.mobile_number);
+    if (!phoneValidation.isValid) {
+      return { error: phoneValidation.error || "Please enter a valid phone number." };
+    }
+    data.mobile_number = phoneValidation.normalized || data.mobile_number;
+  }
+
   const supabase = await createClient();
   
   const { data: customer, error } = await supabase
@@ -29,6 +38,14 @@ export async function createCustomer(data: Partial<Customer>) {
 }
 
 export async function updateCustomer(id: string, data: Partial<Customer>) {
+  if (data.mobile_number) {
+    const phoneValidation = validatePhoneNumber(data.mobile_number);
+    if (!phoneValidation.isValid) {
+      return { error: phoneValidation.error || "Please enter a valid phone number." };
+    }
+    data.mobile_number = phoneValidation.normalized || data.mobile_number;
+  }
+
   const supabase = await createClient();
   
   const { data: customer, error } = await supabase
@@ -95,6 +112,13 @@ export async function getCustomerDetails(id: string) {
 }
 
 export async function checkDuplicateCustomer(mobile?: string, email?: string) {
+  if (mobile) {
+    const parsed = validatePhoneNumber(mobile);
+    if (parsed.isValid && parsed.normalized) {
+      mobile = parsed.normalized;
+    }
+  }
+
   const supabase = await createClient();
   let query = supabase.from('customers').select('id, full_name, mobile_number, email').eq('is_active', true);
   
@@ -117,6 +141,7 @@ export async function checkDuplicateCustomer(mobile?: string, email?: string) {
 
   return { duplicates };
 }
+
 export async function getAllCustomers() {
   const supabase = await createClient();
   const { data: customers, error } = await supabase
@@ -148,18 +173,20 @@ export async function updateCustomerProfile(formData: FormData) {
       return { success: false, error: "Please enter a valid full name." };
     }
 
+    let normalizedPhone = null;
     if (mobileNumber) {
-      const stripped = mobileNumber.replace(/\D/g, '');
-      if (stripped.length !== 10) {
-        return { success: false, error: "Please enter a valid 10-digit phone number." };
+      const phoneValidation = validatePhoneNumber(mobileNumber);
+      if (!phoneValidation.isValid) {
+        return { success: false, error: phoneValidation.error || "Please enter a valid phone number." };
       }
+      normalizedPhone = phoneValidation.normalized;
     }
 
     const { error } = await supabase
       .from("customers")
       .update({
         full_name: fullName.trim(),
-        mobile_number: mobileNumber?.trim() || null
+        mobile_number: normalizedPhone
       })
       .eq("user_id", user.id);
 
