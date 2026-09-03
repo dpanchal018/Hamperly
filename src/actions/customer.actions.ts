@@ -148,6 +148,13 @@ export async function updateCustomerProfile(formData: FormData) {
       return { success: false, error: "Please enter a valid full name." };
     }
 
+    if (mobileNumber) {
+      const stripped = mobileNumber.replace(/\D/g, '');
+      if (stripped.length !== 10) {
+        return { success: false, error: "Please enter a valid 10-digit phone number." };
+      }
+    }
+
     const { error } = await supabase
       .from("customers")
       .update({

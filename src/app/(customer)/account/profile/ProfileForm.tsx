@@ -73,11 +73,17 @@ export function ProfileForm({ initialName, initialPhone }: { initialName: string
         <input
           type="tel"
           id="phone"
-          name="phone"
+          name="mobileNumber"
           defaultValue={initialPhone}
           required
+          maxLength={10}
+          pattern="[0-9]{10}"
+          title="Please enter exactly 10 digits"
+          onInput={(e) => {
+            e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '').slice(0, 10);
+          }}
           className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all outline-none"
-          placeholder="+91 98765 43210"
+          placeholder="9876543210"
         />
       </div>
 
