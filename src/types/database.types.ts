@@ -232,6 +232,7 @@ export interface SiteContent {
   updated_at: string;
 }
 
+
 export interface HeaderContent {
   logoText: string;
   navLinks: { name: string; href: string }[];
@@ -245,6 +246,8 @@ export interface FooterContent {
     title: string;
     links: { name: string; href: string }[];
   }[];
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export interface Wishlist {

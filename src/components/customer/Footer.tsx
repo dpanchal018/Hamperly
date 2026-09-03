@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { Heart, Mail, Phone } from 'lucide-react';
 import { FooterContent } from '@/types/database.types';
 
 export function Footer({ content }: { content: FooterContent }) {
@@ -51,6 +51,35 @@ export function Footer({ content }: { content: FooterContent }) {
               </ul>
             </div>
           ))}
+
+          {/* Contact Us — merged with support email & phone */}
+          <div>
+            <h4 className="font-bold text-foreground mb-6">Contact Us</h4>
+            <ul className="space-y-4 text-sm text-foreground/70">
+              {content.contactEmail && (
+                <li>
+                  <a
+                    href={`mailto:${content.contactEmail}`}
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    <Mail className="w-4 h-4 shrink-0 text-primary/50" />
+                    {content.contactEmail}
+                  </a>
+                </li>
+              )}
+              {content.contactPhone && (
+                <li>
+                  <a
+                    href={`tel:${content.contactPhone.replace(/\s/g, '')}`}
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    <Phone className="w-4 h-4 shrink-0 text-primary/50" />
+                    {content.contactPhone}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
 
           <div>
             <h4 className="font-bold text-foreground mb-6">Newsletter</h4>
