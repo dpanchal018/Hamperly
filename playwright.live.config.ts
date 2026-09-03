@@ -7,6 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/live',
   fullyParallel: false,
+  timeout: 90000, // 90s per test — full checkout lifecycle takes ~35-40s on Vercel
   retries: 1,
   workers: 1, // Single worker to avoid throttling/DDoS protection on live site
   reporter: [
