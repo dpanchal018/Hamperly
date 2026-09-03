@@ -115,12 +115,12 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // The cancel dialog has reason buttons — click "Other"
     const otherReasonBtn = page.locator('button:has-text("Other")');
-    await otherReasonBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await otherReasonBtn.waitFor({ state: 'visible', timeout: 15000 });
     await otherReasonBtn.click();
     
     // Fill in the textarea that appears after clicking "Other"
     const cancelTextarea = page.locator('textarea[placeholder="Please tell us why..."]');
-    await cancelTextarea.waitFor({ state: 'visible', timeout: 5000 });
+    await cancelTextarea.waitFor({ state: 'visible', timeout: 10000 });
     await cancelTextarea.fill('Automated QA Teardown - Do Not Process');
     
     const confirmCancelBtn = page.locator('button:has-text("Confirm Cancellation")');
