@@ -28,11 +28,27 @@ jobs:
 
       - name: Run Live Site Bug Crawler
         run: npm run test:live
+        continue-on-error: true  # Always generate report even if tests fail
 
-      - name: Upload Test Report
+      - name: Generate QA Report Document
+        if: always()
+        run: node scripts/generate-qa-report.js
+
+      - name: Upload QA Report & Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: live-crawler-report
-          path: validation-reports/live-site/html/
-          retention-days: 7
+          name: live-crawler-report-${{ github.run_number }}
+          path: |
+            validation-reports/live-site/qa-report.md
+            validation-reports/live-site/html/
+            validation-reports/live-site/results.json
+          retention-days: 30
+
+      - name: Fail job if tests failed
+        if: always()
+        run: |
+          STATUS=$(node -e "
+            const d = require('./validation-reports/live-site/results.json');
+            process.exit((d.stats?.unexpected ?? 0) > 0 ? 1 : 0);
+          ")

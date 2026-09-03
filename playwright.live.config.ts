@@ -12,6 +12,7 @@ export default defineConfig({
   workers: 1, // Single worker to avoid throttling/DDoS protection on live site
   reporter: [
     ['html', { outputFolder: 'validation-reports/live-site/html', open: 'never' }],
+    ['json', { outputFile: 'validation-reports/live-site/results.json' }],
     ['list']
   ],
   use: {
