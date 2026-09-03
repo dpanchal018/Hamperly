@@ -86,7 +86,11 @@ export function CheckoutForm({ customer }: { customer: any }) {
 
     // Validate Guest Contact
     if (!customer) {
-      const cErrors = { name: !guestName.trim(), email: !/^\S+@\S+\.\S+$/.test(guestEmail), phone: !guestPhone.trim() };
+      const cErrors = { 
+        name: !guestName.trim(), 
+        email: !/^\S+@\S+\.\S+$/.test(guestEmail), 
+        phone: guestPhone.replace(/\D/g, '').length !== 10 
+      };
       setContactErrors(cErrors);
       
       if (cErrors.name || cErrors.email || cErrors.phone) {
@@ -187,8 +191,22 @@ export function CheckoutForm({ customer }: { customer: any }) {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Phone Number</label>
-                  <input type="tel" required value={guestPhone} onChange={e => { setGuestPhone(e.target.value); setContactErrors(p => ({...p, phone: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.phone ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="+91 9876543210" />
-                  {contactErrors.phone && <p className="text-red-500 text-xs mt-1">Phone number is required.</p>}
+                  <input 
+                    type="tel" 
+                    required 
+                    maxLength={10}
+                    pattern="[0-9]{10}"
+                    title="Please enter exactly 10 digits"
+                    value={guestPhone} 
+                    onChange={e => { 
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setGuestPhone(val); 
+                      setContactErrors(p => ({...p, phone: false}));
+                    }} 
+                    className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.phone ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} 
+                    placeholder="9876543210" 
+                  />
+                  {contactErrors.phone && <p className="text-red-500 text-xs mt-1">10-digit phone number is required.</p>}
                 </div>
               </div>
             </div>

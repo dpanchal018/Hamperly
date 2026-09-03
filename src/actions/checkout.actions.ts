@@ -56,6 +56,11 @@ export async function placeCustomerOrder(
     if (!finalCustomerId) {
       if (!guestDetails) throw new Error("Guest details required for unauthenticated checkout");
       
+      const strippedPhone = guestDetails.phone?.replace(/\D/g, '');
+      if (!strippedPhone || strippedPhone.length !== 10) {
+        throw new Error("Guest phone number must be exactly 10 digits.");
+      }
+
       const { data: existingGuest } = await supabaseAdmin
         .from('customers')
         .select('id, full_name, mobile_number')
@@ -71,6 +76,12 @@ export async function placeCustomerOrder(
         const updateData: any = {};
         if (deliveryAddress !== undefined) updateData.address = deliveryAddress;
         if (pincode !== undefined) updateData.pincode = pincode;
+        // Also update guest phone if missing or changed
+        if (guestDetails.phone && guestDetails.phone !== existingGuest.mobile_number) {
+          updateData.mobile_number = strippedPhone;
+          finalCustomerPhone = strippedPhone;
+        }
+
         if (Object.keys(updateData).length > 0) {
           await supabaseAdmin.from('customers').update(updateData).eq('id', finalCustomerId);
         }
@@ -82,7 +93,7 @@ export async function placeCustomerOrder(
             customer_reference: guestRef,
             full_name: guestDetails.fullName,
             email: guestDetails.email,
-            mobile_number: guestDetails.phone,
+            mobile_number: strippedPhone,
             address: deliveryAddress,
             pincode: pincode,
             is_active: true,
@@ -94,7 +105,7 @@ export async function placeCustomerOrder(
         if (createError || !newGuest) throw new Error("Failed to create guest profile");
         finalCustomerId = newGuest.id;
         finalCustomerName = guestDetails.fullName;
-        finalCustomerPhone = guestDetails.phone;
+        finalCustomerPhone = strippedPhone;
       }
     }
 
