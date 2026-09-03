@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { FooterContent } from "@/types/database.types";
@@ -101,6 +101,30 @@ export default function FooterForm({ initialContent }: { initialContent: FooterC
               value={content.description} 
               onChange={e => setContent({ ...content, description: e.target.value })} 
               rows={3}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl border shadow-sm">
+        <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Support Email</label>
+            <Input
+              type="email"
+              placeholder="hello@hamperly.com"
+              value={content.contactEmail ?? ''}
+              onChange={e => setContent({ ...content, contactEmail: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Support Phone</label>
+            <Input
+              type="tel"
+              placeholder="+91 98765 43210"
+              value={content.contactPhone ?? ''}
+              onChange={e => setContent({ ...content, contactPhone: e.target.value })}
             />
           </div>
         </div>

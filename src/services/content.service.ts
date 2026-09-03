@@ -56,10 +56,11 @@ export const defaultFooterContent: FooterContent = {
       title: 'Information',
       links: [
         { name: 'About Us', href: '/about' },
-        { name: 'Contact', href: '/contact' },
         { name: 'FAQ', href: '/faq' },
         { name: 'Terms of Service', href: '/terms' }
       ]
     }
-  ]
+  ],
+  contactEmail: 'hello@hamperly.com',
+  contactPhone: '+91 98765 43210',
 };

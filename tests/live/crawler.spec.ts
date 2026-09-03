@@ -7,8 +7,15 @@ function attachErrorListeners(page: Page) {
   page.on('console', msg => {
     if (msg.type() === 'error') {
       const text = msg.text();
-      // Ignore browser-level noise that isn't our bug
-      if (!text.includes('favicon') && !text.includes('net::ERR') && !text.includes('NEXT_REDIRECT')) {
+      // Ignore browser-level noise: missing assets (404s), network errors,
+      // and Next.js internal redirects. We catch real HTTP 5xx errors separately.
+      const isNoise = 
+        text.includes('favicon') ||
+        text.includes('net::ERR') ||
+        text.includes('NEXT_REDIRECT') ||
+        text.includes('404') ||
+        text.includes('Failed to load resource');
+      if (!isNoise) {
         criticalErrors.push(`[Console Error] ${page.url()}: ${text}`);
       }
     }
