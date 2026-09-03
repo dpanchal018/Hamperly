@@ -55,8 +55,8 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     // CRITICAL: Next.js CartProvider fetches the cart from the cloud database on mount.
     // If Playwright clicks "Add to Cart" before this fetch completes, the cloud fetch 
     // will resolve and overwrite the newly added item with an empty cart!
-    // We must wait for network idle to ensure loadCart() has completely finished.
-    await page.waitForLoadState('networkidle');
+    // We use a safe 3-second wait instead of networkidle (which hangs on websockets).
+    await page.waitForTimeout(3000);
     
     const firstHamperBtn = page.locator('button[aria-label="Add to Cart"]').first();
     await firstHamperBtn.waitFor({ state: 'visible' });
