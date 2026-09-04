@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { getPublicOccasions, getPublicProducts, getPublicCategories } from '@/services/catalog.service';
 import { getPublicCustomizations } from '@/actions/customization.actions';
-import { HamperBuilderProvider } from '@/contexts/HamperBuilderContext';
 import { HamperStudio } from '@/components/customer/builder/HamperStudio';
 import { Metadata } from 'next';
 
@@ -21,19 +20,17 @@ export default async function BuildHamperPage() {
   ]);
 
   return (
-    <HamperBuilderProvider customizationCategories={customizationCategories}>
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600" />
-        </div>
-      }>
-        <HamperStudio
-          occasions={occasions}
-          products={products}
-          categories={categories}
-          customizationCategories={customizationCategories}
-        />
-      </Suspense>
-    </HamperBuilderProvider>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600" />
+      </div>
+    }>
+      <HamperStudio
+        occasions={occasions}
+        products={products}
+        categories={categories}
+        customizationCategories={customizationCategories}
+      />
+    </Suspense>
   );
 }

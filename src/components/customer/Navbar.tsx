@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { Search, Menu, X, Heart, ShoppingBag, ChevronDown, ChevronRight } from 'lucide-react';
+import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
+import { Search, Menu, X, Heart, ShoppingBag, Gift, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { NotificationBell } from './NotificationBell';
 import { ProfileDropdown } from './ProfileDropdown';
+import { HamperIndicator } from './HamperIndicator';
 
 import { HeaderContent, Occasion } from '@/types/database.types';
 
@@ -56,6 +58,8 @@ export function Navbar({ user, role, content, occasions = [] }: { user: any; rol
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileOccasionsOpen, setMobileOccasionsOpen] = useState(false);
+  const { totalProductsCount, totalPrice, isInitialized } = useHamperBuilder();
+  const hasHamperItems = isInitialized && totalProductsCount > 0;
 
   // Filter out Occasions from header nav links
   const navLinks = (content.navLinks || []).filter(link => link.href !== '/occasions');
@@ -139,6 +143,7 @@ export function Navbar({ user, role, content, occasions = [] }: { user: any; rol
           </Link>
 
           <WishlistNavButton />
+          <HamperIndicator />
           {user && <NotificationBell />}
           <CartButton />
 
@@ -220,6 +225,21 @@ export function Navbar({ user, role, content, occasions = [] }: { user: any; rol
             )}
 
             <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
+              <Link
+                href="/build"
+                className="flex items-center justify-between text-foreground hover:text-primary py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className="flex items-center">
+                  <Gift className="w-5 h-5 mr-3" strokeWidth={1.5} />
+                  {hasHamperItems ? 'Finish My Hamper' : 'Start a Hamper'}
+                </span>
+                {hasHamperItems && (
+                  <span className="text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full">
+                    {totalProductsCount} item{totalProductsCount !== 1 ? 's' : ''} · ₹{totalPrice.toFixed(0)}
+                  </span>
+                )}
+              </Link>
               <Link href="/products" className="flex items-center text-foreground hover:text-primary py-2" onClick={() => setMobileMenuOpen(false)}>
                 <Search className="w-5 h-5 mr-3" strokeWidth={1.5} />
                 Search

@@ -3,6 +3,8 @@ import { Navbar } from '@/components/customer/Navbar';
 import { Footer } from '@/components/customer/Footer';
 import { CartSlideover } from '@/components/customer/CartSlideover';
 import { ChatWidget } from '@/components/customer/ChatWidget';
+import { HamperBuilderProvider } from '@/contexts/HamperBuilderContext';
+import { getPublicCustomizations } from '@/actions/customization.actions';
 
 export const metadata: Metadata = {
   title: {
@@ -29,24 +31,29 @@ export default async function CustomerLayout({
   const footerContent = await getSiteContent('footer', defaultFooterContent);
 
   const supabase = await createClient();
-  const { data: occasions } = await supabase
-    .from('occasions')
-    .select('*')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
+  const [{ data: occasions }, customizationCategories] = await Promise.all([
+    supabase
+      .from('occasions')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true }),
+    getPublicCustomizations()
+  ]);
 
   return (
-    <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
-      {settings?.store_announcement && (
-        <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
-          {settings.store_announcement}
-        </div>
-      )}
-      <Navbar user={user} role={role} content={headerContent} occasions={occasions || []} />
-      <main className="flex-1 bg-slate-50">{children}</main>
-      <Footer content={footerContent} />
-      <CartSlideover user={user} />
-      <ChatWidget />
-    </div>
+    <HamperBuilderProvider customizationCategories={customizationCategories}>
+      <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
+        {settings?.store_announcement && (
+          <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
+            {settings.store_announcement}
+          </div>
+        )}
+        <Navbar user={user} role={role} content={headerContent} occasions={occasions || []} />
+        <main className="flex-1 bg-slate-50">{children}</main>
+        <Footer content={footerContent} />
+        <CartSlideover user={user} />
+        <ChatWidget />
+      </div>
+    </HamperBuilderProvider>
   );
 }
