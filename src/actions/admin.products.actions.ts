@@ -28,6 +28,9 @@ export async function createProductAction(formData: FormData) {
   const occasionIdsStr = formData.get('occasion_ids') as string;
   const occasionIds: string[] = occasionIdsStr ? JSON.parse(occasionIdsStr) : [];
 
+  const eventIdsStr = formData.get('event_ids') as string;
+  const eventIds: string[] = eventIdsStr ? JSON.parse(eventIdsStr) : [];
+
   const recipientTagIdsStr = formData.get('recipient_tag_ids') as string;
   const recipientTagIds: number[] = recipientTagIdsStr ? JSON.parse(recipientTagIdsStr) : [];
 
@@ -71,6 +74,13 @@ export async function createProductAction(formData: FormData) {
     );
   }
 
+  // 4b. Assign Events
+  if (eventIds.length > 0) {
+    await supabase.from('product_events').insert(
+      eventIds.map(event_id => ({ product_id: product.id, event_id }))
+    );
+  }
+
   // 5. Primary Image
   const imageUrl = formData.get('image_url') as string;
   if (imageUrl) {
@@ -108,6 +118,9 @@ export async function updateProductAction(id: string, formData: FormData) {
 
   const occasionIdsStr = formData.get('occasion_ids') as string;
   const occasionIds: string[] = occasionIdsStr ? JSON.parse(occasionIdsStr) : [];
+
+  const eventIdsStr = formData.get('event_ids') as string;
+  const eventIds: string[] = eventIdsStr ? JSON.parse(eventIdsStr) : [];
 
   const recipientTagIdsStr = formData.get('recipient_tag_ids') as string;
   const recipientTagIds: number[] = recipientTagIdsStr ? JSON.parse(recipientTagIdsStr) : [];
@@ -150,6 +163,14 @@ export async function updateProductAction(id: string, formData: FormData) {
   if (recipientTagIds.length > 0) {
     await supabase.from('product_recipient_tags').insert(
       recipientTagIds.map(tag_id => ({ product_id: id, recipient_tag_id: tag_id }))
+    );
+  }
+
+  // 4b. Replace Events
+  await supabase.from('product_events').delete().eq('product_id', id);
+  if (eventIds.length > 0) {
+    await supabase.from('product_events').insert(
+      eventIds.map(event_id => ({ product_id: id, event_id }))
     );
   }
 

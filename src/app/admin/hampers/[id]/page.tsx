@@ -17,6 +17,7 @@ export default async function EditHamperPage({ params }: { params: Promise<{ id:
 
   const [
     { data: occasions },
+    { data: events },
     { data: packagingTypes },
     { data: genders },
     { data: recipientTags },
@@ -25,6 +26,7 @@ export default async function EditHamperPage({ params }: { params: Promise<{ id:
     recipeItems
   ] = await Promise.all([
     supabase.from('occasions').select('*').order('name'),
+    supabase.from('events').select('*').order('name'),
     supabase.from('packaging_types').select('*').order('name'),
     supabase.from('genders').select('*').order('name'),
     supabase.from('recipient_tags').select('*').order('name'),
@@ -44,11 +46,12 @@ export default async function EditHamperPage({ params }: { params: Promise<{ id:
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Edit Hamper</h1>
         <p className="text-slate-500 mt-1">Update details for {hamper.name}.</p>
       </div>
-      
-      <HamperForm 
-        initialData={hamperWithTags} 
+
+      <HamperForm
+        initialData={hamperWithTags}
         initialItems={recipeItems}
         occasions={occasions || []}
+        events={events || []}
         packagingTypes={packagingTypes || []}
         genders={genders || []}
         recipientTags={recipientTags || []}

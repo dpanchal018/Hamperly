@@ -6,10 +6,14 @@ export type { PublicProduct };
 
 export async function getPublicOccasions(): Promise<Occasion[]> {
   const supabase = await createClient();
+  // Top-level only: the homepage/occasions listing shows Occasions, never
+  // their child occasions (occasions.parent_id) or Events — those live one
+  // level deeper, reached by drilling into an Occasion's own page.
   const { data, error } = await supabase
     .from('occasions')
     .select('*')
     .eq('is_active', true)
+    .is('parent_id', null)
     .order('display_order', { ascending: true });
 
   if (error) {
@@ -48,6 +52,7 @@ export async function getPublicCategories(): Promise<Category[]> {
 export async function getPublicProducts(options?: {
   categoryId?: string;
   occasionId?: string;
+  eventId?: string;
   searchQuery?: string;
   inStockOnly?: boolean;
 }): Promise<PublicProduct[]> {
@@ -88,8 +93,20 @@ export async function getPublicProducts(options?: {
         .from('product_occasions')
         .select('product_id')
         .eq('occasion_id', options.occasionId);
-        
+
     if (mappingError) throw new Error('Failed to filter by occasion');
+    const productIds = mappingData.map(m => m.product_id);
+    products = products.filter(p => productIds.includes(p.id));
+  }
+
+  if (options?.eventId) {
+    const supabase = await createClient();
+    const { data: mappingData, error: mappingError } = await supabase
+        .from('product_events')
+        .select('product_id')
+        .eq('event_id', options.eventId);
+
+    if (mappingError) throw new Error('Failed to filter by event');
     const productIds = mappingData.map(m => m.product_id);
     products = products.filter(p => productIds.includes(p.id));
   }

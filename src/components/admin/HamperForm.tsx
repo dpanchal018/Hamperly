@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PreMadeHamper, Occasion, PackagingType, Gender, RecipientTag } from '@/types/database.types';
+import { PreMadeHamper, Occasion, Event, PackagingType, Gender, RecipientTag } from '@/types/database.types';
 import { createHamper, updateHamper, deleteHamper, upsertHamperItems } from '@/actions/hamper.actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,16 +16,18 @@ interface HamperFormProps {
   initialData?: PreMadeHamper & { recipientTagIds?: number[] };
   initialItems?: any[];
   occasions?: Occasion[];
+  events?: Event[];
   packagingTypes?: PackagingType[];
   genders?: Gender[];
   recipientTags?: RecipientTag[];
   products?: any[];
 }
 
-export function HamperForm({ 
+export function HamperForm({
   initialData,
   initialItems = [],
   occasions = [],
+  events = [],
   packagingTypes = [],
   genders = [],
   recipientTags = [],
@@ -34,7 +36,7 @@ export function HamperForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     slug: initialData?.slug || '',
@@ -45,9 +47,13 @@ export function HamperForm({
     actual_cost: initialData?.actual_cost || 0,
     is_active: initialData?.is_active ?? true,
     occasion_id: initialData?.occasion_id || '',
+    event_id: initialData?.event_id || '',
     packaging_type_id: initialData?.packaging_type_id || '',
     gender_id: initialData?.gender_id || '',
   });
+
+  // Only offer events that belong to the currently selected occasion
+  const eventsForOccasion = events.filter(e => e.occasion_id === formData.occasion_id);
 
   const [selectedRecipientTags, setSelectedRecipientTags] = useState<number[]>(
     initialData?.recipientTagIds || []
@@ -67,14 +73,20 @@ export function HamperForm({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     let finalValue: any = value;
-    
+
     if (type === 'checkbox') {
       finalValue = (e.target as HTMLInputElement).checked;
     } else if (type === 'number') {
       finalValue = value === '' ? 0 : parseFloat(value);
     }
-    
-    setFormData(prev => ({ ...prev, [name]: finalValue }));
+
+    setFormData(prev => {
+      // Changing the occasion invalidates any previously selected event
+      if (name === 'occasion_id' && finalValue !== prev.occasion_id) {
+        return { ...prev, occasion_id: finalValue, event_id: '' };
+      }
+      return { ...prev, [name]: finalValue };
+    });
   };
 
   const handleRecipientTagToggle = (id: number, checked: boolean) => {
@@ -166,6 +178,7 @@ export function HamperForm({
       const payload: any = {
         ...formData,
         occasion_id: formData.occasion_id || null,
+        event_id: formData.event_id || null,
         // packaging_type_id/gender_id are INTEGER FKs, but <select> values are always
         // strings — parse them, matching how admin.products.actions.ts handles gender_id.
         packaging_type_id: formData.packaging_type_id ? parseInt(formData.packaging_type_id as string) : null,
@@ -293,17 +306,30 @@ export function HamperForm({
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Occasion</label>
-            <select 
-              name="occasion_id" 
-              value={formData.occasion_id} 
+            <select
+              name="occasion_id"
+              value={formData.occasion_id}
               onChange={handleChange}
               className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
             >
               <option value="">Select an Occasion</option>
               {occasions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Event</label>
+            <select
+              name="event_id"
+              value={formData.event_id}
+              onChange={handleChange}
+              disabled={!formData.occasion_id}
+              className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+            >
+              <option value="">{formData.occasion_id ? 'None' : 'Select an occasion first'}</option>
+              {eventsForOccasion.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
           </div>
           <div>

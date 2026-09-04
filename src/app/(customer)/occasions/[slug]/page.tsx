@@ -1,12 +1,15 @@
 import { getPublicOccasionBySlug } from '@/services/catalog.service';
 import { getPublicHampers } from '@/actions/hamper.actions';
+import { getPublicEvents } from '@/actions/event.actions';
 import { createClient } from '@/lib/supabase/server';
 import { HampersCatalog } from '@/components/customer/HampersCatalog';
 import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
 import { notFound } from 'next/navigation';
 import { Metadata, ResolvingMetadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Calendar } from 'lucide-react';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -51,10 +54,12 @@ export default async function OccasionDetailPage(props: Props) {
 
   const [
     { data: genders },
-    { data: recipientTags }
+    { data: recipientTags },
+    events
   ] = await Promise.all([
     supabase.from('genders').select('*').order('name'),
-    supabase.from('recipient_tags').select('*').order('name')
+    supabase.from('recipient_tags').select('*').order('name'),
+    getPublicEvents(occasion.id)
   ]);
 
   return (
@@ -93,6 +98,46 @@ export default async function OccasionDetailPage(props: Props) {
       </div>
 
       <div className="container mx-auto px-4 py-24">
+        {events.length > 0 && (
+          <>
+            <FadeInScroll>
+              <div className="flex items-end justify-between mb-10 border-b border-slate-100 pb-4">
+                <h2 className="text-3xl font-bold font-serif text-slate-900">Explore {occasion.name}</h2>
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{events.length} Events</span>
+              </div>
+            </FadeInScroll>
+            <StaggerScrollContainer>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+                {events.map(event => (
+                  <Link
+                    key={event.id}
+                    href={`/events/${event.slug}`}
+                    className="group relative h-56 rounded-3xl overflow-hidden shadow-sm border border-slate-100 block"
+                  >
+                    {event.image_url ? (
+                      <Image
+                        src={event.image_url}
+                        alt={event.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-rose-900 flex items-center justify-center">
+                        <Calendar className="w-8 h-8 text-white/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-lg font-bold text-white font-serif">{event.name}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </StaggerScrollContainer>
+          </>
+        )}
+
         <FadeInScroll>
           <div className="flex items-end justify-between mb-16 border-b border-slate-100 pb-4">
             <h2 className="text-3xl font-bold font-serif text-slate-900">Curated Hampers for {occasion.name}</h2>

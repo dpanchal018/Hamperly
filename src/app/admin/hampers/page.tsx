@@ -59,6 +59,7 @@ export default async function HampersPage() {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Hamper Name</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Occasion</th>
+                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Event</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Items</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Quantity</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Cost (₹)</th>
@@ -80,6 +81,9 @@ export default async function HampersPage() {
                     </td>
                     <td className="py-4 px-6 text-slate-600">
                       {hamper.occasion?.name || '-'}
+                    </td>
+                    <td className="py-4 px-6 text-slate-600">
+                      {hamper.event?.name || '-'}
                     </td>
                     <td className="py-4 px-6 text-right text-slate-600">
                       {hamper.items?.[0]?.count || 0}
@@ -119,7 +123,7 @@ export default async function HampersPage() {
 
               {hampers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-500">
+                  <td colSpan={10} className="py-12 text-center text-slate-500">
                     No hampers found. Create one to get started.
                   </td>
                 </tr>

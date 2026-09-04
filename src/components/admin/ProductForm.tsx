@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createProductAction, updateProductAction } from '@/actions/admin.products.actions';
-import { Product, Category, Occasion, ProductPricing, Gender, RecipientTag } from '@/types/database.types';
+import { Product, Category, Occasion, ProductPricing, Gender, RecipientTag, Event } from '@/types/database.types';
 import { createClient } from '@/lib/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getInventoryStatus, getInventoryStatusColor } from '@/lib/inventory';
@@ -26,6 +26,7 @@ const productSchema = z.object({
   cost_price: z.number().nonnegative("Cost price cannot be negative"),
   target_margin: z.number().min(0).max(0.99, "Margin must be strictly less than 100% (0.99)"),
   occasion_ids: z.array(z.string()),
+  event_ids: z.array(z.string()),
   recipient_tag_ids: z.array(z.number()),
   image_url: z.string().optional(),
   sku: z.string().optional(),
@@ -37,14 +38,15 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
-  initialData?: Product & { pricing?: ProductPricing, occasionIds?: string[], recipientTagIds?: number[], primaryImageUrl?: string };
+  initialData?: Product & { pricing?: ProductPricing, occasionIds?: string[], eventIds?: string[], recipientTagIds?: number[], primaryImageUrl?: string };
   categories: Category[];
   occasions: Occasion[];
+  events: Event[];
   genders: Gender[];
   recipientTags: RecipientTag[];
 }
 
-export default function ProductForm({ initialData, categories, occasions, genders, recipientTags }: ProductFormProps) {
+export default function ProductForm({ initialData, categories, occasions, events, genders, recipientTags }: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -62,6 +64,7 @@ export default function ProductForm({ initialData, categories, occasions, gender
       cost_price: initialData?.pricing?.cost_price || 0,
       target_margin: initialData?.pricing?.target_margin || 0.25,
       occasion_ids: initialData?.occasionIds || [],
+      event_ids: initialData?.eventIds || [],
       recipient_tag_ids: initialData?.recipientTagIds || [],
       image_url: initialData?.primaryImageUrl || '',
       sku: initialData?.sku || '',
@@ -74,6 +77,7 @@ export default function ProductForm({ initialData, categories, occasions, gender
   const costPrice = watch('cost_price');
   const targetMargin = watch('target_margin');
   const selectedOccasions = watch('occasion_ids');
+  const selectedEvents = watch('event_ids');
   const selectedRecipientTags = watch('recipient_tag_ids');
   const currentImageUrl = watch('image_url');
   const currentStock = watch('stock_quantity');
@@ -87,6 +91,14 @@ export default function ProductForm({ initialData, categories, occasions, gender
       setValue('occasion_ids', [...selectedOccasions, id]);
     } else {
       setValue('occasion_ids', selectedOccasions.filter(o => o !== id));
+    }
+  };
+
+  const handleEventToggle = (id: string, checked: boolean) => {
+    if (checked) {
+      setValue('event_ids', [...selectedEvents, id]);
+    } else {
+      setValue('event_ids', selectedEvents.filter(e => e !== id));
     }
   };
 
@@ -145,7 +157,7 @@ export default function ProductForm({ initialData, categories, occasions, gender
       try {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
-           if (key === 'occasion_ids' || key === 'recipient_tag_ids') {
+           if (key === 'occasion_ids' || key === 'event_ids' || key === 'recipient_tag_ids') {
              formData.append(key, JSON.stringify(value));
            } else if (value !== null && value !== undefined) {
              formData.append(key, value.toString());
@@ -257,7 +269,7 @@ export default function ProductForm({ initialData, categories, occasions, gender
             {errors.category_id && <p className="text-sm text-red-500">{errors.category_id.message}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label>Occasions</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border rounded-md bg-gray-50 max-h-60 overflow-y-auto">
@@ -272,6 +284,24 @@ export default function ProductForm({ initialData, categories, occasions, gender
                       {occ.parent_id ? <span className="text-slate-400 mr-1">↳</span> : null}
                       {occ.name}
                     </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Events</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border rounded-md bg-gray-50 max-h-60 overflow-y-auto">
+                {events.length === 0 ? (
+                  <p className="text-sm text-slate-400 col-span-2">No events created yet.</p>
+                ) : events.map(event => (
+                  <div key={event.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`event-${event.id}`}
+                      checked={selectedEvents.includes(event.id)}
+                      onCheckedChange={(checked) => handleEventToggle(event.id, checked as boolean)}
+                    />
+                    <Label htmlFor={`event-${event.id}`} className="font-normal cursor-pointer text-sm">{event.name}</Label>
                   </div>
                 ))}
               </div>
