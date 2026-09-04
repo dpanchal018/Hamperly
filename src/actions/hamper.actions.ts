@@ -9,7 +9,7 @@ export async function getHampers() {
   const supabase = await createClient();
   const { data: hampers, error } = await supabase
     .from('hampers')
-    .select('*, occasion:occasions(name), items:hamper_items(count)')
+    .select('*, occasion:occasions(name), event:events(name), items:hamper_items(count)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -80,6 +80,7 @@ export async function createHamper(data: Partial<PreMadeHamper> & { recipient_ta
       is_active: data.is_active ?? true,
       slug: data.slug || null,
       occasion_id: data.occasion_id || null,
+      event_id: data.event_id || null,
       packaging_type_id: data.packaging_type_id || null,
       gender_id: data.gender_id || null,
       tags: data.tags || null,
@@ -118,6 +119,7 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper> & { 
       is_active: data.is_active,
       slug: data.slug,
       occasion_id: data.occasion_id,
+      event_id: data.event_id,
       packaging_type_id: data.packaging_type_id,
       gender_id: data.gender_id,
       tags: data.tags,

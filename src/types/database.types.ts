@@ -158,6 +158,7 @@ export interface PublicProduct {
   dimensions_cm?: string | null;
   tags?: string[] | null;
   product_occasions?: { occasions: { name: string } }[];
+  product_events?: { event_id: string }[];
 }
 
 /** Product enriched with joined lookup data for display */
@@ -226,11 +227,37 @@ export interface PreMadeHamper {
   actual_cost: number;
   is_active: boolean;
   occasion_id: string | null;
+  event_id: string | null;
   packaging_type_id: number | null;
   gender_id: number | null;
   tags: string[] | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * An Event lives under exactly one Occasion (e.g. "Diwali" under
+ * "Festivals") and gets its own public page. Occasions stay the only
+ * thing shown on the homepage/occasions listing — Events are reached
+ * by drilling into an Occasion's page.
+ */
+export interface Event {
+  id: string;
+  occasion_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Junction table: Product <-> Event (Many-to-Many) */
+export interface ProductEvent {
+  product_id: string;
+  event_id: string;
 }
 
 /** Pre-made Hamper enriched with recipe and joined lookups */

@@ -15,6 +15,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       *,
       product_occasions(
         occasions ( name )
+      ),
+      product_events(
+        events ( name )
       )
     `)
     .order('created_at', { ascending: false });
@@ -72,6 +75,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               <TableHead>Product</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Occasions</TableHead>
+              <TableHead>Events</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Availability</TableHead>
               <TableHead>Status</TableHead>
@@ -81,7 +85,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <TableBody>
             {!products || products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-6 text-gray-500">
                   No products found.
                 </TableCell>
               </TableRow>
@@ -92,8 +96,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell className="text-xs text-slate-500">{product.sku || '-'}</TableCell>
                   <TableCell>
-                    {product.product_occasions && product.product_occasions.length > 0 
+                    {product.product_occasions && product.product_occasions.length > 0
                       ? product.product_occasions.map((po: any) => po.occasions?.name).filter(Boolean).join(', ')
+                      : 'N/A'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {product.product_events && product.product_events.length > 0
+                      ? product.product_events.map((pe: any) => pe.events?.name).filter(Boolean).join(', ')
                       : 'N/A'
                     }
                   </TableCell>

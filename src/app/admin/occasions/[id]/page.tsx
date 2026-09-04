@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/services/auth.service';
 import OccasionForm from '@/components/admin/OccasionForm';
+import { EventsManager } from '@/components/admin/EventsManager';
+import { getEventsByOccasion } from '@/actions/event.actions';
 import { notFound } from 'next/navigation';
 
 export default async function EditOccasionPage({ params }: { params: Promise<{ id: string }> }) {
@@ -8,16 +10,11 @@ export default async function EditOccasionPage({ params }: { params: Promise<{ i
   await requireAdmin();
   const supabase = await createClient();
 
-  const { data: occasion, error } = await supabase
-    .from('occasions')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  const { data: allOccasions } = await supabase
-    .from('occasions')
-    .select('*')
-    .order('name');
+  const [{ data: occasion, error }, { data: allOccasions }, events] = await Promise.all([
+    supabase.from('occasions').select('*').eq('id', id).single(),
+    supabase.from('occasions').select('*').order('name'),
+    getEventsByOccasion(id),
+  ]);
 
   if (error || !occasion) {
     notFound();
@@ -30,6 +27,7 @@ export default async function EditOccasionPage({ params }: { params: Promise<{ i
         <p className="text-gray-500">Update occasion details.</p>
       </div>
       <OccasionForm initialData={occasion} allOccasions={allOccasions || []} />
+      <EventsManager occasionId={id} initialEvents={events} />
     </div>
   );
 }

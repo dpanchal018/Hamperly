@@ -8,12 +8,14 @@ export default async function NewHamperPage() {
 
   const [
     { data: occasions },
+    { data: events },
     { data: packagingTypes },
     { data: genders },
     { data: recipientTags },
     { data: products },
   ] = await Promise.all([
     supabase.from('occasions').select('*').order('name'),
+    supabase.from('events').select('*').order('name'),
     supabase.from('packaging_types').select('*').order('name'),
     supabase.from('genders').select('*').order('name'),
     supabase.from('recipient_tags').select('*').order('name'),
@@ -26,9 +28,10 @@ export default async function NewHamperPage() {
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Add New Hamper</h1>
         <p className="text-slate-500 mt-1">Create a new pre-made hamper bundle.</p>
       </div>
-      
-      <HamperForm 
+
+      <HamperForm
         occasions={occasions || []}
+        events={events || []}
         packagingTypes={packagingTypes || []}
         genders={genders || []}
         recipientTags={recipientTags || []}
