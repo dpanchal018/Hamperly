@@ -1,10 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
-import { Occasion, Category, Product } from '@/types/database.types';
+import { Occasion, Category, Product, PublicProduct } from '@/types/database.types';
 
-export interface PublicProduct extends Omit<Product, 'status'> {
-  primary_image_url: string | null;
-  category: { name: string, slug: string } | null;
-}
+// PublicProduct is exported from database.types.ts — re-export for backwards compatibility
+export type { PublicProduct };
 
 export async function getPublicOccasions(): Promise<Occasion[]> {
   const supabase = await createClient();
@@ -59,7 +57,8 @@ export async function getPublicProducts(options?: {
     .select(`
       id, category_id, name, slug, description, stock_quantity, selling_price, created_at, updated_at,
       categories ( name, slug ),
-      product_images ( image_url )
+      product_images ( image_url ),
+      product_occasions ( occasions ( name ) )
     `)
     .eq('status', 'active');
 
@@ -106,6 +105,7 @@ export async function getPublicProducts(options?: {
     updated_at: p.updated_at,
     category_id: p.category_id,
     category: p.categories ? { name: p.categories.name, slug: p.categories.slug } : null,
+    product_occasions: p.product_occasions || [],
     primary_image_url: p.product_images && p.product_images.length > 0 ? p.product_images[0].image_url : null
   }));
 }

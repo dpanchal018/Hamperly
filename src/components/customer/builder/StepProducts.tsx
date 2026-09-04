@@ -148,7 +148,8 @@ export function StepProducts({ products, categories }: Props) {
           {filteredProducts.map((product) => {
             const quantityInHamper = productQuantityMap.get(product.id) || 0;
             const isSelected = quantityInHamper > 0;
-            const isOutOfStock = product.stock_quantity <= 0;
+            const isOutOfStock = product.stock_quantity !== null && product.stock_quantity <= 0;
+            const isLowStock = product.stock_quantity !== null && product.stock_quantity > 0 && product.stock_quantity <= 5;
 
             return (
               <div
@@ -181,7 +182,7 @@ export function StepProducts({ products, categories }: Props) {
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-900 text-white uppercase tracking-wider">
                         Out of Stock
                       </span>
-                    ) : product.stock_quantity <= 5 ? (
+                    ) : isLowStock ? (
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white uppercase tracking-wider">
                         Only {product.stock_quantity} left
                       </span>
@@ -233,7 +234,7 @@ export function StepProducts({ products, categories }: Props) {
                         </span>
                         <button
                           onClick={() => updateProductQuantity(product.id, quantityInHamper + 1)}
-                          disabled={quantityInHamper >= product.stock_quantity}
+                          disabled={product.stock_quantity !== null && quantityInHamper >= product.stock_quantity}
                           className="w-6 h-6 rounded-full bg-white text-rose-600 flex items-center justify-center hover:bg-rose-100 disabled:opacity-40 transition-colors"
                           aria-label="Increase quantity"
                         >

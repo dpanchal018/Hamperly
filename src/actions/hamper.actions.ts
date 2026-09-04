@@ -1,7 +1,7 @@
 'use server';
 import { requireAdmin } from '@/services/auth.service';
 import { createClient } from '@/lib/supabase/server';
-import { PreMadeHamper } from '@/types/database.types';
+import { PreMadeHamper, HamperDetailView, PublicHamper } from '@/types/database.types';
 import { revalidatePath } from 'next/cache';
 import { PublicProduct } from '@/services/catalog.service';
 
@@ -9,21 +9,21 @@ export async function getHampers() {
   const supabase = await createClient();
   const { data: hampers, error } = await supabase
     .from('hampers')
-    .select('*')
+    .select('*, occasion:occasions(name), items:hamper_items(count)')
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching hampers:', error);
     return [];
   }
-  return hampers as PreMadeHamper[];
+  return hampers;
 }
 
-export async function getPublicHampers() {
+export async function getPublicHampers(): Promise<PublicHamper[]> {
   const supabase = await createClient();
   const { data: hampers, error } = await supabase
     .from('hampers')
-    .select('*')
+    .select('*, hamper_recipient_tags(recipient_tag_id)')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
@@ -31,15 +31,24 @@ export async function getPublicHampers() {
     console.error('Error fetching public hampers:', error.message || error);
     return [];
   }
-  return hampers as PreMadeHamper[];
+  return hampers as PublicHamper[];
 }
 
-export async function getHamperById(id: string) {
+export async function getHamperById(id: string): Promise<HamperDetailView | null> {
   if (!id) return null;
   const supabase = await createClient();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-  let query = supabase.from('hampers').select('*, occasion:occasions(name, slug)');
+  let query = supabase.from('hampers').select(`
+    *, 
+    occasion:occasions(name, slug),
+    items:hamper_items(
+      *,
+      product:products(
+        id, name, description, slug, stock_quantity, selling_price, primary_image_url:product_images(image_url)
+      )
+    )
+  `);
   if (isUuid) {
     query = query.eq('id', id);
   } else {
@@ -52,10 +61,10 @@ export async function getHamperById(id: string) {
     console.error('Error fetching hamper:', error.message || error);
     return null;
   }
-  return hamper as PreMadeHamper | null;
+  return hamper as HamperDetailView;
 }
 
-export async function createHamper(data: Partial<PreMadeHamper>) {
+export async function createHamper(data: Partial<PreMadeHamper> & { recipient_tag_ids?: number[] }) {
   const supabase = await createClient();
   await requireAdmin();
   
@@ -69,6 +78,11 @@ export async function createHamper(data: Partial<PreMadeHamper>) {
       selling_price: data.selling_price || 0,
       actual_cost: data.actual_cost || 0,
       is_active: data.is_active ?? true,
+      slug: data.slug || null,
+      occasion_id: data.occasion_id || null,
+      packaging_type_id: data.packaging_type_id || null,
+      gender_id: data.gender_id || null,
+      tags: data.tags || null,
     }])
     .select()
     .single();
@@ -78,11 +92,17 @@ export async function createHamper(data: Partial<PreMadeHamper>) {
     return { error: error.message };
   }
   
+  if (data.recipient_tag_ids && data.recipient_tag_ids.length > 0) {
+    await supabase.from('hamper_recipient_tags').insert(
+      data.recipient_tag_ids.map(tagId => ({ hamper_id: hamper.id, recipient_tag_id: tagId }))
+    );
+  }
+  
   revalidatePath('/admin/hampers');
   return { hamper: hamper as PreMadeHamper };
 }
 
-export async function updateHamper(id: string, data: Partial<PreMadeHamper>) {
+export async function updateHamper(id: string, data: Partial<PreMadeHamper> & { recipient_tag_ids?: number[] }) {
   const supabase = await createClient();
   await requireAdmin();
   
@@ -96,6 +116,11 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper>) {
       selling_price: data.selling_price,
       actual_cost: data.actual_cost,
       is_active: data.is_active,
+      slug: data.slug,
+      occasion_id: data.occasion_id,
+      packaging_type_id: data.packaging_type_id,
+      gender_id: data.gender_id,
+      tags: data.tags,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -107,9 +132,92 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper>) {
     return { error: error.message };
   }
   
+  if (data.recipient_tag_ids !== undefined) {
+    await supabase.from('hamper_recipient_tags').delete().eq('hamper_id', id);
+    if (data.recipient_tag_ids.length > 0) {
+      await supabase.from('hamper_recipient_tags').insert(
+        data.recipient_tag_ids.map(tagId => ({ hamper_id: id, recipient_tag_id: tagId }))
+      );
+    }
+  }
+  
   revalidatePath('/admin/hampers');
   revalidatePath(`/admin/hampers/${id}`);
   return { hamper: hamper as PreMadeHamper };
+}
+
+export async function getHamperItems(hamperId: string) {
+  const supabase = await createClient();
+  
+  const { data: items, error } = await supabase
+    .from('hamper_items')
+    .select(`
+      *,
+      product:products(
+        id, name, slug, selling_price, stock_quantity, 
+        primary_image_url:product_images(image_url)
+      )
+    `)
+    .eq('hamper_id', hamperId)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching hamper items:', error);
+    return [];
+  }
+  
+  // Reshape slightly to make the frontend easier to work with (flatten primary image array)
+  return items.map((item: any) => {
+    const product = item.product;
+    if (product && product.primary_image_url && Array.isArray(product.primary_image_url)) {
+      product.primary_image_url = product.primary_image_url.find((img: any) => img.is_primary)?.image_url 
+        || product.primary_image_url[0]?.image_url 
+        || null;
+    }
+    return item;
+  });
+}
+
+export async function upsertHamperItems(hamperId: string, items: any[]) {
+  const supabase = await createClient();
+  await requireAdmin();
+  
+  // First delete all existing items for this hamper
+  const { error: deleteError } = await supabase
+    .from('hamper_items')
+    .delete()
+    .eq('hamper_id', hamperId);
+    
+  if (deleteError) {
+    console.error('Error deleting old hamper items:', deleteError);
+    return { error: deleteError.message };
+  }
+  
+  // If we have new items, insert them
+  if (items && items.length > 0) {
+    const recordsToInsert = items.map((item, index) => ({
+      hamper_id: hamperId,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      is_required: item.is_required ?? true,
+      min_qty: item.min_qty ?? 1, // hamper_items.min_qty is NOT NULL DEFAULT 1 — never send null
+      max_qty: item.max_qty || null,
+      sort_order: index
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('hamper_items')
+      .insert(recordsToInsert);
+      
+    if (insertError) {
+      console.error('Error inserting new hamper items:', insertError);
+      return { error: insertError.message };
+    }
+  }
+  
+  revalidatePath('/admin/hampers');
+  revalidatePath(`/admin/hampers/${hamperId}`);
+  return { success: true };
 }
 
 export async function deleteHamper(id: string) {

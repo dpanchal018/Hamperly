@@ -9,7 +9,7 @@ export interface CartItem {
   price: number;
   imageUrl: string | null;
   quantity: number;
-  maxQuantity: number;
+  maxQuantity: number | null; // null = unlimited stock
   itemType?: 'HAMPER' | 'PRODUCT' | 'PERSONALIZED_HAMPER';
 
   // Specific to PERSONALIZED_HAMPER
@@ -97,7 +97,9 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
               guestItems.forEach(guestItem => {
                 if (mergedMap.has(guestItem.id)) {
                   const existing = mergedMap.get(guestItem.id)!;
-                  existing.quantity = Math.min(existing.quantity + guestItem.quantity, existing.maxQuantity);
+                  existing.quantity = existing.maxQuantity !== null 
+                    ? Math.min(existing.quantity + guestItem.quantity, existing.maxQuantity)
+                    : existing.quantity + guestItem.quantity;
                 } else {
                   mergedMap.set(guestItem.id, guestItem);
                 }

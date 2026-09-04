@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 import { getCurrentUser, getCurrentUserRole } from '@/services/auth.service';
 import { getStoreSettings } from '@/actions/settings.actions';
 import { getSiteContent, defaultHeaderContent, defaultFooterContent } from '@/services/content.service';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function CustomerLayout({
   children,
@@ -27,6 +28,13 @@ export default async function CustomerLayout({
   const headerContent = await getSiteContent('header', defaultHeaderContent);
   const footerContent = await getSiteContent('footer', defaultFooterContent);
 
+  const supabase = await createClient();
+  const { data: occasions } = await supabase
+    .from('occasions')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+
   return (
     <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
       {settings?.store_announcement && (
@@ -34,7 +42,7 @@ export default async function CustomerLayout({
           {settings.store_announcement}
         </div>
       )}
-      <Navbar user={user} role={role} content={headerContent} />
+      <Navbar user={user} role={role} content={headerContent} occasions={occasions || []} />
       <main className="flex-1 bg-slate-50">{children}</main>
       <Footer content={footerContent} />
       <CartSlideover user={user} />

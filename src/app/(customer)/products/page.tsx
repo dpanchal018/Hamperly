@@ -1,4 +1,4 @@
-import { getPublicProducts, getPublicCategories } from '@/services/catalog.service';
+import { getPublicProducts, getPublicOccasions } from '@/services/catalog.service';
 import { ProductCard } from '@/components/customer/ProductCard';
 import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
 import { Metadata } from 'next';
@@ -16,17 +16,17 @@ export const dynamic = 'force-dynamic';
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string; inStock?: string }>;
+  searchParams: Promise<{ occasion?: string; q?: string; inStock?: string }>;
 }) {
   const resolvedParams = await searchParams;
-  const categories = await getPublicCategories();
+  const occasions = await getPublicOccasions().then(occs => occs.filter(o => !o.parent_id));
   
-  const categoryFilter = resolvedParams.category;
+  const occasionFilter = resolvedParams.occasion;
   const searchQuery = resolvedParams.q;
   const inStockOnly = resolvedParams.inStock === 'true';
 
   const products = await getPublicProducts({
-    categoryId: categoryFilter,
+    occasionId: occasionFilter,
     searchQuery: searchQuery,
     inStockOnly: inStockOnly,
   });
@@ -57,7 +57,7 @@ export default async function ProductsPage({
                     Search
                   </h3>
                   <form className="relative" method="GET">
-                    {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+                    {occasionFilter && <input type="hidden" name="occasion" value={occasionFilter} />}
                     {inStockOnly && <input type="hidden" name="inStock" value="true" />}
                     
                     <input 
@@ -79,18 +79,18 @@ export default async function ProductsPage({
                   </h3>
                   <div className="space-y-4">
                     <Link 
-                      href={`/products?${new URLSearchParams({...resolvedParams, category: ''}).toString()}`}
-                      className={`block text-sm transition-colors ${!categoryFilter ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
+                      href={`/products?${new URLSearchParams({...resolvedParams, occasion: ''}).toString()}`}
+                      className={`block text-sm transition-colors ${!occasionFilter ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
                     >
                       All Items
                     </Link>
-                    {categories.map(cat => (
+                    {occasions.map(occ => (
                       <Link 
-                        key={cat.id}
-                        href={`/products?${new URLSearchParams({...resolvedParams, category: cat.id}).toString()}`}
-                        className={`block text-sm transition-colors ${categoryFilter === cat.id ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
+                        key={occ.id}
+                        href={`/products?${new URLSearchParams({...resolvedParams, occasion: occ.id}).toString()}`}
+                        className={`block text-sm transition-colors ${occasionFilter === occ.id ? 'font-bold text-rose-600' : 'text-slate-500 hover:text-slate-900 font-medium'}`}
                       >
-                        {cat.name}
+                        {occ.name}
                       </Link>
                     ))}
                   </div>
@@ -101,7 +101,7 @@ export default async function ProductsPage({
                     Availability
                   </h3>
                   <form method="GET">
-                    {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+                    {occasionFilter && <input type="hidden" name="occasion" value={occasionFilter} />}
                     {searchQuery && <input type="hidden" name="q" value={searchQuery} />}
                     
                     <label className="flex items-center space-x-3 cursor-pointer mb-4 group">
@@ -136,7 +136,7 @@ export default async function ProductsPage({
                   <span className="text-slate-900 font-bold">{products.length}</span> items
                 </div>
                 
-                {(categoryFilter || searchQuery || inStockOnly) && (
+                {(occasionFilter || searchQuery || inStockOnly) && (
                   <Link href="/products" className="text-rose-600 hover:text-rose-700 text-sm font-semibold transition-colors flex items-center">
                     Clear filters <ArrowRight className="w-3 h-3 ml-2" />
                   </Link>

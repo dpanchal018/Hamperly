@@ -1,4 +1,5 @@
 import { getPublicHampers } from '@/actions/hamper.actions';
+import { createClient } from '@/lib/supabase/server';
 import { PageTransition, FadeInScroll } from '@/components/ui/AnimatedWrapper';
 import { Metadata } from 'next';
 import Link from 'next/link';
@@ -20,6 +21,17 @@ export default async function PublicHampersPage({
 }) {
   const resolvedParams = await searchParams;
   const hampers = await getPublicHampers();
+  const supabase = await createClient();
+
+  const [
+    { data: genders },
+    { data: recipientTags },
+    { data: occasions }
+  ] = await Promise.all([
+    supabase.from('genders').select('*').order('name'),
+    supabase.from('recipient_tags').select('*').order('name'),
+    supabase.from('occasions').select('*').order('display_order')
+  ]);
 
   return (
     <PageTransition className="min-h-screen pt-24 pb-16 bg-gradient-to-br from-[#F5F0FA] via-[#FFFDFD] to-[#FFF5F7]">
@@ -37,7 +49,13 @@ export default async function PublicHampersPage({
         </FadeInScroll>
 
         {hampers.length > 0 ? (
-          <HampersCatalog initialHampers={hampers} initialQuery={resolvedParams?.q} />
+          <HampersCatalog 
+            initialHampers={hampers} 
+            initialQuery={resolvedParams?.q}
+            genders={genders || []}
+            recipientTags={recipientTags || []}
+            occasions={occasions || []}
+          />
         ) : (
           <FadeInScroll>
             <div className="text-center py-16 bg-white rounded-[3rem] shadow-sm border border-slate-100 max-w-3xl mx-auto">

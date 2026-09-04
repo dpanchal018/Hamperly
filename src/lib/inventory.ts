@@ -2,10 +2,11 @@ export type InventoryStatus = 'IN STOCK' | 'LOW STOCK' | 'CRITICAL' | 'OUT OF ST
 
 /**
  * Returns the availability status of a product based on its stock quantity.
- * @param quantity The current stock quantity
+ * @param quantity The current stock quantity. NULL means unlimited — always IN STOCK.
  * @returns The authoritative InventoryStatus string
  */
-export function getInventoryStatus(quantity: number): InventoryStatus {
+export function getInventoryStatus(quantity: number | null): InventoryStatus {
+  if (quantity === null) return 'IN STOCK'; // NULL = unlimited stock
   if (quantity <= 0) return 'OUT OF STOCK';
   if (quantity <= 2) return 'CRITICAL';
   if (quantity <= 5) return 'LOW STOCK';

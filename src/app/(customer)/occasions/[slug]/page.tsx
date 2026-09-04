@@ -1,5 +1,7 @@
-import { getPublicOccasionBySlug, getPublicProducts } from '@/services/catalog.service';
-import { ProductCard } from '@/components/customer/ProductCard';
+import { getPublicOccasionBySlug } from '@/services/catalog.service';
+import { getPublicHampers } from '@/actions/hamper.actions';
+import { createClient } from '@/lib/supabase/server';
+import { HampersCatalog } from '@/components/customer/HampersCatalog';
 import { PageTransition, FadeInScroll, StaggerScrollContainer } from '@/components/ui/AnimatedWrapper';
 import { notFound } from 'next/navigation';
 import { Metadata, ResolvingMetadata } from 'next';
@@ -32,7 +34,28 @@ export default async function OccasionDetailPage(props: Props) {
     notFound();
   }
 
-  const products = await getPublicProducts({ occasionId: occasion.id });
+  const supabase = await createClient();
+  const allHampers = await getPublicHampers();
+  
+  // Filter hampers to only those matching this occasion (or its children if it's a parent)
+  // Fetch children if this is a parent occasion
+  let validOccasionIds = [occasion.id];
+  if (!occasion.parent_id) {
+    const { data: children } = await supabase.from('occasions').select('id').eq('parent_id', occasion.id);
+    if (children) {
+      validOccasionIds = [...validOccasionIds, ...children.map(c => c.id)];
+    }
+  }
+
+  const filteredHampers = allHampers.filter(h => h.occasion_id && validOccasionIds.includes(h.occasion_id));
+
+  const [
+    { data: genders },
+    { data: recipientTags }
+  ] = await Promise.all([
+    supabase.from('genders').select('*').order('name'),
+    supabase.from('recipient_tags').select('*').order('name')
+  ]);
 
   return (
     <PageTransition className="bg-gradient-to-b from-[#FAFAFA] to-white min-h-screen">
@@ -72,29 +95,26 @@ export default async function OccasionDetailPage(props: Props) {
       <div className="container mx-auto px-4 py-24">
         <FadeInScroll>
           <div className="flex items-end justify-between mb-16 border-b border-slate-100 pb-4">
-            <h2 className="text-3xl font-bold font-serif text-slate-900">Curated Gifts</h2>
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{products.length} Items</span>
+            <h2 className="text-3xl font-bold font-serif text-slate-900">Curated Hampers for {occasion.name}</h2>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{filteredHampers.length} Hampers</span>
           </div>
         </FadeInScroll>
 
-        {products.length > 0 ? (
-          <StaggerScrollContainer>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {products.map((product) => (
-                <div key={product.id} className="h-full">
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          </StaggerScrollContainer>
+        {filteredHampers.length > 0 ? (
+          <HampersCatalog 
+            initialHampers={filteredHampers} 
+            genders={genders || []}
+            recipientTags={recipientTags || []}
+            hideOccasionFilter={true}
+          />
         ) : (
           <FadeInScroll>
             <div className="text-center py-32 bg-slate-50 rounded-[3rem] shadow-sm border border-slate-100">
               <h3 className="text-3xl font-bold font-serif text-slate-900 mb-4">Curating in progress</h3>
-              <p className="text-slate-500 font-light text-lg mb-8">We are selecting the finest items for this collection.</p>
-              <Link href="/products">
+              <p className="text-slate-500 font-light text-lg mb-8">We are selecting the finest hampers for this collection.</p>
+              <Link href="/hampers">
                 <Button className="bg-slate-900 hover:bg-rose-600 text-white rounded-full px-8 h-12 transition-all duration-300">
-                  Explore All Products
+                  Explore All Hampers
                 </Button>
               </Link>
             </div>

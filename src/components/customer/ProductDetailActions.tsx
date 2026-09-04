@@ -74,7 +74,7 @@ export function ProductDetailActions({ product }: Props) {
           <span className="w-8 text-center font-medium text-foreground">{currentQuantity}</span>
           <button 
             onClick={handleIncrease}
-            disabled={currentQuantity >= product.stock_quantity}
+            disabled={product.stock_quantity !== null && currentQuantity >= product.stock_quantity}
             aria-label="Increase quantity"
             className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors disabled:opacity-30"
           >

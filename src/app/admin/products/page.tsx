@@ -3,7 +3,7 @@ import { requireAdmin } from '@/services/auth.service';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getInventoryStatus, getInventoryStatusColor, InventoryStatus } from '@/lib/inventory';
+import { getInventoryStatus, getInventoryStatusColor } from '@/lib/inventory';
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ stock?: string }> }) {
   await requireAdmin();
@@ -13,7 +13,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     .from('products')
     .select(`
       *,
-      categories ( name )
+      product_occasions(
+        occasions ( name )
+      )
     `)
     .order('created_at', { ascending: false });
 
@@ -68,7 +70,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <TableHeader>
             <TableRow>
               <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Occasions</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Availability</TableHead>
               <TableHead>Status</TableHead>
@@ -78,7 +81,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <TableBody>
             {!products || products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
                   No products found.
                 </TableCell>
               </TableRow>
@@ -87,10 +90,16 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               return (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.categories?.name || 'N/A'}</TableCell>
+                  <TableCell className="text-xs text-slate-500">{product.sku || '-'}</TableCell>
                   <TableCell>
-                    <span className={product.stock_quantity < 3 ? 'text-red-500 font-bold' : ''}>
-                      {product.stock_quantity}
+                    {product.product_occasions && product.product_occasions.length > 0 
+                      ? product.product_occasions.map((po: any) => po.occasions?.name).filter(Boolean).join(', ')
+                      : 'N/A'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    <span className={product.stock_quantity !== null && product.stock_quantity < 3 ? 'text-red-500 font-bold' : ''}>
+                      {product.stock_quantity === null ? '∞' : product.stock_quantity}
                     </span>
                   </TableCell>
                   <TableCell>

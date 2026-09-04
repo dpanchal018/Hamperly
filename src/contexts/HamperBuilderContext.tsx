@@ -143,14 +143,16 @@ export function HamperBuilderProvider({
   const addProduct = useCallback((product: PublicProduct, quantity = 1) => {
     setSelectedProducts(prev => {
       const existing = prev.find(p => p.product.id === product.id);
+      // NULL stock = unlimited; use Infinity as cap so Math.min always passes through
+      const maxStock = product.stock_quantity ?? Infinity;
       if (existing) {
         return prev.map(p => 
           p.product.id === product.id 
-            ? { ...p, quantity: Math.min(p.quantity + quantity, product.stock_quantity) }
+            ? { ...p, quantity: Math.min(p.quantity + quantity, maxStock) }
             : p
         );
       }
-      return [...prev, { product, quantity: Math.min(quantity, product.stock_quantity) }];
+      return [...prev, { product, quantity: Math.min(quantity, maxStock) }];
     });
   }, []);
 
@@ -161,7 +163,8 @@ export function HamperBuilderProvider({
     }
     setSelectedProducts(prev => prev.map(p => {
       if (p.product.id !== productId) return p;
-      return { ...p, quantity: Math.min(quantity, p.product.stock_quantity) };
+      const maxStock = p.product.stock_quantity ?? Infinity;
+      return { ...p, quantity: Math.min(quantity, maxStock) };
     }));
   }, []);
 
@@ -217,6 +220,8 @@ export function HamperBuilderProvider({
         image_url: null,
         is_active: true,
         display_order: 1,
+        parent_id: null,
+        occasion_type: 'GENERAL',
         created_at: '',
         updated_at: ''
       });

@@ -14,6 +14,7 @@ import { ReviewCard } from '@/components/customer/ReviewCard';
 import { ReviewForm } from '@/components/customer/ReviewForm';
 import { StarRating } from '@/components/customer/StarRating';
 import { HamperDetailActions } from '@/components/customer/HamperDetailActions';
+import { WhatsInsideCarousel } from '@/components/customer/WhatsInsideCarousel';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -106,8 +107,17 @@ export default async function HamperDetailPage({ params }: Props) {
           </div>
         </FadeInScroll>
 
+        {/* What's Inside Carousel */}
+        {hamper.items && hamper.items.length > 0 && (
+          <FadeInScroll delay={0.1}>
+            <div className="mt-24 pt-16 border-t border-primary/10">
+              <WhatsInsideCarousel items={hamper.items} />
+            </div>
+          </FadeInScroll>
+        )}
+
         {/* Reviews */}
-        <FadeInScroll delay={0.1}>
+        <FadeInScroll delay={0.2}>
           <div className="mt-24 pt-16 border-t border-primary/10">
             <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Ratings &amp; Reviews</h2>
 

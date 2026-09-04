@@ -15,14 +15,20 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     { data: product, error: prodError },
     { data: pricing },
     { data: productOccasions },
-    { data: productImages }
+    { data: productImages },
+    { data: genders },
+    { data: recipientTags },
+    { data: productRecipientTags }
   ] = await Promise.all([
     supabase.from('categories').select('*').order('display_order'),
     supabase.from('occasions').select('*').order('display_order'),
     supabase.from('products').select('*').eq('id', id).single(),
     supabase.from('product_pricing').select('*').eq('product_id', id).single(),
     supabase.from('product_occasions').select('occasion_id').eq('product_id', id),
-    supabase.from('product_images').select('image_url').eq('product_id', id).eq('is_primary', true).limit(1)
+    supabase.from('product_images').select('image_url').eq('product_id', id).eq('is_primary', true).limit(1),
+    supabase.from('genders').select('*').order('name'),
+    supabase.from('recipient_tags').select('*').order('name'),
+    supabase.from('product_recipient_tags').select('recipient_tag_id').eq('product_id', id)
   ]);
 
   if (prodError || !product) {
@@ -33,6 +39,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     ...product,
     pricing: pricing || undefined,
     occasionIds: productOccasions ? productOccasions.map(po => po.occasion_id) : [],
+    recipientTagIds: productRecipientTags ? productRecipientTags.map(pt => pt.recipient_tag_id) : [],
     primaryImageUrl: productImages && productImages.length > 0 ? productImages[0].image_url : undefined
   };
 
@@ -47,6 +54,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         initialData={initialData}
         categories={categories || []} 
         occasions={occasions || []} 
+        genders={genders || []}
+        recipientTags={recipientTags || []}
       />
     </div>
   );
