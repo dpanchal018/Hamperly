@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { Search, Menu, X, Heart, ShoppingBag } from 'lucide-react';
+import { Search, Menu, X, Heart, ShoppingBag, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { NotificationBell } from './NotificationBell';
 import { ProfileDropdown } from './ProfileDropdown';
 
-import { HeaderContent } from '@/types/database.types';
+import { HeaderContent, Occasion } from '@/types/database.types';
 
 
 function WishlistNavButton() {
@@ -36,7 +36,7 @@ function WishlistNavButton() {
 }
 
 function CartButton() {
-  const { isCartOpen, setIsCartOpen, totalItems } = useCart();
+  const { setIsCartOpen, totalItems } = useCart();
   return (
     <button 
       onClick={() => setIsCartOpen(true)}
@@ -52,12 +52,16 @@ function CartButton() {
   );
 }
 
-export function Navbar({ user, role, content }: { user: any; role?: string | null; content: HeaderContent }) {
+export function Navbar({ user, role, content, occasions = [] }: { user: any; role?: string | null; content: HeaderContent, occasions?: Occasion[] }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOccasionsOpen, setMobileOccasionsOpen] = useState(false);
 
   // Filter out Occasions from header nav links
   const navLinks = (content.navLinks || []).filter(link => link.href !== '/occasions');
+
+  const parentOccasions = occasions.filter(o => !o.parent_id);
+  const childOccasions = occasions.filter(o => o.parent_id);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-primary/10 shadow-sm">
@@ -76,6 +80,46 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
               {link.name}
             </Link>
           ))}
+          
+          {/* Occasions Flyout Dropdown */}
+          {parentOccasions.length > 0 && (
+            <div className="group/nav relative">
+              <button className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center py-4">
+                Occasions
+                <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover/nav:rotate-180" />
+              </button>
+              
+              {/* Level 1 Dropdown */}
+              <ul className="absolute left-0 top-full hidden group-hover/nav:block bg-white border border-slate-100 shadow-xl rounded-xl py-2 min-w-[240px] z-50">
+                {parentOccasions.map(parent => {
+                  const children = childOccasions.filter(child => child.parent_id === parent.id);
+                  const hasChildren = children.length > 0;
+                  
+                  return (
+                    <li key={parent.id} className="group/item relative px-4 py-2 hover:bg-slate-50 transition-colors">
+                      <Link href={`/occasions/${parent.slug}`} className="flex justify-between items-center w-full text-sm font-medium text-slate-700 hover:text-primary">
+                        {parent.name}
+                        {hasChildren && <ChevronRight className="w-4 h-4 text-slate-400" />}
+                      </Link>
+                      
+                      {/* Level 2 Flyout (Right side) */}
+                      {hasChildren && (
+                        <ul className="absolute left-full top-0 hidden group-hover/item:block bg-white border border-slate-100 shadow-xl rounded-xl py-2 min-w-[200px] z-50 -ml-1">
+                          {children.map(child => (
+                            <li key={child.id} className="px-4 py-2 hover:bg-slate-50 transition-colors">
+                              <Link href={`/occasions/${child.slug}`} className="text-sm text-slate-600 hover:text-primary block">
+                                {child.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </nav>
 
         {/* Logo */}
@@ -122,7 +166,7 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
 
       {/* Mobile Nav */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-primary/10 bg-white">
+        <div className="md:hidden border-t border-primary/10 bg-white max-h-[80vh] overflow-y-auto">
           <nav className="flex flex-col p-4 space-y-4">
             {navLinks.map((link) => (
               <Link
@@ -136,6 +180,45 @@ export function Navbar({ user, role, content }: { user: any; role?: string | nul
                 {link.name}
               </Link>
             ))}
+            
+            {/* Mobile Occasions Accordion */}
+            {parentOccasions.length > 0 && (
+              <div className="border-t border-slate-100 pt-4">
+                <button 
+                  className="flex items-center justify-between w-full text-base font-semibold text-foreground"
+                  onClick={() => setMobileOccasionsOpen(!mobileOccasionsOpen)}
+                >
+                  Occasions
+                  <ChevronDown className={`w-5 h-5 transition-transform ${mobileOccasionsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileOccasionsOpen && (
+                  <div className="mt-4 pl-4 space-y-4">
+                    {parentOccasions.map(parent => (
+                      <div key={parent.id} className="space-y-2">
+                        <Link 
+                          href={`/occasions/${parent.slug}`} 
+                          className="block font-semibold text-primary"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {parent.name}
+                        </Link>
+                        {childOccasions.filter(child => child.parent_id === parent.id).map(child => (
+                          <Link 
+                            key={child.id}
+                            href={`/occasions/${child.slug}`} 
+                            className="block text-sm text-slate-600 pl-4 py-1"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
               <Link href="/products" className="flex items-center text-foreground hover:text-primary py-2" onClick={() => setMobileMenuOpen(false)}>
                 <Search className="w-5 h-5 mr-3" strokeWidth={1.5} />

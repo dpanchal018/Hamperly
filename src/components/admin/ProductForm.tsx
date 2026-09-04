@@ -10,9 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createProductAction, updateProductAction } from '@/actions/admin.products.actions';
-import { Product, Category, Occasion, ProductPricing } from '@/types/database.types';
+import { Product, Category, Occasion, ProductPricing, Gender, RecipientTag } from '@/types/database.types';
 import { createClient } from '@/lib/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getInventoryStatus, getInventoryStatusColor } from '@/lib/inventory';
@@ -23,22 +22,29 @@ const productSchema = z.object({
   description: z.string().optional(),
   category_id: z.string().min(1, "Category is required"),
   status: z.enum(['draft', 'active', 'archived']),
-  stock_quantity: z.number().int().nonnegative(),
+  stock_quantity: z.number().int().nullable(), // Null means unlimited
   cost_price: z.number().nonnegative("Cost price cannot be negative"),
   target_margin: z.number().min(0).max(0.99, "Margin must be strictly less than 100% (0.99)"),
   occasion_ids: z.array(z.string()),
+  recipient_tag_ids: z.array(z.number()),
   image_url: z.string().optional(),
+  sku: z.string().optional(),
+  gender_id: z.number().nullable().optional(),
+  is_customizable: z.boolean(),
+  min_quantity: z.number().int().min(1),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
-  initialData?: Product & { pricing?: ProductPricing, occasionIds?: string[], primaryImageUrl?: string };
+  initialData?: Product & { pricing?: ProductPricing, occasionIds?: string[], recipientTagIds?: number[], primaryImageUrl?: string };
   categories: Category[];
   occasions: Occasion[];
+  genders: Gender[];
+  recipientTags: RecipientTag[];
 }
 
-export default function ProductForm({ initialData, categories, occasions }: ProductFormProps) {
+export default function ProductForm({ initialData, categories, occasions, genders, recipientTags }: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -52,17 +58,23 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
       description: initialData?.description || '',
       category_id: initialData?.category_id || '',
       status: initialData?.status || 'draft',
-      stock_quantity: initialData?.stock_quantity || 0,
+      stock_quantity: initialData?.stock_quantity ?? null,
       cost_price: initialData?.pricing?.cost_price || 0,
       target_margin: initialData?.pricing?.target_margin || 0.25,
       occasion_ids: initialData?.occasionIds || [],
+      recipient_tag_ids: initialData?.recipientTagIds || [],
       image_url: initialData?.primaryImageUrl || '',
+      sku: initialData?.sku || '',
+      gender_id: initialData?.gender_id || null,
+      is_customizable: initialData?.is_customizable || false,
+      min_quantity: initialData?.min_quantity || 1,
     }
   });
 
   const costPrice = watch('cost_price');
   const targetMargin = watch('target_margin');
   const selectedOccasions = watch('occasion_ids');
+  const selectedRecipientTags = watch('recipient_tag_ids');
   const currentImageUrl = watch('image_url');
   const currentStock = watch('stock_quantity');
   
@@ -75,6 +87,14 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
       setValue('occasion_ids', [...selectedOccasions, id]);
     } else {
       setValue('occasion_ids', selectedOccasions.filter(o => o !== id));
+    }
+  };
+
+  const handleRecipientTagToggle = (id: number, checked: boolean) => {
+    if (checked) {
+      setValue('recipient_tag_ids', [...selectedRecipientTags, id]);
+    } else {
+      setValue('recipient_tag_ids', selectedRecipientTags.filter(t => t !== id));
     }
   };
 
@@ -125,10 +145,12 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
       try {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
-           if (key === 'occasion_ids') {
+           if (key === 'occasion_ids' || key === 'recipient_tag_ids') {
              formData.append(key, JSON.stringify(value));
-           } else if (value !== undefined) {
+           } else if (value !== null && value !== undefined) {
              formData.append(key, value.toString());
+           } else if (value === null) {
+             formData.append(key, ''); // Send empty string for nulls
            }
         });
 
@@ -165,16 +187,59 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
             </div>
           </div>
           
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU (Optional)</Label>
+              <Input id="sku" {...register('sku')} placeholder="CHOC-001" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender_id">Target Gender</Label>
+              <select 
+                id="gender_id" 
+                className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                value={watch('gender_id') || ''}
+                onChange={(e) => setValue('gender_id', e.target.value ? parseInt(e.target.value) : null)}
+              >
+                <option value="">Unisex / Any</option>
+                {genders.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" {...register('description')} rows={4} />
+          </div>
+          
+          <div className="flex flex-row items-center gap-6 pt-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="is_customizable" 
+                checked={watch('is_customizable')}
+                onCheckedChange={(checked) => setValue('is_customizable', checked as boolean)}
+              />
+              <Label htmlFor="is_customizable">Is Customizable (e.g., engravable)</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="min_quantity" className="whitespace-nowrap">Min Qty:</Label>
+              <Input 
+                id="min_quantity" 
+                type="number" 
+                min="1"
+                className="w-20"
+                {...register('min_quantity', { valueAsNumber: true })} 
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Category & Occasions</CardTitle>
+          <CardTitle>Categorization & Tags</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2 max-w-sm">
@@ -192,19 +257,40 @@ export default function ProductForm({ initialData, categories, occasions }: Prod
             {errors.category_id && <p className="text-sm text-red-500">{errors.category_id.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label>Occasions (Multi-select)</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md bg-gray-50">
-              {occasions.map(occ => (
-                <div key={occ.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`occ-${occ.id}`} 
-                    checked={selectedOccasions.includes(occ.id)}
-                    onCheckedChange={(checked) => handleOccasionToggle(occ.id, checked as boolean)}
-                  />
-                  <Label htmlFor={`occ-${occ.id}`} className="font-normal cursor-pointer">{occ.name}</Label>
-                </div>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Occasions</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border rounded-md bg-gray-50 max-h-60 overflow-y-auto">
+                {occasions.map(occ => (
+                  <div key={occ.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`occ-${occ.id}`} 
+                      checked={selectedOccasions.includes(occ.id)}
+                      onCheckedChange={(checked) => handleOccasionToggle(occ.id, checked as boolean)}
+                    />
+                    <Label htmlFor={`occ-${occ.id}`} className="font-normal cursor-pointer text-sm">
+                      {occ.parent_id ? <span className="text-slate-400 mr-1">↳</span> : null}
+                      {occ.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Recipient Tags</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border rounded-md bg-gray-50 max-h-60 overflow-y-auto">
+                {recipientTags.map(tag => (
+                  <div key={tag.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`tag-${tag.id}`} 
+                      checked={selectedRecipientTags.includes(tag.id)}
+                      onCheckedChange={(checked) => handleRecipientTagToggle(tag.id, checked as boolean)}
+                    />
+                    <Label htmlFor={`tag-${tag.id}`} className="font-normal cursor-pointer text-sm">{tag.name}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>

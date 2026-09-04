@@ -80,7 +80,9 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="p-6 flex flex-col flex-1 bg-white">
           <div className="flex justify-between items-start mb-3">
             <div className="text-xs font-semibold text-primary/70 bg-primary/5 px-3 py-1 rounded-full">
-              {product.category?.name || 'Item'}
+              {product.product_occasions && product.product_occasions.length > 0 && product.product_occasions[0].occasions 
+                ? product.product_occasions[0].occasions.name 
+                : 'Premium Item'}
             </div>
             <div className={`text-[10px] font-bold px-2 py-1 rounded-full ${getStatusColor(status)}`}>
               {customerStatus}
@@ -114,9 +116,9 @@ export function ProductCard({ product }: ProductCardProps) {
                 <span className="text-sm font-bold w-6 text-center text-foreground">{selectedCount}</span>
                 <button 
                   onClick={() => updateQuantity(product.id, selectedCount + 1)}
-                  disabled={selectedCount >= product.stock_quantity}
+                  disabled={product.stock_quantity !== null && selectedCount >= product.stock_quantity}
                   aria-label="Increase quantity"
-                  className={`w-7 h-7 flex items-center justify-center rounded-full bg-white text-primary shadow-sm transition-colors ${selectedCount >= product.stock_quantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-white'}`}
+                  className={`w-7 h-7 flex items-center justify-center rounded-full bg-white text-primary shadow-sm transition-colors ${product.stock_quantity !== null && selectedCount >= product.stock_quantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-white'}`}
                 >
                   <Plus className="w-4 h-4" strokeWidth={2} />
                 </button>

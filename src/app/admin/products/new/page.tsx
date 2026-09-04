@@ -9,13 +9,17 @@ export default async function NewProductPage() {
   // Load categories and occasions for the form dropdowns
   const [
     { data: categories, error: catError },
-    { data: occasions, error: occError }
+    { data: occasions, error: occError },
+    { data: genders, error: genError },
+    { data: recipientTags, error: recError }
   ] = await Promise.all([
     supabase.from('categories').select('*').order('display_order'),
-    supabase.from('occasions').select('*').order('display_order')
+    supabase.from('occasions').select('*').order('display_order'),
+    supabase.from('genders').select('*').order('name'),
+    supabase.from('recipient_tags').select('*').order('name')
   ]);
 
-  if (catError || occError) {
+  if (catError || occError || genError || recError) {
     return <div>Error loading form dependencies.</div>;
   }
 
@@ -28,7 +32,9 @@ export default async function NewProductPage() {
       
       <ProductForm 
         categories={categories || []} 
-        occasions={occasions || []} 
+        occasions={occasions || []}
+        genders={genders || []}
+        recipientTags={recipientTags || []}
       />
     </div>
   );

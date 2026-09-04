@@ -11,12 +11,13 @@ interface Props {
 }
 
 export function StepCustomize({ customizationCategories }: Props) {
-  const { 
-    selectedCustomizations, 
-    toggleCustomization, 
+  const {
+    selectedCustomizations,
+    toggleCustomization,
     customizationsSubtotal,
-    nextStep, 
-    prevStep 
+    totalProductsCount,
+    nextStep,
+    prevStep
   } = useHamperBuilder();
 
   // Validate that all required categories have at least 1 selection
@@ -93,14 +94,19 @@ export function StepCustomize({ customizationCategories }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {options.map((option) => {
                   const isSelected = selectedOptionIds.includes(option.id);
+                  const isBoxOption = category.id === 'cat-packaging';
+                  const wouldExceed = isBoxOption && option.max_items != null && totalProductsCount > option.max_items;
 
                   return (
                     <button
                       key={option.id}
+                      disabled={wouldExceed}
                       onClick={() => toggleCustomization(category.id, option.id, category.allow_multiple)}
                       className={`relative p-5 rounded-2xl text-left border-2 transition-all duration-200 flex flex-col justify-between h-[150px] ${
                         isSelected
                           ? 'border-rose-600 bg-rose-50/40 shadow-md shadow-rose-100'
+                          : wouldExceed
+                          ? 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
                           : 'border-slate-100 bg-slate-50/50 hover:border-slate-300 hover:bg-white'
                       }`}
                     >
@@ -119,6 +125,13 @@ export function StepCustomize({ customizationCategories }: Props) {
                         <p className="text-xs text-slate-500 line-clamp-2 my-1 font-light">
                           {option.description}
                         </p>
+                      )}
+
+                      {isBoxOption && option.max_items != null && (
+                        <p className="text-[11px] text-slate-500 font-medium">Holds up to {option.max_items} items</p>
+                      )}
+                      {wouldExceed && (
+                        <p className="text-[11px] text-rose-600 font-medium">You have {totalProductsCount} items — remove some to fit this box</p>
                       )}
 
                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between w-full">

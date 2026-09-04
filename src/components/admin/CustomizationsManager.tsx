@@ -43,6 +43,7 @@ export function CustomizationsManager({ initialCategories }: Props) {
   const [optPrice, setOptPrice] = useState(0);
   const [optOrder, setOptOrder] = useState(1);
   const [optActive, setOptActive] = useState(true);
+  const [optMaxItems, setOptMaxItems] = useState<number | ''>('');
   const [isSavingOpt, setIsSavingOpt] = useState(false);
 
   const openCategoryModal = (cat?: CustomizationCategory) => {
@@ -124,6 +125,7 @@ export function CustomizationsManager({ initialCategories }: Props) {
       setOptPrice(opt.price);
       setOptOrder(opt.display_order || 1);
       setOptActive(opt.is_active);
+      setOptMaxItems(opt.max_items ?? '');
     } else {
       setEditingOption(null);
       setOptName('');
@@ -131,9 +133,12 @@ export function CustomizationsManager({ initialCategories }: Props) {
       setOptPrice(0);
       setOptOrder(currentOptions.length + 1);
       setOptActive(true);
+      setOptMaxItems('');
     }
     setIsOptModalOpen(true);
   };
+
+  const isPackagingCategory = selectedCatIdForOpt === 'cat-packaging';
 
   const handleSaveOption = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +155,8 @@ export function CustomizationsManager({ initialCategories }: Props) {
       price: Math.max(0, Number(optPrice) || 0),
       display_order: Number(optOrder) || 1,
       is_active: optActive,
-      image_url: null
+      image_url: null,
+      max_items: isPackagingCategory && optMaxItems !== '' ? Math.max(1, Number(optMaxItems) || 1) : null
     };
 
     const res = await saveCustomizationOption(optionPayload);
@@ -342,6 +348,11 @@ export function CustomizationsManager({ initialCategories }: Props) {
                               </div>
                               {opt.description && (
                                 <p className="text-xs text-slate-500 line-clamp-2 mb-3">{opt.description}</p>
+                              )}
+                              {cat.id === 'cat-packaging' && (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 mb-1">
+                                  {opt.max_items ? `Capacity: ${opt.max_items} items` : 'No item limit set'}
+                                </span>
                               )}
                             </div>
 
@@ -541,6 +552,22 @@ export function CustomizationsManager({ initialCategories }: Props) {
                   />
                 </div>
               </div>
+
+              {isPackagingCategory && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Box Capacity (Max Items)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    step="1"
+                    value={optMaxItems}
+                    onChange={(e) => setOptMaxItems(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
+                    placeholder="e.g. 6"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <span className="text-[11px] text-slate-400">Maximum number of items customers can pack into this box. Leave blank for no limit.</span>
+                </div>
+              )}
 
               <div className="pt-2">
                 <label className="flex items-center gap-2 cursor-pointer">

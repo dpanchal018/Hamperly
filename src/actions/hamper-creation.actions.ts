@@ -131,6 +131,7 @@ export async function validateAndConfirmHamper(
     const categories = await getPublicCustomizations();
     const selectedCustomizationDetails: SelectedCustomizationDetail[] = [];
     let customizationsSubtotal = 0;
+    const totalProductQuantity = request.products.reduce((sum, p) => sum + p.quantity, 0);
 
     for (const cat of categories) {
       const selectedOptionIds = request.selectedCustomizations?.[cat.id] || [];
@@ -158,6 +159,14 @@ export async function validateAndConfirmHamper(
           return { 
             success: false, 
             error: `Selected option for "${cat.name}" is no longer available.` 
+          };
+        }
+
+        // Box capacity check: this option's max_items caps the total number of products in the hamper
+        if (cat.id === 'cat-packaging' && opt.max_items != null && totalProductQuantity > opt.max_items) {
+          return {
+            success: false,
+            error: `Your hamper has ${totalProductQuantity} items, which exceeds the ${opt.max_items}-item capacity of "${opt.name}". Please remove some items or choose a larger box.`
           };
         }
 

@@ -14,6 +14,11 @@ export default async function EditOccasionPage({ params }: { params: Promise<{ i
     .eq('id', id)
     .single();
 
+  const { data: allOccasions } = await supabase
+    .from('occasions')
+    .select('*')
+    .order('name');
+
   if (error || !occasion) {
     notFound();
   }
@@ -24,7 +29,7 @@ export default async function EditOccasionPage({ params }: { params: Promise<{ i
         <h1 className="text-3xl font-bold tracking-tight">Edit Occasion</h1>
         <p className="text-gray-500">Update occasion details.</p>
       </div>
-      <OccasionForm initialData={occasion} />
+      <OccasionForm initialData={occasion} allOccasions={allOccasions || []} />
     </div>
   );
 }

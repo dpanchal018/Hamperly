@@ -1,6 +1,6 @@
 import { getHampers } from '@/actions/hamper.actions';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Gift, Trash2 } from 'lucide-react';
+import { Plus, Edit, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { HamperImportButton } from '@/components/admin/HamperImportButton';
 import { HamperExportButton } from '@/components/admin/HamperExportButton';
@@ -11,7 +11,7 @@ export default async function HampersPage() {
 
   // Calculate totals
   const totalHampers = hampers.length;
-  const totalInventory = hampers.reduce((acc, h) => acc + h.stock_quantity, 0);
+  const totalInventory = hampers.reduce((acc, h) => acc + (h.stock_quantity ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -58,6 +58,8 @@ export default async function HampersPage() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Hamper Name</th>
+                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Occasion</th>
+                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Items</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Quantity</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Cost (₹)</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Selling Price (₹)</th>
@@ -67,7 +69,7 @@ export default async function HampersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {hampers.map((hamper) => {
+              {hampers.map((hamper: any) => {
                 const profit = hamper.selling_price - hamper.actual_cost;
                 const marginPercent = hamper.selling_price > 0 ? ((profit / hamper.selling_price) * 100).toFixed(1) : 0;
                 
@@ -75,6 +77,12 @@ export default async function HampersPage() {
                   <tr key={hamper.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="font-medium text-slate-900">{hamper.name}</div>
+                    </td>
+                    <td className="py-4 px-6 text-slate-600">
+                      {hamper.occasion?.name || '-'}
+                    </td>
+                    <td className="py-4 px-6 text-right text-slate-600">
+                      {hamper.items?.[0]?.count || 0}
                     </td>
                     <td className="py-4 px-6 text-right font-medium text-slate-900">
                       {hamper.stock_quantity}
@@ -111,7 +119,7 @@ export default async function HampersPage() {
 
               {hampers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
                     No hampers found. Create one to get started.
                   </td>
                 </tr>

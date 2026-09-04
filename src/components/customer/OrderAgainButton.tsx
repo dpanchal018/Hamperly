@@ -1,6 +1,6 @@
 'use client';
 
-import { Package, ArrowRight, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'react-hot-toast';
 import { useState } from 'react';
@@ -23,14 +23,14 @@ export function OrderAgainButton({ hamperName }: { hamperName: string }) {
       const existingItem = items.find(i => i.id === hamper.id);
       
       if (existingItem) {
-        if (existingItem.quantity >= hamper.stock_quantity) {
+        if (hamper.stock_quantity !== null && existingItem.quantity >= hamper.stock_quantity) {
           toast.error(`Only ${hamper.stock_quantity} left in stock`);
         } else {
           updateQuantity(hamper.id, existingItem.quantity + 1);
           toast.success('Added to cart');
         }
       } else {
-        if (hamper.stock_quantity <= 0) {
+        if (hamper.stock_quantity !== null && hamper.stock_quantity <= 0) {
           toast.error('This hamper is out of stock');
         } else {
           addItem({

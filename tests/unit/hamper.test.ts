@@ -49,6 +49,13 @@ describe('Hamper Service Unit Tests', () => {
       stock_quantity: 10,
       status: 'active',
       selling_price: 150,
+      sku: null,
+      gender_id: null,
+      is_customizable: false,
+      min_quantity: 1,
+      weight_grams: null,
+      dimensions_cm: null,
+      tags: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });

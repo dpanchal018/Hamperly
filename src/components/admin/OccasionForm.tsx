@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,11 +19,13 @@ const occasionSchema = z.object({
   description: z.string().optional(),
   display_order: z.number().int().nonnegative(),
   is_active: z.boolean(),
+  parent_id: z.string().nullable(),
+  occasion_type: z.enum(['FESTIVAL', 'CORPORATE', 'WEDDING', 'BIRTHDAY', 'ANNIVERSARY', 'MILESTONE', 'BABY_SHOWER', 'JUST_BECAUSE', 'GENERAL'] as const),
 });
 
 type OccasionFormValues = z.infer<typeof occasionSchema>;
 
-export default function OccasionForm({ initialData }: { initialData?: Occasion }) {
+export default function OccasionForm({ initialData, allOccasions = [] }: { initialData?: Occasion, allOccasions?: Occasion[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -35,10 +37,29 @@ export default function OccasionForm({ initialData }: { initialData?: Occasion }
       description: initialData?.description || '',
       display_order: initialData?.display_order || 0,
       is_active: initialData ? initialData.is_active : true,
+      parent_id: initialData?.parent_id || null,
+      occasion_type: initialData?.occasion_type || 'GENERAL',
     }
   });
 
   const isActive = watch('is_active');
+  const parentId = watch('parent_id');
+
+  // Exclude this occasion and all of its descendants from the parent dropdown,
+  // otherwise an admin could create a cycle in the hierarchy (A -> B -> ... -> A).
+  const selectableParents = useMemo(() => {
+    if (!initialData) return allOccasions;
+
+    const excludedIds = new Set<string>([initialData.id]);
+    let frontier = [initialData.id];
+    while (frontier.length > 0) {
+      const children = allOccasions.filter(o => o.parent_id && frontier.includes(o.parent_id));
+      frontier = children.map(c => c.id).filter(id => !excludedIds.has(id));
+      frontier.forEach(id => excludedIds.add(id));
+    }
+
+    return allOccasions.filter(o => !excludedIds.has(o.id));
+  }, [allOccasions, initialData]);
 
   const onSubmit = async (data: OccasionFormValues) => {
     startTransition(async () => {
@@ -49,6 +70,8 @@ export default function OccasionForm({ initialData }: { initialData?: Occasion }
         formData.append('description', data.description || '');
         formData.append('display_order', data.display_order.toString());
         formData.append('is_active', data.is_active.toString());
+        if (data.parent_id) formData.append('parent_id', data.parent_id);
+        formData.append('occasion_type', data.occasion_type);
 
         if (initialData) {
           await updateOccasionAction(initialData.id, formData);
@@ -64,16 +87,56 @@ export default function OccasionForm({ initialData }: { initialData?: Occasion }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white p-6 rounded-md shadow-sm border">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" {...register('name')} placeholder="e.g. Diwali" />
-        {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" {...register('name')} placeholder="e.g. Diwali" />
+          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="slug">Slug</Label>
+          <Input id="slug" {...register('slug')} placeholder="e.g. diwali" />
+          {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
-        <Input id="slug" {...register('slug')} placeholder="e.g. diwali" />
-        {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="occasion_type">Type</Label>
+          <select 
+            id="occasion_type" 
+            {...register('occasion_type')}
+            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="GENERAL">General</option>
+            <option value="FESTIVAL">Festival</option>
+            <option value="CORPORATE">Corporate</option>
+            <option value="WEDDING">Wedding</option>
+            <option value="BIRTHDAY">Birthday</option>
+            <option value="ANNIVERSARY">Anniversary</option>
+            <option value="MILESTONE">Milestone (Birthday/Anniversary)</option>
+            <option value="BABY_SHOWER">Baby Shower</option>
+            <option value="JUST_BECAUSE">Just Because</option>
+          </select>
+          {errors.occasion_type && <p className="text-sm text-red-500">{errors.occasion_type.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="parent_id">Parent Occasion (Optional)</Label>
+          <select 
+            id="parent_id" 
+            value={parentId || ''}
+            onChange={(e) => setValue('parent_id', e.target.value || null)}
+            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">None (Top-Level)</option>
+            {selectableParents.map(occ => (
+              <option key={occ.id} value={occ.id}>{occ.name}</option>
+            ))}
+          </select>
+          {errors.parent_id && <p className="text-sm text-red-500">{errors.parent_id.message}</p>}
+        </div>
       </div>
 
       <div className="space-y-2">
