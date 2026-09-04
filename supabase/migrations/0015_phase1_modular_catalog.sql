@@ -99,9 +99,11 @@ CREATE TABLE IF NOT EXISTS public.product_recipient_tags (
 
 ALTER TABLE public.product_recipient_tags ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can view product recipient tags" ON public.product_recipient_tags;
 CREATE POLICY "Public can view product recipient tags"
     ON public.product_recipient_tags FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage product recipient tags" ON public.product_recipient_tags;
 CREATE POLICY "Admins can manage product recipient tags"
     ON public.product_recipient_tags FOR ALL USING (
         EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'ADMIN')
@@ -161,9 +163,11 @@ CREATE TABLE IF NOT EXISTS public.hamper_items (
 
 ALTER TABLE public.hamper_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can view hamper items" ON public.hamper_items;
 CREATE POLICY "Public can view hamper items"
     ON public.hamper_items FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage hamper items" ON public.hamper_items;
 CREATE POLICY "Admins can manage hamper items"
     ON public.hamper_items FOR ALL USING (
         EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'ADMIN')
@@ -174,6 +178,9 @@ CREATE INDEX IF NOT EXISTS idx_hamper_items_hamper   ON public.hamper_items(hamp
 CREATE INDEX IF NOT EXISTS idx_hamper_items_product  ON public.hamper_items(product_id);
 
 -- Constraint: min_qty must be <= max_qty when max_qty is set
+ALTER TABLE public.hamper_items
+    DROP CONSTRAINT IF EXISTS hamper_items_qty_range;
+
 ALTER TABLE public.hamper_items
     ADD CONSTRAINT hamper_items_qty_range
     CHECK (max_qty IS NULL OR max_qty >= min_qty);
@@ -191,9 +198,11 @@ CREATE TABLE IF NOT EXISTS public.hamper_recipient_tags (
 
 ALTER TABLE public.hamper_recipient_tags ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can view hamper recipient tags" ON public.hamper_recipient_tags;
 CREATE POLICY "Public can view hamper recipient tags"
     ON public.hamper_recipient_tags FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage hamper recipient tags" ON public.hamper_recipient_tags;
 CREATE POLICY "Admins can manage hamper recipient tags"
     ON public.hamper_recipient_tags FOR ALL USING (
         EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'ADMIN')
