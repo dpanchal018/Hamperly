@@ -18,7 +18,8 @@ export const DEFAULT_CUSTOMIZATION_CATEGORIES: CustomizationCategory[] = [
         price: 100,
         image_url: null,
         display_order: 1,
-        is_active: true
+        is_active: true,
+        max_items: 6
       },
       {
         id: 'opt-box-velvet',
@@ -28,7 +29,8 @@ export const DEFAULT_CUSTOMIZATION_CATEGORIES: CustomizationCategory[] = [
         price: 200,
         image_url: null,
         display_order: 2,
-        is_active: true
+        is_active: true,
+        max_items: 8
       },
       {
         id: 'opt-box-basket',
@@ -38,7 +40,8 @@ export const DEFAULT_CUSTOMIZATION_CATEGORIES: CustomizationCategory[] = [
         price: 350,
         image_url: null,
         display_order: 3,
-        is_active: true
+        is_active: true,
+        max_items: 12
       },
       {
         id: 'opt-box-kraft',
@@ -48,7 +51,8 @@ export const DEFAULT_CUSTOMIZATION_CATEGORIES: CustomizationCategory[] = [
         price: 80,
         image_url: null,
         display_order: 4,
-        is_active: true
+        is_active: true,
+        max_items: 5
       }
     ]
   },

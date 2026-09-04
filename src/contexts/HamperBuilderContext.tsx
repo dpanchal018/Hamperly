@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { PublicProduct } from '@/services/catalog.service';
 import { CustomizationCategory } from '@/types/customization.types';
 import { Occasion } from '@/types/database.types';
@@ -37,6 +37,10 @@ interface HamperBuilderContextType {
   customizationsSubtotal: number;
   totalPrice: number;
   totalProductsCount: number;
+
+  // Box capacity (from the selected packaging/box customization option)
+  boxCapacity: number | null;
+  remainingCapacity: number | null;
 
   // Actions
   setOccasion: (occasion: Occasion | null) => void;
@@ -135,6 +139,16 @@ export function HamperBuilderProvider({
     }
   }, [draftId, editingCartId, occasion, selectedProducts, selectedCustomizations, personalMessage, recipient, currentStep, isInitialized]);
 
+  // Box capacity: derived from whichever packaging/box option is currently selected
+  const boxCapacity = useMemo(() => {
+    const packagingCategory = customizationCategories.find(c => c.id === 'cat-packaging');
+    if (!packagingCategory) return null;
+    const selectedOptionId = (selectedCustomizations['cat-packaging'] || [])[0];
+    if (!selectedOptionId) return null;
+    const option = (packagingCategory.options || []).find(o => o.id === selectedOptionId);
+    return option?.max_items ?? null;
+  }, [customizationCategories, selectedCustomizations]);
+
   // Product operations
   const setOccasion = useCallback((occ: Occasion | null) => {
     setOccasionState(occ);
@@ -145,16 +159,18 @@ export function HamperBuilderProvider({
       const existing = prev.find(p => p.product.id === product.id);
       // NULL stock = unlimited; use Infinity as cap so Math.min always passes through
       const maxStock = product.stock_quantity ?? Infinity;
+      const otherItemsTotal = prev.reduce((sum, p) => sum + (p.product.id === product.id ? 0 : p.quantity), 0);
+      const capRemaining = boxCapacity !== null ? Math.max(0, boxCapacity - otherItemsTotal) : Infinity;
+      const desiredQty = (existing ? existing.quantity : 0) + quantity;
+      const cappedQty = Math.min(desiredQty, maxStock, capRemaining);
+
       if (existing) {
-        return prev.map(p => 
-          p.product.id === product.id 
-            ? { ...p, quantity: Math.min(p.quantity + quantity, maxStock) }
-            : p
-        );
+        return prev.map(p => p.product.id === product.id ? { ...p, quantity: cappedQty } : p);
       }
-      return [...prev, { product, quantity: Math.min(quantity, maxStock) }];
+      if (cappedQty <= 0) return prev;
+      return [...prev, { product, quantity: cappedQty }];
     });
-  }, []);
+  }, [boxCapacity]);
 
   const updateProductQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -164,9 +180,11 @@ export function HamperBuilderProvider({
     setSelectedProducts(prev => prev.map(p => {
       if (p.product.id !== productId) return p;
       const maxStock = p.product.stock_quantity ?? Infinity;
-      return { ...p, quantity: Math.min(quantity, maxStock) };
+      const otherItemsTotal = prev.reduce((sum, item) => sum + (item.product.id === productId ? 0 : item.quantity), 0);
+      const capRemaining = boxCapacity !== null ? Math.max(0, boxCapacity - otherItemsTotal) : Infinity;
+      return { ...p, quantity: Math.min(quantity, maxStock, capRemaining) };
     }));
-  }, []);
+  }, [boxCapacity]);
 
   const removeProduct = useCallback((productId: string) => {
     setSelectedProducts(prev => prev.filter(p => p.product.id !== productId));
@@ -332,6 +350,7 @@ export function HamperBuilderProvider({
   }
 
   const totalPrice = productsSubtotal + customizationsSubtotal;
+  const remainingCapacity = boxCapacity !== null ? Math.max(0, boxCapacity - totalProductsCount) : null;
 
   return (
     <HamperBuilderContext.Provider value={{
@@ -348,6 +367,8 @@ export function HamperBuilderProvider({
       customizationsSubtotal,
       totalPrice,
       totalProductsCount,
+      boxCapacity,
+      remainingCapacity,
       setOccasion,
       addProduct,
       updateProductQuantity,

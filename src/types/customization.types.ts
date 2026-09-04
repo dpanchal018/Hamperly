@@ -7,6 +7,9 @@ export interface CustomizationOption {
   image_url?: string | null;
   display_order: number;
   is_active: boolean;
+  // Only meaningful for the packaging/box category: caps how many total
+  // items a hamper using this box may contain. Null/undefined = no cap.
+  max_items?: number | null;
 }
 
 export interface CustomizationCategory {

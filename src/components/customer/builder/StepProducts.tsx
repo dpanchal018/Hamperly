@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
 import { PublicProduct } from '@/services/catalog.service';
 import { Category } from '@/types/database.types';
-import { Plus, Minus, Check, Search, ArrowRight, ArrowLeft, Package, Sparkles } from 'lucide-react';
+import { Plus, Minus, Check, Search, ArrowRight, ArrowLeft, Package, Sparkles, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
@@ -14,15 +14,17 @@ interface Props {
 }
 
 export function StepProducts({ products, categories }: Props) {
-  const { 
-    selectedProducts, 
-    addProduct, 
-    updateProductQuantity, 
-    removeProduct, 
-    totalProductsCount, 
+  const {
+    selectedProducts,
+    addProduct,
+    updateProductQuantity,
+    removeProduct,
+    totalProductsCount,
     productsSubtotal,
-    nextStep, 
-    prevStep 
+    boxCapacity,
+    remainingCapacity,
+    nextStep,
+    prevStep
   } = useHamperBuilder();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -45,6 +47,10 @@ export function StepProducts({ products, categories }: Props) {
     return map;
   }, [selectedProducts]);
 
+  // A box is only chosen in the Customize step (3), so capacity is unset (unlimited)
+  // until then. Once set, it caps further additions here and in Customize.
+  const isCapacityFull = remainingCapacity !== null && remainingCapacity <= 0;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header Info */}
@@ -59,6 +65,18 @@ export function StepProducts({ products, categories }: Props) {
           Add treats, keepsakes, and artisanal items to fill your personalized hamper.
         </p>
       </div>
+
+      {/* Capacity notice - only relevant once a box has been chosen (Step 3), e.g. when editing an existing hamper */}
+      {boxCapacity !== null && (
+        <div className={`p-4 rounded-2xl flex items-center gap-3 text-sm border ${isCapacityFull ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>
+            {isCapacityFull
+              ? `Your box is full (${totalProductsCount}/${boxCapacity} items). Remove an item or choose a larger box to add more.`
+              : `${totalProductsCount} / ${boxCapacity} items used in your selected box.`}
+          </span>
+        </div>
+      )}
 
       {/* Search & Category Filter Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm space-y-4">
@@ -234,7 +252,7 @@ export function StepProducts({ products, categories }: Props) {
                         </span>
                         <button
                           onClick={() => updateProductQuantity(product.id, quantityInHamper + 1)}
-                          disabled={product.stock_quantity !== null && quantityInHamper >= product.stock_quantity}
+                          disabled={(product.stock_quantity !== null && quantityInHamper >= product.stock_quantity) || isCapacityFull}
                           className="w-6 h-6 rounded-full bg-white text-rose-600 flex items-center justify-center hover:bg-rose-100 disabled:opacity-40 transition-colors"
                           aria-label="Increase quantity"
                         >
@@ -244,8 +262,9 @@ export function StepProducts({ products, categories }: Props) {
                     ) : (
                       <Button
                         size="sm"
+                        disabled={isCapacityFull}
                         onClick={() => addProduct(product)}
-                        className="rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4"
+                        className="rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 disabled:opacity-40"
                       >
                         <Plus className="w-3.5 h-3.5 mr-1" /> Add
                       </Button>

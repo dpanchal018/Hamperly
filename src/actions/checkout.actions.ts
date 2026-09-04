@@ -207,6 +207,21 @@ export async function placeCustomerOrder(
       }
     }
 
+    // Verify box capacity for personalized hampers (defense-in-depth against a tampered cart payload)
+    const packagingCategory = activeCustomizationCategories.find(c => c.id === 'cat-packaging');
+    if (packagingCategory) {
+      for (const item of personalizedHampers) {
+        const boxSelection = (item.customizations || []).find((c: any) => c.categoryId === 'cat-packaging');
+        if (!boxSelection) continue;
+        const boxOption = (packagingCategory.options || []).find(o => o.id === boxSelection.optionId);
+        if (!boxOption || boxOption.max_items == null) continue;
+        const totalQty = (item.products || []).reduce((sum: number, p: any) => sum + (Number(p.quantity) || 0), 0);
+        if (totalQty > boxOption.max_items) {
+          throw new Error(`"${item.name}" has ${totalQty} items, which exceeds the ${boxOption.max_items}-item capacity of "${boxOption.name}". Please remove some items or choose a larger box.`);
+        }
+      }
+    }
+
     // 4. Construct authoritative line items & snapshots
     let grandSubtotal = 0;
     const purchaseItems = [];
