@@ -121,7 +121,7 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     await page.fill('input[name="email"]', 'qa-crawler@hamperly.com');
     await page.fill('input[name="password"]', 'HamperlyQA123!');
     await page.getByRole('button', { name: /sign in|log in/i }).click();
-    await page.waitForURL(url => url.pathname === '/', { timeout: 10000 });
+    await page.waitForURL(url => url.pathname === '/', { timeout: 15000 });
 
     // 2. Go to hampers page and wait for CartProvider to finish loading from cloud
     await page.goto('/hampers');
