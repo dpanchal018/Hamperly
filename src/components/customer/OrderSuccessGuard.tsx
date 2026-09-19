@@ -4,80 +4,57 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-const STORAGE_KEY = 'hamperly:consumedOrderSuccess';
-const UNMOUNT_GRACE_MS = 300;
-
-// Module-scoped (not component state) so it survives React StrictMode's dev-only
-// mount -> cleanup -> mount cycle, which runs on the same fiber/instance.
-const pendingConsume: Record<string, ReturnType<typeof setTimeout>> = {};
-
-function getConsumed(): string[] {
-  try {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-  } catch {
-    return [];
-  }
+// `popstate` only ever fires for real back/forward history traversal — never for the
+// pushState/replaceState navigations Next.js's <Link> and router.push/replace use. So a
+// recent `popstate` is a reliable "the user just pressed back/forward" signal, independent
+// of any per-order bookkeeping (which would otherwise also block legitimate later visits,
+// e.g. reprinting an order from Account > Orders).
+let lastPopstateAt = 0;
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    lastPopstateAt = Date.now();
+  });
 }
 
-function markConsumed(orderId: string) {
-  const consumed = getConsumed();
-  if (!consumed.includes(orderId)) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...consumed, orderId]));
-  }
-}
+const POPSTATE_WINDOW_MS = 800;
+const MESSAGE = 'This order confirmation is no longer available after navigating back or forward.';
 
-// A real navigation-away unmount and StrictMode's synthetic diagnostic unmount both
-// call this cleanup. We can't tell them apart synchronously, so we delay the write and
-// let the following real mount (if any) cancel it via `cancelScheduledConsume`.
-// StrictMode's remount happens within the same tick; a real "user came back" remount
-// only happens after real navigation, which always takes far longer than the grace window.
-function scheduleConsume(orderId: string) {
-  clearTimeout(pendingConsume[orderId]);
-  pendingConsume[orderId] = setTimeout(() => {
-    markConsumed(orderId);
-    delete pendingConsume[orderId];
-  }, UNMOUNT_GRACE_MS);
-}
-
-function cancelScheduledConsume(orderId: string) {
-  clearTimeout(pendingConsume[orderId]);
-  delete pendingConsume[orderId];
+function cameViaBackForward() {
+  const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (navEntry?.type === 'back_forward') return true;
+  return Date.now() - lastPopstateAt < POPSTATE_WINDOW_MS;
 }
 
 /**
- * Order confirmation pages carry customer PII (address, phone, email) and are meant to be
- * seen once. This blocks the page from reappearing via browser back/forward:
- * - Marks the order "consumed" once the user genuinely navigates away within the app.
- * - Redirects away immediately if a later mount finds it already consumed.
- * - Also catches bfcache restores (pageshow with `persisted`), which skip React's mount cycle.
+ * Order confirmation pages carry customer PII (address, phone, email) and should never
+ * reappear via browser back/forward once the user has moved on. This redirects away when:
+ * - The page's own document load was itself a back/forward navigation (hard nav, bfcache miss).
+ * - A `popstate` just fired (soft, client-side back/forward within the app).
+ * - The page is restored live from bfcache (`pageshow` with `persisted`), which skips
+ *   React's mount cycle entirely.
+ * A direct visit (typed URL, clicking a Link — e.g. reprinting from Account > Orders) is
+ * a `push`/`navigate`, never fires `popstate`, and is always allowed through.
  */
-export function OrderSuccessGuard({ orderId, redirectTo }: { orderId: string; redirectTo: string }) {
+export function OrderSuccessGuard({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (getConsumed().includes(orderId)) {
-      toast.error('This order confirmation has already been viewed and is no longer available.');
+    if (cameViaBackForward()) {
+      toast.error(MESSAGE);
       router.replace(redirectTo);
     }
-  }, [orderId, redirectTo, router]);
+  }, [redirectTo, router]);
 
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
-        toast.error('This order confirmation has already been viewed and is no longer available.');
+        toast.error(MESSAGE);
         router.replace(redirectTo);
       }
     };
     window.addEventListener('pageshow', handlePageShow);
     return () => window.removeEventListener('pageshow', handlePageShow);
-  }, [orderId, redirectTo, router]);
-
-  useEffect(() => {
-    cancelScheduledConsume(orderId);
-    return () => {
-      scheduleConsume(orderId);
-    };
-  }, [orderId]);
+  }, [redirectTo, router]);
 
   return null;
 }

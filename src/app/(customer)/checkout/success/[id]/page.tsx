@@ -85,7 +85,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
 
   return (
     <div className="w-full bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC] py-8 px-4 sm:px-6 print:bg-white print:p-0">
-      <OrderSuccessGuard orderId={purchase.id} redirectTo={user ? '/account/orders' : '/'} />
+      <OrderSuccessGuard redirectTo={user ? '/account/orders' : '/'} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full space-y-8 print:space-y-0">
         {/* Success Confirmation Banner - Hidden during print */}
