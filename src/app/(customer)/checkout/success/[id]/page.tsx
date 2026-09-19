@@ -6,6 +6,9 @@ import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { getCurrentUser } from '@/services/auth.service';
 import { redirect } from 'next/navigation';
 import { PrintInvoiceButton } from '@/components/customer/PrintInvoiceButton';
+import { OrderSuccessGuard } from '@/components/customer/OrderSuccessGuard';
+
+export const dynamic = 'force-dynamic';
 
 export default async function CheckoutSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -82,8 +85,9 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
 
   return (
     <div className="w-full bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC] py-8 px-4 sm:px-6 print:bg-white print:p-0">
+      <OrderSuccessGuard orderId={purchase.id} redirectTo={user ? '/account/orders' : '/'} />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full space-y-8">
+      <main className="flex-1 max-w-4xl mx-auto w-full space-y-8 print:space-y-0">
         {/* Success Confirmation Banner - Hidden during print */}
         <div className="bg-white rounded-3xl border border-emerald-100 p-8 shadow-xl shadow-emerald-900/5 text-center print:hidden">
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-emerald-50">
@@ -118,9 +122,9 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
         </div>
 
         {/* Printable Invoice Container */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-12 shadow-sm print:border-none print:shadow-none print:p-0 print:m-0">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-12 shadow-sm print:border-none print:shadow-none print:p-0 print:m-0 print:text-[13px]">
           {/* Invoice Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-slate-100 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-slate-100 gap-4 print:pb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Logo className="scale-90 origin-left" withTagline={false} />
@@ -156,42 +160,42 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
           </div>
 
           {/* Customer & Shipping Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b border-slate-100 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b border-slate-100 text-sm print:grid-cols-2 print:gap-6 print:py-4">
             <div>
-              <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3">Customer Details</h3>
+              <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3 print:mb-1.5">Customer Details</h3>
               <p className="font-bold text-slate-900 text-base">{customer?.full_name || 'Guest Customer'}</p>
               {customer?.email && (
-                <p className="text-slate-600 flex items-center gap-2 mt-1">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <p className="text-slate-600 flex items-center gap-2 mt-1 break-all">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   {customer.email}
                 </p>
               )}
               {customer?.mobile_number && (
                 <p className="text-slate-600 flex items-center gap-2 mt-1">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   {customer.mobile_number}
                 </p>
               )}
             </div>
 
             <div>
-              <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3">Delivery Information</h3>
+              <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3 print:mb-1.5">Delivery Information</h3>
               <div className="text-slate-700 flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="whitespace-pre-wrap">{deliveryAddress || 'Address on file'}</p>
+                <div className="min-w-0">
+                  <p className="whitespace-pre-wrap break-words">{deliveryAddress || 'Address on file'}</p>
                   {deliveryPincode && (
                     <p className="font-mono text-xs font-semibold text-slate-600 mt-1">Pincode: {deliveryPincode}</p>
                   )}
-                  <p className="text-xs text-emerald-600 font-medium mt-1">Standard Delivery</p>
+                  <p className="text-xs text-emerald-600 font-medium mt-1 print:hidden">Standard Delivery</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Itemized Table */}
-          <div className="py-8 border-b border-slate-100 overflow-x-auto">
-            <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-4">Purchased Items</h3>
+          <div className="py-8 border-b border-slate-100 overflow-x-auto print:py-4">
+            <h3 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-4 print:mb-2">Purchased Items</h3>
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -224,27 +228,27 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                         return (
                           <React.Fragment key={`group-${groupName}`}>
                             <tr className="bg-slate-50/80">
-                              <td colSpan={3} className="py-3 px-4 font-bold text-slate-800">
+                              <td colSpan={3} className="py-3 print:py-1.5 px-4 font-bold text-slate-800">
                                 <Package className="w-4 h-4 inline mr-2 text-slate-500 mb-0.5" />
                                 {groupName}
                               </td>
-                              <td className="py-3 pl-2 text-right font-bold text-slate-900 pr-4">
+                              <td className="py-3 print:py-1.5 pl-2 text-right font-bold text-slate-900 pr-4">
                                 ₹{groupTotal.toLocaleString('en-IN')}
                               </td>
                             </tr>
                             {groupItems.map((item) => (
                               <tr key={item.id}>
-                                <td className="py-3 pl-10 pr-4 border-l-2 border-slate-200">
+                                <td className="py-3 print:py-1.5 pl-10 pr-4 border-l-2 border-slate-200">
                                   <p className="font-semibold text-slate-700 text-sm">{item.clean_name}</p>
                                   <p className="text-[11px] text-slate-400 mt-0.5">{item.category_snapshot || 'Component'}</p>
                                 </td>
-                                <td className="py-3 px-2 text-center text-slate-600 font-medium text-sm">
+                                <td className="py-3 print:py-1.5 px-2 text-center text-slate-600 font-medium text-sm">
                                   {item.quantity}
                                 </td>
-                                <td className="py-3 px-2 text-right text-slate-500 text-sm">
+                                <td className="py-3 print:py-1.5 px-2 text-right text-slate-500 text-sm">
                                   ₹{Number(item.actual_unit_price).toLocaleString('en-IN')}
                                 </td>
-                                <td className="py-3 pl-2 text-right font-medium text-slate-600 text-sm">
+                                <td className="py-3 print:py-1.5 pl-2 text-right font-medium text-slate-600 text-sm">
                                   ₹{Number(item.line_total).toLocaleString('en-IN')}
                                 </td>
                               </tr>
@@ -254,17 +258,17 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                       })}
                       {standaloneItems.map((item) => (
                         <tr key={item.id}>
-                          <td className="py-4 pr-4">
+                          <td className="py-4 print:py-1.5 pr-4">
                             <p className="font-semibold text-slate-900">{item.clean_name}</p>
                             <p className="text-xs text-slate-400 mt-0.5">{item.category_snapshot || 'Gift Hamper'}</p>
                           </td>
-                          <td className="py-4 px-2 text-center text-slate-700 font-medium">
+                          <td className="py-4 print:py-1.5 px-2 text-center text-slate-700 font-medium">
                             {item.quantity}
                           </td>
-                          <td className="py-4 px-2 text-right text-slate-600">
+                          <td className="py-4 print:py-1.5 px-2 text-right text-slate-600">
                             ₹{Number(item.actual_unit_price).toLocaleString('en-IN')}
                           </td>
-                          <td className="py-4 pl-2 text-right font-bold text-slate-900">
+                          <td className="py-4 print:py-1.5 pl-2 text-right font-bold text-slate-900">
                             ₹{Number(item.line_total).toLocaleString('en-IN')}
                           </td>
                         </tr>
@@ -277,8 +281,8 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
           </div>
 
           {/* Pricing Breakdown & Status */}
-          <div className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+          <div className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-start print:pt-4 print:grid-cols-2 print:gap-6">
+            <div className="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 print:p-3 print:rounded-lg">
               <div className="flex items-center gap-2 text-slate-700 text-sm font-semibold">
                 <CreditCard className="w-4 h-4 text-slate-500" />
                 Payment & Fulfillment
@@ -340,9 +344,9 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
           </div>
 
           {/* Footer Note */}
-          <div className="mt-12 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+          <div className="mt-12 pt-6 border-t border-slate-100 text-center text-xs text-slate-400 print:mt-4 print:pt-3">
             <p>Thank you for choosing Hamperly. We hope you love your gift hampers!</p>
-            <p className="mt-1">For support or inquiries, please contact us with your order reference.</p>
+            <p className="mt-1 print:hidden">For support or inquiries, please contact us with your order reference.</p>
           </div>
         </div>
       </main>

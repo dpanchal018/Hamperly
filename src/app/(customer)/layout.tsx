@@ -43,16 +43,20 @@ export default async function CustomerLayout({
   return (
     <HamperBuilderProvider customizationCategories={customizationCategories}>
       <div className="flex min-h-screen flex-col font-sans selection:bg-rose-200">
-        {settings?.store_announcement && (
-          <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
-            {settings.store_announcement}
-          </div>
-        )}
-        <Navbar user={user} role={role} content={headerContent} occasions={occasions || []} />
+        <div className="print:hidden">
+          {settings?.store_announcement && (
+            <div className="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium tracking-wide">
+              {settings.store_announcement}
+            </div>
+          )}
+          <Navbar user={user} role={role} content={headerContent} occasions={occasions || []} />
+        </div>
         <main className="flex-1 bg-slate-50">{children}</main>
-        <Footer content={footerContent} />
-        <CartSlideover user={user} />
-        <ChatWidget />
+        <div className="print:hidden">
+          <Footer content={footerContent} />
+          <CartSlideover user={user} />
+          <ChatWidget />
+        </div>
       </div>
     </HamperBuilderProvider>
   );

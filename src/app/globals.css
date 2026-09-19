@@ -109,3 +109,14 @@ button {
   cursor: pointer;
 }
 /* } First css change */
+
+@media print {
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

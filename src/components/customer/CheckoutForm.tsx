@@ -138,7 +138,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
       } else {
         clearCart();
         toast.success('Order placed successfully!');
-        router.push(`/checkout/success/${result.purchaseId}`);
+        router.replace(`/checkout/success/${result.purchaseId}`);
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to place order');
