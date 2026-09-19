@@ -6,7 +6,7 @@ import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Logo } from '@/components/ui/Logo'
 
 export const metadata = {
-  title: 'Admin Login - Hamperly',
+  title: 'Sign In - Hamperly',
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string, redirect?: string }> }) {
@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="z-10 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
         <div className="flex flex-col items-center justify-center space-y-3 border-b border-border bg-secondary/30 px-4 py-8 pt-10 text-center sm:px-16">
           <Logo className="scale-75" />
-          <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Admin Portal</p>
+          <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Sign In</p>
         </div>
         {error && (
           <div className="bg-red-50 text-red-600 px-4 py-3 text-sm text-center border-b border-red-100">
@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               id="email"
               name="email"
               type="email"
-              placeholder="admin@hamperly.local"
+              placeholder="you@example.com"
               autoComplete="email"
               required
               className="w-full"

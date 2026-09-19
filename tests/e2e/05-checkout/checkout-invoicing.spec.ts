@@ -94,7 +94,7 @@ test.describe('Domain 6: Checkout, Pincode Validation & Invoicing Receipt', () =
     if (isGuest) {
       await nameInput.fill('QA Tester');
       await page.locator('input[placeholder="john@example.com"]').fill('qa.tester@example.com');
-      await page.locator('input[placeholder="+91 9876543210"]').fill('9876543210');
+      await page.locator('.PhoneInputInput').fill('+91 9876543210');
     }
 
     // Enter valid local pincode

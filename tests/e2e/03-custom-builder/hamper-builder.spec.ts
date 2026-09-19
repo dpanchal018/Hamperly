@@ -141,7 +141,7 @@ test.describe('Domain 3: Unified Hamper Creation & Personalization Studio', () =
     await page.goto('/build');
     await expect(page.locator('h2:has-text("What are you celebrating?")').first()).toBeVisible();
     const occButtons2 = page.locator('button:has(h3)');
-    await occButtons2.nth(1).click();
+    await occButtons2.first().click();
     await page.getByRole('button', { name: /Continue to Select Products/i }).or(page.getByRole('button', { name: /Continue to Review Products/i })).click();
 
     const addBtns2 = page.locator('button:has-text("Add")');
