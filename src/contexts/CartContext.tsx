@@ -12,6 +12,11 @@ export interface CartItem {
   maxQuantity: number | null; // null = unlimited stock
   itemType?: 'HAMPER' | 'PRODUCT' | 'PERSONALIZED_HAMPER';
 
+  // Set on PRODUCT items added from an occasion/event page, so "Build Hamper"
+  // from the cart can carry that context back into the builder.
+  occasionId?: string;
+  eventId?: string;
+
   // Specific to PERSONALIZED_HAMPER
   occasion?: { id: string; name: string; slug?: string };
   products?: {
@@ -34,6 +39,17 @@ export interface CartItem {
   recipient?: string;
   productsSubtotal?: number;
   customizationsSubtotal?: number;
+}
+
+// Builds the /build URL for "Build Hamper" from the cart, carrying forward the
+// occasion/event of the first loose product that has one (set when it was
+// added from an occasion/event page) so the builder doesn't re-ask for it.
+export function buildFromCartUrl(items: CartItem[]): string {
+  const params = new URLSearchParams({ fromCart: 'true' });
+  const withContext = items.find(i => i.itemType === 'PRODUCT' && i.occasionId);
+  if (withContext?.occasionId) params.set('occasion', withContext.occasionId);
+  if (withContext?.eventId) params.set('event', withContext.eventId);
+  return `/build?${params.toString()}`;
 }
 
 interface CartContextType {

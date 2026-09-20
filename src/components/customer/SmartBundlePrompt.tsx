@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, PackageOpen, Gift, ShoppingBag, Check, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCart, CartItem } from '@/contexts/CartContext';
+import { useCart, buildFromCartUrl, CartItem } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 
@@ -19,7 +19,7 @@ export function SmartBundlePrompt({ hampers, looseItemsCount }: Props) {
   const [merged, setMerged] = useState(false);
   const [selectedHamperId, setSelectedHamperId] = useState<string | null>(hampers[0]?.id || null);
   
-  const { mergeLooseItemsIntoHamper, setIsCartOpen } = useCart();
+  const { items, mergeLooseItemsIntoHamper, setIsCartOpen } = useCart();
   const router = useRouter();
 
   // If no loose items or hampers, don't show anything
@@ -40,7 +40,7 @@ export function SmartBundlePrompt({ hampers, looseItemsCount }: Props) {
   const handleNewHamper = () => {
     setIsOpen(false);
     setIsCartOpen(false);
-    router.push('/build?fromCart=true');
+    router.push(buildFromCartUrl(items));
   };
 
   const handleBuySeparate = () => {

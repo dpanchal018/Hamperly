@@ -16,12 +16,13 @@ export async function createOccasionAction(formData: FormData) {
   
   const parent_id = (formData.get('parent_id') as string) || null;
   const occasion_type = (formData.get('occasion_type') as string) || 'GENERAL';
+  const image_url = (formData.get('image_url') as string) || null;
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
   const supabase = await createClient();
   const { error } = await supabase.from('occasions').insert({
-    name, slug, description, is_active, display_order, parent_id, occasion_type
+    name, slug, description, is_active, display_order, parent_id, occasion_type, image_url
   });
 
   if (error) throw new Error(error.message);
@@ -38,12 +39,13 @@ export async function updateOccasionAction(id: string, formData: FormData) {
 
   const parent_id = (formData.get('parent_id') as string) || null;
   const occasion_type = (formData.get('occasion_type') as string) || 'GENERAL';
+  const image_url = (formData.get('image_url') as string) || null;
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
   const supabase = await createClient();
   const { error } = await supabase.from('occasions').update({
-    name, slug, description, is_active, display_order, parent_id, occasion_type, updated_at: new Date().toISOString()
+    name, slug, description, is_active, display_order, parent_id, occasion_type, image_url, updated_at: new Date().toISOString()
   }).eq('id', id);
 
   if (error) throw new Error(error.message);
@@ -76,12 +78,13 @@ export async function createCategoryAction(formData: FormData) {
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string;
   const display_order = parseInt(formData.get('display_order') as string) || 0;
+  const image_url = (formData.get('image_url') as string) || null;
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
   const supabase = await createClient();
   const { error } = await supabase.from('categories').insert({
-    name, slug, description, display_order
+    name, slug, description, display_order, image_url
   });
 
   if (error) throw new Error(error.message);
@@ -94,12 +97,13 @@ export async function updateCategoryAction(id: string, formData: FormData) {
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string;
   const display_order = parseInt(formData.get('display_order') as string) || 0;
+  const image_url = (formData.get('image_url') as string) || null;
 
   if (!name || !slug) throw new Error('Name and Slug are required');
 
   const supabase = await createClient();
   const { error } = await supabase.from('categories').update({
-    name, slug, description, display_order, updated_at: new Date().toISOString()
+    name, slug, description, display_order, image_url, updated_at: new Date().toISOString()
   }).eq('id', id);
 
   if (error) throw new Error(error.message);

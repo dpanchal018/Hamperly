@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { getPublicOccasions, getPublicProducts, getPublicCategories } from '@/services/catalog.service';
 import { getPublicCustomizations } from '@/actions/customization.actions';
+import { getPublicEvents } from '@/actions/event.actions';
 import { HamperStudio } from '@/components/customer/builder/HamperStudio';
 import { Metadata } from 'next';
 
@@ -12,11 +13,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function BuildHamperPage() {
-  const [occasions, products, categories, customizationCategories] = await Promise.all([
+  const [occasions, products, categories, customizationCategories, events] = await Promise.all([
     getPublicOccasions(),
     getPublicProducts(),
     getPublicCategories(),
-    getPublicCustomizations()
+    getPublicCustomizations(),
+    getPublicEvents()
   ]);
 
   return (
@@ -30,6 +32,7 @@ export default async function BuildHamperPage() {
         products={products}
         categories={categories}
         customizationCategories={customizationCategories}
+        events={events}
       />
     </Suspense>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCart } from '@/contexts/CartContext';
+import { useCart, buildFromCartUrl } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, X, Minus, Plus, PackageOpen, Sparkles, Edit3, Heart, Sliders, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
@@ -100,10 +100,10 @@ export function CartSlideover({ user }: { user?: any }) {
                     </h4>
                     <p className="text-[11px] text-rose-700/80 mt-0.5 font-medium">Turn your loose bag items into a beautiful, personalized gift hamper.</p>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setIsCartOpen(false);
-                      router.push('/build?fromCart=true');
+                      router.push(buildFromCartUrl(items));
                     }}
                     size="sm"
                     className="bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs px-4 h-9 shadow-md shadow-rose-200 shrink-0 w-full sm:w-auto"

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { PublicProduct } from '@/services/catalog.service';
 import { CustomizationCategory } from '@/types/customization.types';
-import { Occasion } from '@/types/database.types';
+import { Occasion, Event } from '@/types/database.types';
 
 export interface SelectedHamperProduct {
   product: PublicProduct;
@@ -14,6 +14,7 @@ export interface HamperBuilderState {
   draftId: string;
   editingCartId: string | null;
   occasion: Occasion | null;
+  event: Event | null;
   selectedProducts: SelectedHamperProduct[];
   selectedCustomizations: Record<string, string[]>; // categoryId -> array of optionIds
   personalMessage: string;
@@ -25,6 +26,7 @@ interface HamperBuilderContextType {
   draftId: string;
   editingCartId: string | null;
   occasion: Occasion | null;
+  event: Event | null;
   selectedProducts: SelectedHamperProduct[];
   selectedCustomizations: Record<string, string[]>;
   personalMessage: string;
@@ -44,6 +46,7 @@ interface HamperBuilderContextType {
 
   // Actions
   setOccasion: (occasion: Occasion | null) => void;
+  setEvent: (event: Event | null) => void;
   addProduct: (product: PublicProduct, quantity?: number) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   removeProduct: (productId: string) => void;
@@ -73,6 +76,7 @@ export function HamperBuilderProvider({
   const [draftId, setDraftId] = useState<string>(() => `draft-${Date.now()}`);
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
   const [occasion, setOccasionState] = useState<Occasion | null>(null);
+  const [event, setEventState] = useState<Event | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<SelectedHamperProduct[]>([]);
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string[]>>({});
   const [personalMessage, setPersonalMessageState] = useState<string>('');
@@ -91,6 +95,7 @@ export function HamperBuilderProvider({
         if (parsed.draftId) setDraftId(parsed.draftId);
         if (parsed.editingCartId) setEditingCartId(parsed.editingCartId);
         if (parsed.occasion) setOccasionState(parsed.occasion);
+        if (parsed.event) setEventState(parsed.event);
         if (Array.isArray(parsed.selectedProducts)) {
           loadedProducts = parsed.selectedProducts;
           setSelectedProducts(parsed.selectedProducts);
@@ -126,6 +131,7 @@ export function HamperBuilderProvider({
         draftId,
         editingCartId,
         occasion,
+        event,
         selectedProducts,
         selectedCustomizations,
         personalMessage,
@@ -137,7 +143,7 @@ export function HamperBuilderProvider({
     } catch (e) {
       console.error('Failed to save draft to localStorage:', e);
     }
-  }, [draftId, editingCartId, occasion, selectedProducts, selectedCustomizations, personalMessage, recipient, currentStep, isInitialized]);
+  }, [draftId, editingCartId, occasion, event, selectedProducts, selectedCustomizations, personalMessage, recipient, currentStep, isInitialized]);
 
   // Box capacity: derived from whichever packaging/box option is currently selected
   const boxCapacity = useMemo(() => {
@@ -151,7 +157,25 @@ export function HamperBuilderProvider({
 
   // Product operations
   const setOccasion = useCallback((occ: Occasion | null) => {
-    setOccasionState(occ);
+    setOccasionState(prevOcc => {
+      if (prevOcc && occ && prevOcc.id !== occ.id) {
+        // Genuinely switching to a different occasion (not the first pick) —
+        // clear the previous occasion's picks so they don't silently merge
+        // into the new hamper (e.g. an abandoned Corporate draft bleeding
+        // into a fresh Diwali one).
+        setSelectedProducts([]);
+        setSelectedCustomizations({});
+        setPersonalMessageState('');
+        setRecipientState('');
+      }
+      return occ;
+    });
+    // An event belongs to exactly one occasion — clear it if it no longer matches.
+    setEventState(prev => (prev && prev.occasion_id === occ?.id ? prev : null));
+  }, []);
+
+  const setEvent = useCallback((evt: Event | null) => {
+    setEventState(evt);
   }, []);
 
   const addProduct = useCallback((product: PublicProduct, quantity = 1) => {
@@ -318,6 +342,7 @@ export function HamperBuilderProvider({
     setDraftId(`draft-${Date.now()}`);
     setEditingCartId(null);
     setOccasionState(null);
+    setEventState(null);
     setSelectedProducts([]);
     setSelectedCustomizations({});
     setPersonalMessageState('');
@@ -357,6 +382,7 @@ export function HamperBuilderProvider({
       draftId,
       editingCartId,
       occasion,
+      event,
       selectedProducts,
       selectedCustomizations,
       personalMessage,
@@ -370,6 +396,7 @@ export function HamperBuilderProvider({
       boxCapacity,
       remainingCapacity,
       setOccasion,
+      setEvent,
       addProduct,
       updateProductQuantity,
       removeProduct,

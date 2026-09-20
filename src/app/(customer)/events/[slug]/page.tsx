@@ -74,10 +74,15 @@ export default async function EventDetailPage(props: Props) {
               {event.name}
             </h1>
             {event.description && (
-              <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed mb-6">
                 {event.description}
               </p>
             )}
+            <Link href={`/build?occasion=${occasion?.slug ?? ''}&event=${event.slug}`}>
+              <Button size="lg" className="rounded-full px-8 h-12 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-lg shadow-rose-900/30">
+                Curate a {event.name} Hamper
+              </Button>
+            </Link>
           </FadeInScroll>
         </div>
       </div>
@@ -95,7 +100,7 @@ export default async function EventDetailPage(props: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
                 {products.map((product) => (
                   <div key={product.id} className="h-full">
-                    <ProductCard product={product} />
+                    <ProductCard product={product} occasionId={event.occasion_id} eventId={event.id} />
                   </div>
                 ))}
               </div>

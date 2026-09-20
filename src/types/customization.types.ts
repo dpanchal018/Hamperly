@@ -5,6 +5,8 @@ export interface CustomizationOption {
   description?: string | null;
   price: number; // Fixed ₹ selling price (can be 0)
   image_url?: string | null;
+  /** Multiple photos (e.g. a box from different angles). Rendered as a swipeable carousel when there's more than one. */
+  images?: string[] | null;
   display_order: number;
   is_active: boolean;
   // Only meaningful for the packaging/box category: caps how many total
