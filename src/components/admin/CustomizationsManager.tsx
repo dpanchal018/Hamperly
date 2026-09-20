@@ -8,12 +8,13 @@ import {
   saveCustomizationOption, 
   deleteCustomizationOption 
 } from '@/actions/customization.actions';
-import { 
-  Sliders, Plus, Edit2, Trash2, CheckCircle2, XCircle, 
-  Sparkles, Layers, Check, AlertCircle, ChevronDown, ChevronUp, DollarSign
+import {
+  Sliders, Plus, Edit2, Trash2, CheckCircle2, XCircle,
+  Sparkles, Layers, Check, AlertCircle, ChevronDown, ChevronUp, DollarSign, X, ImagePlus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
 
 interface Props {
   initialCategories: CustomizationCategory[];
@@ -45,6 +46,9 @@ export function CustomizationsManager({ initialCategories }: Props) {
   const [optActive, setOptActive] = useState(true);
   const [optMaxItems, setOptMaxItems] = useState<number | ''>('');
   const [isSavingOpt, setIsSavingOpt] = useState(false);
+  const [optImages, setOptImages] = useState<string[]>([]);
+  const [uploadingOptImage, setUploadingOptImage] = useState(false);
+  const [optImageError, setOptImageError] = useState('');
 
   const openCategoryModal = (cat?: CustomizationCategory) => {
     if (cat) {
@@ -126,6 +130,7 @@ export function CustomizationsManager({ initialCategories }: Props) {
       setOptOrder(opt.display_order || 1);
       setOptActive(opt.is_active);
       setOptMaxItems(opt.max_items ?? '');
+      setOptImages(opt.images && opt.images.length > 0 ? opt.images : (opt.image_url ? [opt.image_url] : []));
     } else {
       setEditingOption(null);
       setOptName('');
@@ -134,11 +139,59 @@ export function CustomizationsManager({ initialCategories }: Props) {
       setOptOrder(currentOptions.length + 1);
       setOptActive(true);
       setOptMaxItems('');
+      setOptImages([]);
     }
+    setOptImageError('');
     setIsOptModalOpen(true);
   };
 
   const isPackagingCategory = selectedCatIdForOpt === 'cat-packaging';
+
+  const handleOptionImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setOptImageError('Only image files are allowed.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setOptImageError('Image must be less than 5MB.');
+      return;
+    }
+
+    setOptImageError('');
+    setUploadingOptImage(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `customizations/${fileName}`;
+
+      const supabase = createClient();
+
+      const { error } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file, { upsert: false });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      setOptImages(prev => [...prev, publicUrl]);
+    } catch (err: any) {
+      setOptImageError(err.message || 'Failed to upload image.');
+    } finally {
+      setUploadingOptImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeOptImage = (index: number) => {
+    setOptImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSaveOption = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +208,8 @@ export function CustomizationsManager({ initialCategories }: Props) {
       price: Math.max(0, Number(optPrice) || 0),
       display_order: Number(optOrder) || 1,
       is_active: optActive,
-      image_url: null,
+      image_url: optImages[0] || null,
+      images: optImages,
       max_items: isPackagingCategory && optMaxItems !== '' ? Math.max(1, Number(optMaxItems) || 1) : null
     };
 
@@ -338,6 +392,19 @@ export function CustomizationsManager({ initialCategories }: Props) {
                             } flex flex-col justify-between`}
                           >
                             <div>
+                              {opt.images && opt.images.length > 0 && (
+                                <div className="flex gap-1.5 mb-3">
+                                  {opt.images.slice(0, 4).map((src, i) => (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img key={i} src={src} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                                  ))}
+                                  {opt.images.length > 4 && (
+                                    <div className="w-10 h-10 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                      +{opt.images.length - 4}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               <div className="flex items-start justify-between gap-2 mb-2">
                                 <h4 className="font-bold text-slate-900 text-base">{opt.name}</h4>
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
@@ -551,6 +618,43 @@ export function CustomizationsManager({ initialCategories }: Props) {
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Images</label>
+                <p className="text-[11px] text-slate-400 mb-2">
+                  Add one or more photos (e.g. different angles of a box). Customers will see them as a swipeable gallery when there&apos;s more than one.
+                </p>
+                {optImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {optImages.map((src, i) => (
+                      <div key={i} className="relative group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => removeOptImage(i)}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-sm"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 cursor-pointer hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                  <ImagePlus className="w-4 h-4" />
+                  {uploadingOptImage ? 'Uploading...' : 'Add Image'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleOptionImageUpload}
+                    disabled={uploadingOptImage}
+                    className="hidden"
+                  />
+                </label>
+                {optImageError && <p className="text-sm text-red-600 mt-2">{optImageError}</p>}
               </div>
 
               {isPackagingCategory && (

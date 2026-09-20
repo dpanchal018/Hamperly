@@ -4,8 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
 import { useCart } from '@/contexts/CartContext';
 import { useSearchParams } from 'next/navigation';
-import { Occasion, Category } from '@/types/database.types';
+import { Occasion, Category, Event } from '@/types/database.types';
 import { PublicProduct } from '@/services/catalog.service';
+import { getBuilderProducts } from '@/actions/products.actions';
 import { CustomizationCategory } from '@/types/customization.types';
 import { StepOccasion } from './StepOccasion';
 import { StepProducts } from './StepProducts';
@@ -20,6 +21,7 @@ interface Props {
   products: PublicProduct[];
   categories: Category[];
   customizationCategories: CustomizationCategory[];
+  events: Event[];
 }
 
 const STEPS = [
@@ -30,15 +32,17 @@ const STEPS = [
   { step: 5, name: 'Review', icon: CheckCircle2 },
 ];
 
-export function HamperStudio({ occasions, products, categories, customizationCategories }: Props) {
-  const { 
-    currentStep, 
-    setCurrentStep, 
-    occasion, 
-    setOccasion, 
-    selectedProducts, 
+export function HamperStudio({ occasions, products, categories, customizationCategories, events }: Props) {
+  const {
+    currentStep,
+    setCurrentStep,
+    occasion,
+    setOccasion,
+    event,
+    setEvent,
+    selectedProducts,
     selectedCustomizations,
-    loadFromCartItem, 
+    loadFromCartItem,
     editingCartId,
     resetBuilder,
     totalPrice,
@@ -50,7 +54,9 @@ export function HamperStudio({ occasions, products, categories, customizationCat
   const searchParams = useSearchParams();
   const loadedEditIdRef = useRef<string | null>(null);
   const loadedOccasionRef = useRef<string | null>(null);
+  const loadedEventRef = useRef<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [displayProducts, setDisplayProducts] = useState<PublicProduct[]>(products);
 
   useEffect(() => {
     setIsMounted(true);
@@ -95,12 +101,27 @@ export function HamperStudio({ occasions, products, categories, customizationCat
   useEffect(() => {
     if (!isMounted) return;
 
+    // Note: deliberately no "&& !occasion" guard here — a link with an explicit
+    // occasion/event must always win over whatever stale draft was restored
+    // from localStorage, otherwise an abandoned hamper's occasion silently
+    // stays active and the new selection gets merged into it. setOccasion
+    // itself clears any previous occasion's product picks when it actually changes.
     const occSlug = searchParams.get('occasion');
-    if (occSlug && occSlug !== loadedOccasionRef.current && !occasion) {
+    if (occSlug && occSlug !== loadedOccasionRef.current) {
       const match = occasions.find(o => o.slug === occSlug || o.id === occSlug);
       if (match) {
         loadedOccasionRef.current = occSlug;
         setOccasion(match);
+        setCurrentStep(2); // Jump to products
+      }
+    }
+
+    const evtSlug = searchParams.get('event');
+    if (evtSlug && evtSlug !== loadedEventRef.current) {
+      const match = events.find(e => e.slug === evtSlug || e.id === evtSlug);
+      if (match) {
+        loadedEventRef.current = evtSlug;
+        setEvent(match);
         setCurrentStep(2); // Jump to products
       }
     }
@@ -128,7 +149,23 @@ export function HamperStudio({ occasions, products, categories, customizationCat
         }, 50);
       }
     }
-  }, [isMounted, searchParams, occasions, occasion, setOccasion, setCurrentStep, cartItems, loadFromCartItem, loadFromCartLooseItems, products, removeCartItem]);
+  }, [isMounted, searchParams, occasions, occasion, setOccasion, events, event, setEvent, setCurrentStep, cartItems, loadFromCartItem, loadFromCartLooseItems, products, removeCartItem]);
+
+  // Whenever the chosen occasion/event changes, re-fetch the product list scoped
+  // to that selection (event takes priority — matches the public event page's
+  // own filtering) so Step 2 only shows relevant products.
+  useEffect(() => {
+    if (!isMounted) return;
+    if (!occasion) {
+      setDisplayProducts(products);
+      return;
+    }
+    let cancelled = false;
+    getBuilderProducts(event ? undefined : occasion.id, event?.id).then(result => {
+      if (!cancelled) setDisplayProducts(result);
+    });
+    return () => { cancelled = true; };
+  }, [isMounted, occasion, event, products]);
 
   const displayStep = isMounted ? currentStep : 1;
 
@@ -202,8 +239,8 @@ export function HamperStudio({ occasions, products, categories, customizationCat
 
         {/* Step Renderer */}
         <div className="transition-all duration-300">
-          {displayStep === 1 && <StepOccasion occasions={occasions} />}
-          {displayStep === 2 && <StepProducts products={products} categories={categories} />}
+          {displayStep === 1 && <StepOccasion occasions={occasions} events={events} />}
+          {displayStep === 2 && <StepProducts products={displayProducts} categories={categories} />}
           {displayStep === 3 && <StepCustomize customizationCategories={customizationCategories} />}
           {displayStep === 4 && <StepPersonalize />}
           {displayStep === 5 && <StepReview customizationCategories={customizationCategories} />}

@@ -5,6 +5,7 @@ import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
 import { CustomizationCategory } from '@/types/customization.types';
 import { Check, ArrowRight, ArrowLeft, Sliders, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OptionImageCarousel } from './OptionImageCarousel';
 
 interface Props {
   customizationCategories: CustomizationCategory[];
@@ -97,19 +98,34 @@ export function StepCustomize({ customizationCategories }: Props) {
                   const isBoxOption = category.id === 'cat-packaging';
                   const wouldExceed = isBoxOption && option.max_items != null && totalProductsCount > option.max_items;
 
+                  const hasImages = !!option.images && option.images.length > 0;
+
                   return (
-                    <button
+                    <div
                       key={option.id}
-                      disabled={wouldExceed}
-                      onClick={() => toggleCustomization(category.id, option.id, category.allow_multiple)}
-                      className={`relative p-5 rounded-2xl text-left border-2 transition-all duration-200 flex flex-col justify-between h-[150px] ${
+                      role="button"
+                      tabIndex={wouldExceed ? -1 : 0}
+                      aria-disabled={wouldExceed}
+                      aria-pressed={isSelected}
+                      onClick={() => { if (!wouldExceed) toggleCustomization(category.id, option.id, category.allow_multiple); }}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && !wouldExceed) {
+                          e.preventDefault();
+                          toggleCustomization(category.id, option.id, category.allow_multiple);
+                        }
+                      }}
+                      className={`relative p-5 rounded-2xl text-left border-2 transition-all duration-200 flex flex-col justify-between min-h-[150px] ${
+                        wouldExceed ? 'cursor-not-allowed' : 'cursor-pointer'
+                      } ${
                         isSelected
                           ? 'border-rose-600 bg-rose-50/40 shadow-md shadow-rose-100'
                           : wouldExceed
-                          ? 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
+                          ? 'border-slate-100 bg-slate-50 opacity-50'
                           : 'border-slate-100 bg-slate-50/50 hover:border-slate-300 hover:bg-white'
                       }`}
                     >
+                      {hasImages && <OptionImageCarousel images={option.images!} alt={option.name} />}
+
                       <div className="flex justify-between items-start w-full">
                         <h4 className={`font-bold text-base leading-snug ${isSelected ? 'text-rose-900' : 'text-slate-900'}`}>
                           {option.name}
@@ -146,7 +162,7 @@ export function StepCustomize({ customizationCategories }: Props) {
                           </span>
                         )}
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>

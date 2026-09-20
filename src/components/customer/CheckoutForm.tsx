@@ -344,11 +344,14 @@ export function CheckoutForm({ customer }: { customer: any }) {
                 <div key={index} className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
                   <div className="flex justify-between items-start text-sm">
                     <div className="flex-1 pr-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2 align-start flex-col">
                         {isPersonalized && (
+                          <div className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                           <Sparkles className="w-3 h-3" />
                           <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> Bespoke Hamper
+                            Bespoke Hamperss
                           </span>
+                          </div>
                         )}
                         <p className="font-serif font-bold text-foreground">{item.name}</p>
                       </div>

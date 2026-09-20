@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
 import { PublicProduct } from '@/services/catalog.service';
 import { Category } from '@/types/database.types';
-import { Plus, Minus, Check, Search, ArrowRight, ArrowLeft, Package, Sparkles, AlertCircle } from 'lucide-react';
+import { Plus, Minus, Check, Search, ArrowRight, ArrowLeft, Package, Sparkles, AlertCircle, Pencil } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +15,8 @@ interface Props {
 
 export function StepProducts({ products, categories }: Props) {
   const {
+    occasion,
+    event,
     selectedProducts,
     addProduct,
     updateProductQuantity,
@@ -24,7 +26,8 @@ export function StepProducts({ products, categories }: Props) {
     boxCapacity,
     remainingCapacity,
     nextStep,
-    prevStep
+    prevStep,
+    setCurrentStep
   } = useHamperBuilder();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -65,6 +68,22 @@ export function StepProducts({ products, categories }: Props) {
           Add treats, keepsakes, and artisanal items to fill your personalized hamper.
         </p>
       </div>
+
+      {/* Active occasion/event scope, with a quick way to change it */}
+      {occasion && (
+        <div className="flex items-center justify-between gap-3 bg-rose-50/60 border border-rose-100 rounded-2xl px-5 py-3 text-sm">
+          <span className="text-rose-800">
+            Showing products for <strong>{event ? event.name : occasion.name}</strong>
+            {event && <span className="text-rose-600"> ({occasion.name})</span>}
+          </span>
+          <button
+            onClick={() => setCurrentStep(1)}
+            className="flex items-center gap-1 text-rose-600 hover:text-rose-700 font-semibold shrink-0"
+          >
+            <Pencil className="w-3.5 h-3.5" /> Change
+          </button>
+        </div>
+      )}
 
       {/* Capacity notice - only relevant once a box has been chosen (Step 3), e.g. when editing an existing hamper */}
       {boxCapacity !== null && (

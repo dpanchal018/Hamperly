@@ -11,9 +11,13 @@ import { HoverCard } from '@/components/ui/AnimatedWrapper';
 
 interface ProductCardProps {
   product: PublicProduct;
+  // When rendered on an occasion/event page, lets "Add to Cart" carry that
+  // context forward so "Build Hamper" from the cart can restore it.
+  occasionId?: string;
+  eventId?: string;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, occasionId, eventId }: ProductCardProps) {
   const { addItem, updateQuantity, removeItem, items } = useCart();
   
   const status = getInventoryStatus(product.stock_quantity);
@@ -131,7 +135,9 @@ export function ProductCard({ product }: ProductCardProps) {
                   price: product.selling_price,
                   imageUrl: product.primary_image_url,
                   maxQuantity: product.stock_quantity,
-                  itemType: 'PRODUCT'
+                  itemType: 'PRODUCT',
+                  occasionId,
+                  eventId
                 }, 1)}
                 aria-label="Add to bag"
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all shadow-xs hover:shadow-md"
