@@ -80,24 +80,6 @@ export function Footer({ content }: { content: FooterContent }) {
               )}
             </ul>
           </div>
-
-          <div>
-            <h4 className="font-bold text-foreground mb-6">Newsletter</h4>
-            <p className="text-sm text-foreground/70 mb-4">Subscribe to receive updates, access to exclusive deals, and more.</p>
-            <form className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="bg-white border border-primary/20 rounded-full px-4 py-2 text-sm flex-1 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              />
-              <button 
-                type="submit"
-                className="bg-primary text-white rounded-full px-4 py-2 text-sm font-semibold hover:bg-primary/90 transition-colors"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
         </div>
         
         <div className="pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center text-sm text-foreground/60">

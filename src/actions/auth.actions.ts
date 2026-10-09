@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { ageOn, MINIMUM_AGE, todayInIndia } from '@/lib/age'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -50,9 +51,19 @@ export async function signup(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const full_name = formData.get('full_name') as string
+  const date_of_birth = formData.get('date_of_birth') as string
 
-  if (!email || !password || !full_name) {
+  if (!email || !password || !full_name || !date_of_birth) {
     redirect('/signup?error=All fields are required')
+  }
+
+  // The date of birth is only checked here; it is never stored
+  const age = ageOn(date_of_birth, todayInIndia())
+  if (age === null) {
+    redirect('/signup?error=Please enter a valid date of birth')
+  }
+  if (age < MINIMUM_AGE) {
+    redirect(`/signup?error=${encodeURIComponent(`You need to be ${MINIMUM_AGE} or older to create a Hamperly account`)}`)
   }
 
   // Create an admin client to bypass the email confirmation requirement
@@ -76,6 +87,7 @@ export async function signup(formData: FormData) {
     email_confirm: true,
     user_metadata: {
       full_name,
+      age_confirmed_at: new Date().toISOString(),
     }
   })
 

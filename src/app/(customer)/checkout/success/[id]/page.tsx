@@ -303,11 +303,21 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                   purchase.status === 'CANCELLED' ? 'bg-slate-100 text-slate-800 border-slate-200' :
                   purchase.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'
                 }`}>
-                  {purchase.status === 'CANCELLED' 
-                    ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED') 
+                  {purchase.status === 'CANCELLED'
+                    ? (Number(purchase.amount_paid) > 0 ? 'REFUND PENDING' : 'VOIDED')
                     : (purchase.payment_status === 'PAID' ? 'PAID' : 'PENDING')}
                 </span>
               </div>
+              {(purchase.delivery_tracking_id || purchase.status !== 'CANCELLED') && (
+                <div className="flex justify-between gap-3 text-xs text-slate-600 items-center">
+                  <span className="shrink-0">Delivery Tracking ID:</span>
+                  {purchase.delivery_tracking_id ? (
+                    <span className="font-mono font-semibold text-slate-900 break-all text-right">{purchase.delivery_tracking_id}</span>
+                  ) : (
+                    <span className="text-slate-500 italic text-right">Shared once your order is dispatched</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-3 text-sm">
@@ -321,9 +331,9 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                   <span>-₹{Number(purchase.discount).toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div className="flex justify-between text-slate-600">
-                <span>Shipping & Packaging</span>
-                <span className="text-emerald-600 font-medium">Free</span>
+              <div className="flex justify-between gap-4 text-slate-600">
+                <span className="shrink-0">Delivery Charges</span>
+                <span className="text-slate-500 italic text-right">Subject to quantity, weight and location</span>
               </div>
               <div className="border-t border-slate-200 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-bold text-slate-900">Total Amount</span>
