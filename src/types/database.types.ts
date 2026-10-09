@@ -473,7 +473,8 @@ export interface Purchase {
   
   status: PurchaseStatus;
   notes: string | null;
-  
+  delivery_tracking_id: string | null;
+
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
