@@ -1,39 +1,63 @@
-'use client';
+"use client";
 
-import { useCart } from '@/contexts/CartContext';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { placeCustomerOrder } from '@/actions/checkout.actions';
-import { ShoppingBag, MapPin, Phone, User, Mail, Check, PackageOpen, Truck, Clock, Sparkles, Heart } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/button';
-import { PhoneField } from '@/components/ui/PhoneField';
-import { validatePhoneNumber } from '@/lib/phone';
-import vadodaraPincodes from '@/data/vadodara_pincodes.json';
+import {useCart} from "@/contexts/CartContext";
+import {useRouter} from "next/navigation";
+import {useState} from "react";
+import {placeCustomerOrder} from "@/actions/checkout.actions";
+import {ShoppingBag, MapPin, Phone, User, Check, Circle, PackageOpen, Truck, Clock, Sparkles, Loader2, MessageCircle} from "lucide-react";
+import toast from "react-hot-toast";
+import {Button} from "@/components/ui/button";
+import {PhoneField} from "@/components/ui/PhoneField";
+import {validatePhoneNumber} from "@/lib/phone";
+import vadodaraPincodes from "@/data/vadodara_pincodes.json";
 
-export function CheckoutForm({ customer }: { customer: any }) {
-  const { items, subtotal, clearCart } = useCart();
+function StepBadge({step, complete}: {step: number; complete: boolean}) {
+  return complete ? (
+    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm mr-3" aria-label={`Step ${step} complete`}>
+      <Check className="w-4 h-4" strokeWidth={3} />
+    </span>
+  ) : (
+    <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm mr-3">{step}</span>
+  );
+}
+
+export function CheckoutForm({customer}: {customer: any}) {
+  const {items, subtotal, clearCart} = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const hasSavedAddress = !!(customer?.address && customer?.pincode);
   const [useSavedAddress, setUseSavedAddress] = useState(hasSavedAddress);
-  
-  const [address, setAddress] = useState(customer?.address || '');
+
+  const [address, setAddress] = useState(customer?.address || "");
   const [addressError, setAddressError] = useState(false);
-  const [pincode, setPincode] = useState(customer?.pincode || '');
-  const [pincodeStatus, setPincodeStatus] = useState<'idle' | 'checking' | 'local' | 'national' | 'invalid' | 'saved'>(
-    hasSavedAddress ? 'saved' : 'idle'
-  );
-  
+  const [pincode, setPincode] = useState(customer?.pincode || "");
+  const [pincodeStatus, setPincodeStatus] = useState<"idle" | "checking" | "local" | "national" | "invalid" | "saved">(hasSavedAddress ? "saved" : "idle");
+
   const [postOffices, setPostOffices] = useState<any[]>([]);
   const [deliverToPO, setDeliverToPO] = useState(false);
-  const [selectedPO, setSelectedPO] = useState('');
+  const [selectedPO, setSelectedPO] = useState("");
 
   // Guest fields & Errors
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
-  const [contactErrors, setContactErrors] = useState({ name: false, email: false, phone: false });
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [contactErrors, setContactErrors] = useState({name: false, email: false, phone: false});
+
+  // Signed-in customers without a saved mobile number add one here (we reach them on WhatsApp for payment)
+  const needsContactPhone = !!customer && !customer.mobile_number;
+  const [contactPhone, setContactPhone] = useState("");
+
+  // Shown from "Confirm Order" until the confirmation page loads. Checked before the empty-cart
+  // state so clearing the cart after a successful order doesn't flash "Your cart is empty".
+  if (isSubmitting) {
+    return (
+      <div className="bg-white rounded-3xl border border-primary/10 p-16 text-center shadow-sm max-w-2xl mx-auto" role="status" aria-live="polite">
+        <Loader2 className="w-14 h-14 text-primary mx-auto mb-6 animate-spin" strokeWidth={1.5} />
+        <h2 className="text-3xl font-serif font-bold text-foreground mb-3 tracking-tight">Placing your order…</h2>
+        <p className="text-foreground/60">Please don&apos;t close or refresh this page.</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -43,7 +67,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
         </div>
         <h2 className="text-3xl font-serif font-bold text-foreground mb-4 tracking-tight">Your cart is empty</h2>
         <p className="text-foreground/60 mb-8 max-w-md mx-auto">Looks like you haven't added anything to your cart yet. Let's find something special.</p>
-        <Button onClick={() => router.push('/products')} className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white">
+        <Button onClick={() => router.push("/products")} className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white">
           Continue Shopping
         </Button>
       </div>
@@ -54,64 +78,74 @@ export function CheckoutForm({ customer }: { customer: any }) {
     setPincode(val);
     setPostOffices([]);
     setDeliverToPO(false);
-    setSelectedPO('');
+    setSelectedPO("");
 
     if (val.length === 6 && /^\d+$/.test(val)) {
-      setPincodeStatus('checking');
+      setPincodeStatus("checking");
       if (vadodaraPincodes.includes(val)) {
-        setPincodeStatus('local');
+        setPincodeStatus("local");
       } else {
         try {
           const res = await fetch(`https://api.postalpincode.in/pincode/${val}`);
           const data = await res.json();
-          if (data && data[0] && data[0].Status === 'Success') {
-            setPincodeStatus('national');
+          if (data && data[0] && data[0].Status === "Success") {
+            setPincodeStatus("national");
             if (data[0].PostOffice && Array.isArray(data[0].PostOffice)) {
               setPostOffices(data[0].PostOffice);
               setSelectedPO(data[0].PostOffice[0].Name);
             }
           } else {
-            setPincodeStatus('invalid');
+            setPincodeStatus("invalid");
           }
         } catch (err) {
           console.error("Pincode API error", err);
-          setPincodeStatus('invalid');
+          setPincodeStatus("invalid");
         }
       }
     } else {
-      setPincodeStatus('idle');
+      setPincodeStatus("idle");
     }
   };
+
+  const isAddressDisabled = ["idle", "invalid", "checking"].includes(pincodeStatus) || pincode.length !== 6;
+
+  const contactComplete = customer ? !needsContactPhone || validatePhoneNumber(contactPhone).isValid : !!guestName.trim() && /^\S+@\S+\.\S+$/.test(guestEmail) && validatePhoneNumber(guestPhone).isValid;
+  const deliveryComplete = useSavedAddress || (!isAddressDisabled && !!address.trim());
+  const canPlaceOrder = contactComplete && deliveryComplete;
 
   const handlePlaceOrder = async () => {
     let hasError = false;
 
     // Validate Guest Contact
     if (!customer) {
-      const cErrors = { 
-        name: !guestName.trim(), 
-        email: !/^\S+@\S+\.\S+$/.test(guestEmail), 
-        phone: !validatePhoneNumber(guestPhone).isValid 
+      const cErrors = {
+        name: !guestName.trim(),
+        email: !/^\S+@\S+\.\S+$/.test(guestEmail),
+        phone: !validatePhoneNumber(guestPhone).isValid,
       };
       setContactErrors(cErrors);
-      
+
       if (cErrors.name || cErrors.email || cErrors.phone) {
         toast.error("Please provide valid contact information.");
         hasError = true;
       }
+    } else if (needsContactPhone && !validatePhoneNumber(contactPhone).isValid) {
+      setContactErrors((p) => ({...p, phone: true}));
+      toast.error("Please add your mobile number.");
+      hasError = true;
     }
 
     // Validate Delivery Address
     if (!useSavedAddress) {
-      if (['idle', 'invalid', 'checking'].includes(pincodeStatus) || pincode.length !== 6) {
-        toast.error('Please enter a valid 6-digit Pincode first.');
-        document.getElementById('delivery-pincode')?.focus();
+      if (["idle", "invalid", "checking"].includes(pincodeStatus) || pincode.length !== 6) {
+        toast.error("Please enter a valid 6-digit Pincode first.");
+        document.getElementById("delivery-pincode")?.focus();
         hasError = true;
       } else if (!address.trim()) {
         setAddressError(true);
-        toast.error('Please provide a delivery address.');
-        document.getElementById('delivery-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('delivery-address')?.focus();
+        toast.error("Please provide a delivery address.");
+        document.getElementById("delivery-address")?.scrollIntoView({behavior: "smooth", block: "center"});
+        document.getElementById("delivery-address")?.focus();
         hasError = true;
       } else {
         setAddressError(false);
@@ -123,43 +157,43 @@ export function CheckoutForm({ customer }: { customer: any }) {
     setIsSubmitting(true);
     try {
       const finalAddress = deliverToPO ? `[POST OFFICE PICKUP: ${selectedPO}] ${address}` : address;
-      
-      const guestDetails = customer ? undefined : {
-        fullName: guestName,
-        email: guestEmail,
-        phone: guestPhone
-      };
 
-      const result = await placeCustomerOrder(items, finalAddress, pincode, guestDetails);
-      
-      if (!result.success || result.error) {
-        toast.error(result.error || 'Failed to place order');
+      const guestDetails = customer
+        ? undefined
+        : {
+            fullName: guestName,
+            email: guestEmail,
+            phone: guestPhone,
+          };
+
+      const result = await placeCustomerOrder(items, finalAddress, pincode, guestDetails, needsContactPhone ? contactPhone : undefined);
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to place order");
         setIsSubmitting(false);
-      } else {
-        clearCart();
-        toast.success('Order placed successfully!');
-        router.replace(`/checkout/success/${result.purchaseId}`);
+        return;
       }
+
+      // The loader stays up (isSubmitting) until the confirmation page replaces this one
+      clearCart();
+      router.replace(`/checkout/success/${result.purchaseId}`);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to place order');
+      toast.error(error.message || "Failed to place order");
       setIsSubmitting(false);
     }
   };
 
-  const isAddressDisabled = ['idle', 'invalid', 'checking'].includes(pincodeStatus) || pincode.length !== 6;
-
   return (
     <div className="grid lg:grid-cols-12 gap-12 max-w-7xl mx-auto items-start">
       <div className="lg:col-span-7 space-y-8">
-        
         {/* Contact Information */}
         <div className="bg-white rounded-3xl p-8 border border-primary/10 shadow-sm relative overflow-hidden group hover:border-primary/20 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-primary/20"></div>
           <h2 className="text-2xl font-serif font-bold text-foreground mb-6 flex items-center">
-            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm mr-3">1</span>
+            <StepBadge step={1} complete={contactComplete} />
             Contact Information
           </h2>
-          
+
           {customer ? (
             <div className="space-y-6 pl-11">
               <div className="flex items-start">
@@ -173,7 +207,22 @@ export function CheckoutForm({ customer }: { customer: any }) {
                 <Phone className="w-5 h-5 text-primary/60 mr-4 mt-0.5" strokeWidth={1.5} />
                 <div>
                   <p className="text-sm font-semibold text-foreground/60 mb-1">Mobile Number</p>
-                  <p className="text-foreground font-medium">{customer.mobile_number || 'Not provided'}</p>
+                  {needsContactPhone ? (
+                    <>
+                      <PhoneField
+                        value={contactPhone}
+                        onChange={(val) => {
+                          setContactPhone(val || "");
+                          setContactErrors((p) => ({...p, phone: false}));
+                        }}
+                        required
+                        error={contactErrors.phone}
+                      />
+                      <p className={`text-xs mt-1 ${contactErrors.phone ? "text-red-500" : "text-foreground/50"}`}>{contactErrors.phone ? validatePhoneNumber(contactPhone).error || "Valid phone number is required." : "Needed for delivery updates and payment."}</p>
+                    </>
+                  ) : (
+                    <p className="text-foreground font-medium">{customer.mobile_number}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -182,13 +231,35 @@ export function CheckoutForm({ customer }: { customer: any }) {
               <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 mb-4">You are checking out as a Guest. We'll use these details to update you on your order.</p>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
-                <input type="text" required value={guestName} onChange={e => { setGuestName(e.target.value); setContactErrors(p => ({...p, name: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.name ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="John Doe" />
+                <input
+                  type="text"
+                  required
+                  value={guestName}
+                  onChange={(e) => {
+                    setGuestName(e.target.value);
+                    setContactErrors((p) => ({...p, name: false}));
+                  }}
+                  onBlur={() => setContactErrors((p) => ({...p, name: !guestName.trim()}))}
+                  className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.name ? "border-red-300 ring-2 ring-red-100 bg-red-50/10" : "border-slate-200"}`}
+                  placeholder="John Doe"
+                />
                 {contactErrors.name && <p className="text-red-500 text-xs mt-1">Name is required.</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
-                  <input type="email" required value={guestEmail} onChange={e => { setGuestEmail(e.target.value); setContactErrors(p => ({...p, email: false})) }} className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.email ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-slate-200'}`} placeholder="john@example.com" />
+                  <input
+                    type="email"
+                    required
+                    value={guestEmail}
+                    onChange={(e) => {
+                      setGuestEmail(e.target.value);
+                      setContactErrors((p) => ({...p, email: false}));
+                    }}
+                    onBlur={() => setContactErrors((p) => ({...p, email: !!guestEmail && !/^\S+@\S+\.\S+$/.test(guestEmail)}))}
+                    className={`w-full rounded-xl px-4 py-3 border focus:ring-2 focus:ring-primary/20 ${contactErrors.email ? "border-red-300 ring-2 ring-red-100 bg-red-50/10" : "border-slate-200"}`}
+                    placeholder="john@example.com"
+                  />
                   {contactErrors.email && <p className="text-red-500 text-xs mt-1">Valid email is required.</p>}
                 </div>
                 <div>
@@ -196,17 +267,13 @@ export function CheckoutForm({ customer }: { customer: any }) {
                   <PhoneField
                     value={guestPhone}
                     onChange={(val) => {
-                      setGuestPhone(val || '');
-                      setContactErrors(p => ({ ...p, phone: false }));
+                      setGuestPhone(val || "");
+                      setContactErrors((p) => ({...p, phone: false}));
                     }}
                     required
                     error={contactErrors.phone}
                   />
-                  {contactErrors.phone && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validatePhoneNumber(guestPhone).error || "Valid phone number is required."}
-                    </p>
-                  )}
+                  {contactErrors.phone && <p className="text-red-500 text-xs mt-1">{validatePhoneNumber(guestPhone).error || "Valid phone number is required."}</p>}
                 </div>
               </div>
             </div>
@@ -217,11 +284,10 @@ export function CheckoutForm({ customer }: { customer: any }) {
         <div className="bg-white rounded-3xl p-8 border border-primary/10 shadow-sm relative overflow-hidden group hover:border-primary/20 transition-colors">
           <div className="absolute top-0 left-0 w-1 h-full bg-primary/20"></div>
           <h2 className="text-2xl font-serif font-bold text-foreground mb-6 flex items-center">
-            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm mr-3">2</span>
+            <StepBadge step={2} complete={deliveryComplete} />
             Delivery Details
           </h2>
           <div className="space-y-6 pl-11">
-            
             {useSavedAddress ? (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative">
                 <div className="absolute top-6 right-6">
@@ -234,9 +300,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
                   <div className="pr-16">
                     <p className="font-semibold text-foreground mb-1">Saved Delivery Address</p>
                     <p className="text-foreground/70 text-sm whitespace-pre-wrap leading-relaxed mb-2">{customer.address}</p>
-                    <span className="inline-block bg-white border border-slate-200 text-slate-600 text-xs px-2 py-1 rounded font-mono">
-                      PIN: {customer.pincode}
-                    </span>
+                    <span className="inline-block bg-white border border-slate-200 text-slate-600 text-xs px-2 py-1 rounded font-mono">PIN: {customer.pincode}</span>
                   </div>
                 </div>
               </div>
@@ -244,91 +308,74 @@ export function CheckoutForm({ customer }: { customer: any }) {
               <>
                 {/* Pincode Input */}
                 <div className="relative">
-                  <label htmlFor="delivery-pincode" className="block text-sm font-semibold text-foreground/60 mb-2">Delivery Pincode</label>
+                  <label htmlFor="delivery-pincode" className="block text-sm font-semibold text-foreground/60 mb-2">
+                    Delivery Pincode
+                  </label>
                   <div className="flex gap-4">
-                    <input
-                      id="delivery-pincode"
-                      type="text"
-                      maxLength={6}
-                      value={pincode}
-                      onChange={(e) => validatePincode(e.target.value)}
-                      className={`flex-1 max-w-[200px] h-12 bg-white rounded-xl border px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono tracking-widest text-lg ${pincodeStatus === 'invalid' || (addressError && pincode.length !== 6) ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-primary/20'}`}
-                      placeholder="390001"
-                    />
-                
-                {/* Status Badges */}
-                {pincodeStatus === 'checking' && (
-                  <div className="flex items-center text-primary/60 animate-pulse"><Clock className="w-5 h-5 mr-2" /> Checking...</div>
-                )}
-                {pincodeStatus === 'local' && (
-                  <div className="flex items-center text-emerald-600 bg-emerald-50 px-4 rounded-xl border border-emerald-100">
-                    <Truck className="w-5 h-5 mr-2" /> Local Vadodara Delivery (Next Day)
-                  </div>
-                )}
-                {pincodeStatus === 'national' && (
-                  <div className="flex items-center text-indigo-600 bg-indigo-50 px-4 rounded-xl border border-indigo-100">
-                    <PackageOpen className="w-5 h-5 mr-2" /> National Delivery (4-5 Days)
-                  </div>
-                )}
-                {pincodeStatus === 'invalid' && (
-                  <div className="flex items-center text-red-500 bg-red-50 px-4 rounded-xl border border-red-100">
-                    Invalid Pincode
-                  </div>
-                )}
-              </div>
-            </div>
+                    <input id="delivery-pincode" type="text" maxLength={6} value={pincode} onChange={(e) => validatePincode(e.target.value)} className={`flex-1 max-w-[200px] h-12 bg-white rounded-xl border px-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono tracking-widest text-lg ${pincodeStatus === "invalid" || (addressError && pincode.length !== 6) ? "border-red-300 ring-2 ring-red-100 bg-red-50/10" : "border-primary/20"}`} placeholder="390001" />
 
-            {/* Rural Delivery Option for National Orders */}
-            {pincodeStatus === 'national' && postOffices.length > 0 && (
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-5 mt-4">
-                <label className="flex items-start cursor-pointer group">
-                  <div className="relative flex items-center justify-center mt-0.5 mr-3">
-                    <input 
-                      type="checkbox" 
-                      checked={deliverToPO}
-                      onChange={(e) => setDeliverToPO(e.target.checked)}
-                      className="w-5 h-5 rounded border-orange-300 text-orange-600 focus:ring-orange-500 cursor-pointer peer" 
-                    />
+                    {/* Status Badges */}
+                    {pincodeStatus === "checking" && (
+                      <div className="flex items-center text-primary/60 animate-pulse">
+                        <Clock className="w-5 h-5 mr-2" /> Checking...
+                      </div>
+                    )}
+                    {pincodeStatus === "local" && (
+                      <div className="flex items-center text-emerald-600 bg-emerald-50 px-4 rounded-xl border border-emerald-100">
+                        <Truck className="w-5 h-5 mr-2" /> Local Vadodara Delivery (Next Day)
+                      </div>
+                    )}
+                    {pincodeStatus === "national" && (
+                      <div className="flex items-center text-indigo-600 bg-indigo-50 px-4 rounded-xl border border-indigo-100">
+                        <PackageOpen className="w-5 h-5 mr-2" /> National Delivery (4-5 Days)
+                      </div>
+                    )}
+                    {pincodeStatus === "invalid" && <div className="flex items-center text-red-500 bg-red-50 px-4 rounded-xl border border-red-100">Invalid Pincode</div>}
                   </div>
-                  <div>
-                    <span className="font-semibold text-orange-900 block mb-1">Deliver to nearest Post Office (Rural Area)</span>
-                    <span className="text-sm text-orange-700/80 leading-relaxed block">If your exact address is difficult to locate, we can ship your hamper directly to your local post office for secure pickup.</span>
-                  </div>
-                </label>
-                
-                {deliverToPO && (
-                  <div className="mt-4 ml-8 animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-sm font-semibold text-orange-900/80 mb-2">Select Post Office Branch</label>
-                    <select 
-                      value={selectedPO}
-                      onChange={(e) => setSelectedPO(e.target.value)}
-                      className="w-full max-w-sm h-11 bg-white rounded-lg border-orange-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm"
-                    >
-                      {postOffices.map((po, idx) => (
-                        <option key={idx} value={po.Name}>{po.Name} ({po.BranchType})</option>
-                      ))}
-                    </select>
+                </div>
+
+                {/* Rural Delivery Option for National Orders */}
+                {pincodeStatus === "national" && postOffices.length > 0 && (
+                  <div className="bg-orange-50 border border-orange-100 rounded-xl p-5 mt-4">
+                    <label className="flex items-start cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5 mr-3">
+                        <input type="checkbox" checked={deliverToPO} onChange={(e) => setDeliverToPO(e.target.checked)} className="w-5 h-5 rounded border-orange-300 text-orange-600 focus:ring-orange-500 cursor-pointer peer" />
+                      </div>
+                      <div>
+                        <span className="font-semibold text-orange-900 block mb-1">Deliver to nearest Post Office (Rural Area)</span>
+                        <span className="text-sm text-orange-700/80 leading-relaxed block">If your exact address is difficult to locate, we can ship your hamper directly to your local post office for secure pickup.</span>
+                      </div>
+                    </label>
+
+                    {deliverToPO && (
+                      <div className="mt-4 ml-8 animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-sm font-semibold text-orange-900/80 mb-2">Select Post Office Branch</label>
+                        <select value={selectedPO} onChange={(e) => setSelectedPO(e.target.value)} className="w-full max-w-sm h-11 bg-white rounded-lg border-orange-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm">
+                          {postOffices.map((po, idx) => (
+                            <option key={idx} value={po.Name}>
+                              {po.Name} ({po.BranchType})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+
+                {/* Full Address Input */}
+                <div className={`transition-opacity duration-300 ${isAddressDisabled ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
+                  <label htmlFor="delivery-address" className="block text-sm font-semibold text-foreground/60 mb-2">
+                    Full Delivery Address
+                  </label>
+                  <textarea id="delivery-address" disabled={isAddressDisabled} value={address} onChange={(e) => setAddress(e.target.value)} rows={3} className={`w-full bg-slate-50/50 rounded-xl border p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none ${addressError ? "border-red-300 ring-2 ring-red-100 bg-red-50/10" : "border-primary/10"}`} placeholder={isAddressDisabled ? "Please enter a valid pincode first" : "House/Flat No, Building Name\nStreet Name, Landmark"} />
+                  {addressError && (
+                    <p className="text-red-500 text-sm mt-2 flex items-center">
+                      <Check className="w-4 h-4 mr-1" /> Address is required.
+                    </p>
+                  )}
+                </div>
+              </>
             )}
-
-            {/* Full Address Input */}
-            <div className={`transition-opacity duration-300 ${isAddressDisabled ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-              <label htmlFor="delivery-address" className="block text-sm font-semibold text-foreground/60 mb-2">Full Delivery Address</label>
-              <textarea
-                id="delivery-address"
-                disabled={isAddressDisabled}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                rows={3}
-                className={`w-full bg-slate-50/50 rounded-xl border p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none ${addressError ? 'border-red-300 ring-2 ring-red-100 bg-red-50/10' : 'border-primary/10'}`}
-                placeholder={isAddressDisabled ? "Please enter a valid pincode first" : "House/Flat No, Building Name\nStreet Name, Landmark"}
-              />
-              {addressError && <p className="text-red-500 text-sm mt-2 flex items-center"><Check className="w-4 h-4 mr-1" /> Address is required.</p>}
-            </div>
-          </>
-        )}
           </div>
         </div>
       </div>
@@ -338,7 +385,7 @@ export function CheckoutForm({ customer }: { customer: any }) {
           <h3 className="text-xl font-serif font-bold text-foreground mb-6 border-b border-primary/10 pb-4">Order Summary</h3>
           <div className="space-y-4 mb-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
             {items.map((item, index) => {
-              const isPersonalized = item.itemType === 'PERSONALIZED_HAMPER';
+              const isPersonalized = item.itemType === "PERSONALIZED_HAMPER";
 
               return (
                 <div key={index} className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
@@ -347,10 +394,8 @@ export function CheckoutForm({ customer }: { customer: any }) {
                       <div className="flex items-start gap-2 align-start flex-col">
                         {isPersonalized && (
                           <div className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                           <Sparkles className="w-3 h-3" />
-                          <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            Bespoke Hamperss
-                          </span>
+                            <Sparkles className="w-3 h-3" />
+                            <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">Bespoke Hamperss</span>
                           </div>
                         )}
                         <p className="font-serif font-bold text-foreground">{item.name}</p>
@@ -364,26 +409,28 @@ export function CheckoutForm({ customer }: { customer: any }) {
                   {isPersonalized && (
                     <div className="pt-2 border-t border-slate-200/60 space-y-1 text-xs text-slate-500">
                       {item.occasion && (
-                        <p><span className="font-medium text-slate-700">Theme:</span> {item.occasion.name}</p>
-                      )}
-                      {Array.isArray(item.products) && item.products.length > 0 && (
-                        <p><span className="font-medium text-slate-700">Gifts:</span> {item.products.map((p: any) => `${p.name} (×${p.quantity})`).join(', ')}</p>
-                      )}
-                      {Array.isArray(item.customizations) && item.customizations.length > 0 && (
-                        <p><span className="font-medium text-slate-700">Style:</span> {item.customizations.map((c: any) => `${c.categoryName}: ${c.optionName}`).join(', ')}</p>
-                      )}
-                      {item.personalMessage && (
-                        <p className="italic text-rose-700 bg-rose-50/50 p-2 rounded-lg border border-rose-100">
-                          &ldquo;{item.personalMessage}&rdquo;
+                        <p>
+                          <span className="font-medium text-slate-700">Theme:</span> {item.occasion.name}
                         </p>
                       )}
+                      {Array.isArray(item.products) && item.products.length > 0 && (
+                        <p>
+                          <span className="font-medium text-slate-700">Gifts:</span> {item.products.map((p: any) => `${p.name} (×${p.quantity})`).join(", ")}
+                        </p>
+                      )}
+                      {Array.isArray(item.customizations) && item.customizations.length > 0 && (
+                        <p>
+                          <span className="font-medium text-slate-700">Style:</span> {item.customizations.map((c: any) => `${c.categoryName}: ${c.optionName}`).join(", ")}
+                        </p>
+                      )}
+                      {item.personalMessage && <p className="italic text-rose-700 bg-rose-50/50 p-2 rounded-lg border border-rose-100">&ldquo;{item.personalMessage}&rdquo;</p>}
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-          
+
           <div className="border-t border-primary/10 pt-4 mb-8 space-y-3">
             <div className="flex justify-between text-sm text-foreground/70">
               <p>Subtotal</p>
@@ -402,16 +449,26 @@ export function CheckoutForm({ customer }: { customer: any }) {
             </div>
           </div>
 
-          <Button 
-            disabled={isSubmitting || items.length === 0}
-            onClick={handlePlaceOrder}
-            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-lg shadow-primary/20 text-base transition-transform hover:scale-[1.02]"
-          >
-            {isSubmitting ? 'Confirming Order...' : 'Confirm Order'}
+          <Button id="confirm-order-button" disabled={isSubmitting || items.length === 0} onClick={handlePlaceOrder} className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-lg shadow-primary/20 text-base transition-transform hover:scale-[1.02]">
+            Confirm Order
           </Button>
-          
+
+          {!canPlaceOrder && (
+            <ul className="mt-4 space-y-1.5 text-xs" aria-label="Checkout steps remaining">
+              {[
+                {label: "Contact information", done: contactComplete},
+                {label: "Delivery details", done: deliveryComplete},
+              ].map(({label, done}) => (
+                <li key={label} className={`flex items-center ${done ? "text-emerald-600" : "text-foreground/50"}`}>
+                  {done ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Circle className="w-3.5 h-3.5 mr-1.5" />}
+                  {label}
+                </li>
+              ))}
+            </ul>
+          )}
+
           <p className="text-center text-xs text-foreground/50 mt-4 flex items-center justify-center">
-            <Check className="w-3.5 h-3.5 mr-1" /> Payment collected safely offline
+            <MessageCircle className="w-3.5 h-3.5 mr-1 shrink-0" /> After confirming, share your Order ID on WhatsApp to get the payment QR
           </p>
         </div>
       </div>

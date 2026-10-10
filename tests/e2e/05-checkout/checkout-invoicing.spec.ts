@@ -107,13 +107,14 @@ test.describe('Domain 6: Checkout, Pincode Validation & Invoicing Receipt', () =
     await expect(addressInput).toBeEnabled({ timeout: 5000 });
     await addressInput.fill('102 Royal Orchid Heights, Alkapuri, Vadodara');
 
-    // Confirm order
+    // Confirm order: loader, then the confirmation page with the WhatsApp payment step
     const confirmOrderBtn = page.getByRole('button', { name: /Confirm Order/i });
     await expect(confirmOrderBtn).toBeEnabled();
     await confirmOrderBtn.click();
+    await expect(page.getByText(/Your cart is empty/i)).toHaveCount(0);
 
-    // Should redirect to success page
     await expect(page).toHaveURL(/\/checkout\/success\//, { timeout: 20000 });
+    await expect(page.getByText(/Send Order ID on WhatsApp/i)).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Application error');
   });
 
