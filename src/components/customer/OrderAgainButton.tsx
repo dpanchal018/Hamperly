@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { searchHamperByName } from '@/actions/storefront.actions';
 
 export function OrderAgainButton({ hamperName }: { hamperName: string }) {
-  const { items, addItem, updateQuantity } = useCart();
+  const { items, addItem, updateQuantity, setIsCartOpen } = useCart();
   const [loading, setLoading] = useState(false);
 
   const handleOrderAgain = async () => {
@@ -27,6 +27,7 @@ export function OrderAgainButton({ hamperName }: { hamperName: string }) {
           toast.error(`Only ${hamper.stock_quantity} left in stock`);
         } else {
           updateQuantity(hamper.id, existingItem.quantity + 1);
+          setIsCartOpen(true);
           toast.success('Added to cart');
         }
       } else {

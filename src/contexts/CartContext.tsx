@@ -168,6 +168,8 @@ export function CartProvider({ children, userId = 'guest' }: { children: React.R
 
       return [...prevItems, { ...newItem, quantity: initialQuantity }];
     });
+    // Show the bag immediately so shoppers don't have to scroll up to the navbar to see it
+    setIsCartOpen(true);
   }, []);
 
   const updateItem = useCallback((id: string, updatedFields: Partial<CartItem>) => {
