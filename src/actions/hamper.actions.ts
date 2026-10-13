@@ -64,6 +64,20 @@ export async function getHamperById(id: string): Promise<HamperDetailView | null
   return hamper as HamperDetailView;
 }
 
+// A blank slug must be stored as NULL: the column is UNIQUE, and Postgres treats every NULL as
+// distinct but '' as a real value, so a second hamper saved with '' would collide.
+function normalizeSlug(slug: string | null | undefined) {
+  if (slug === undefined) return undefined;
+  return slug?.trim() || null;
+}
+
+function hamperSaveError(error: { code?: string; message: string }) {
+  if (error.code === '23505' && error.message.includes('slug')) {
+    return 'This slug is already used by another hamper. Please choose a different one or leave it blank.';
+  }
+  return error.message;
+}
+
 export async function createHamper(data: Partial<PreMadeHamper> & { recipient_tag_ids?: number[] }) {
   const supabase = await createClient();
   await requireAdmin();
@@ -78,7 +92,7 @@ export async function createHamper(data: Partial<PreMadeHamper> & { recipient_ta
       selling_price: data.selling_price || 0,
       actual_cost: data.actual_cost || 0,
       is_active: data.is_active ?? true,
-      slug: data.slug || null,
+      slug: normalizeSlug(data.slug) ?? null,
       occasion_id: data.occasion_id || null,
       event_id: data.event_id || null,
       packaging_type_id: data.packaging_type_id || null,
@@ -90,7 +104,7 @@ export async function createHamper(data: Partial<PreMadeHamper> & { recipient_ta
 
   if (error) {
     console.error('Error creating hamper:', error);
-    return { error: error.message };
+    return { error: hamperSaveError(error) };
   }
   
   if (data.recipient_tag_ids && data.recipient_tag_ids.length > 0) {
@@ -117,7 +131,7 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper> & { 
       selling_price: data.selling_price,
       actual_cost: data.actual_cost,
       is_active: data.is_active,
-      slug: data.slug,
+      slug: normalizeSlug(data.slug),
       occasion_id: data.occasion_id,
       event_id: data.event_id,
       packaging_type_id: data.packaging_type_id,
@@ -131,7 +145,7 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper> & { 
 
   if (error) {
     console.error('Error updating hamper:', error);
-    return { error: error.message };
+    return { error: hamperSaveError(error) };
   }
   
   if (data.recipient_tag_ids !== undefined) {
