@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Package, Calendar, User, ArrowLeft, Download, FileText, CheckCircle, XCircle, Wallet } from 'lucide-react';
 import { CancelOrderButton } from '@/components/admin/CancelOrderButton';
 import { RecordPaymentButton } from '@/components/admin/RecordPaymentButton';
+import { DeliveryTrackingForm } from '@/components/admin/DeliveryTrackingForm';
 
 export default async function PurchaseDetailPage({ params }: { params: { id: string } }) {
   const { id } = await params;
@@ -103,6 +104,12 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-500">Latest Method</span>
                   <span className="text-sm font-medium text-slate-900">{purchase.payment_mode}</span>
+                </div>
+              )}
+
+              {purchase.status !== 'CANCELLED' && (
+                <div className="pt-3 border-t border-slate-100">
+                  <DeliveryTrackingForm purchaseId={purchase.id} initialTrackingId={purchase.delivery_tracking_id ?? null} />
                 </div>
               )}
             </div>

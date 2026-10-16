@@ -319,6 +319,35 @@ export async function updatePaymentStatus(purchaseId: string, amountPaid: number
   return { purchase: updatedPurchase };
 }
 
+const DELIVERY_TRACKING_ID_MAX = 100;
+
+export async function updateDeliveryTrackingId(purchaseId: string, trackingId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Unauthorized' };
+
+  const value = trackingId.trim();
+  if (value.length > DELIVERY_TRACKING_ID_MAX) {
+    return { error: `Tracking ID must be ${DELIVERY_TRACKING_ID_MAX} characters or fewer.` };
+  }
+
+  const { error } = await supabase
+    .from('purchases')
+    .update({
+      delivery_tracking_id: value || null,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', purchaseId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/customers-purchases/${purchaseId}`);
+  revalidatePath(`/checkout/success/${purchaseId}`);
+  return { trackingId: value || null };
+}
+
 export async function getPurchases(filters?: any) {
   const supabase = await createClient();
   
