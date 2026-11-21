@@ -1,14 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
-import { SiteContent, HeaderContent, FooterContent } from '@/types/database.types';
+import {createClient} from "@/lib/supabase/server";
+import {SiteContent, HeaderContent, FooterContent} from "@/types/database.types";
 
 export async function getSiteContent<T>(sectionId: string, defaultContent: T): Promise<T> {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('content')
-      .eq('section_id', sectionId)
-      .single();
+    const {data, error} = await supabase.from("site_content").select("content").eq("section_id", sectionId).single();
 
     if (error) {
       console.warn(`Could not fetch ${sectionId} content, using defaults. Error:`, error.message);
@@ -16,7 +12,7 @@ export async function getSiteContent<T>(sectionId: string, defaultContent: T): P
     }
 
     if (data && data.content) {
-      return { ...defaultContent, ...data.content } as T;
+      return {...defaultContent, ...data.content} as T;
     }
 
     return defaultContent;
@@ -27,40 +23,40 @@ export async function getSiteContent<T>(sectionId: string, defaultContent: T): P
 }
 
 export const defaultHeaderContent: HeaderContent = {
-  logoText: 'Hamperly',
+  logoText: "Hamperly",
   navLinks: [
-    { name: 'Shop', href: '/products' },
-    { name: 'Hampers', href: '/hampers' },
-    { name: 'Exhibitions', href: '/exhibitions' }
-  ]
+    {name: "Shop", href: "/products"},
+    {name: "Hampers", href: "/hampers"},
+    {name: "Exhibitions", href: "/exhibitions"},
+  ],
 };
 
 export const defaultFooterContent: FooterContent = {
-  logoText: 'Hamperly',
-  description: 'Curating beautiful, personalized gifts for every special moment. Handcrafted with love and delivered with care.',
+  logoText: "Hamperly",
+  description: "Curating beautiful, personalized gifts for every special moment. Handcrafted with love and delivered with care.",
   socialLinks: [
-    { platform: 'IG', url: '#' },
-    { platform: 'FB', url: '#' },
-    { platform: 'X', url: '#' }
+    {platform: "IG", url: "#"},
+    {platform: "FB", url: "#"},
+    {platform: "X", url: "#"},
   ],
   columns: [
     {
-      title: 'Shop',
+      title: "Shop",
       links: [
-        { name: 'Build a Hamper', href: '/build' },
-        { name: 'Pre-made Hampers', href: '/hampers' },
-        { name: 'Exhibitions', href: '/exhibitions' }
-      ]
+        {name: "Build a Hamper", href: "/build"},
+        {name: "Pre-made Hampers", href: "/hampers"},
+        {name: "Exhibitions", href: "/exhibitions"},
+      ],
     },
     {
-      title: 'Information',
+      title: "Information",
       links: [
-        { name: 'About Us', href: '/about' },
-        { name: 'FAQ', href: '/faq' },
-        { name: 'Terms of Service', href: '/terms' }
-      ]
-    }
+        {name: "About Us", href: "/about"},
+        {name: "FAQ", href: "/faq"},
+        {name: "Terms of Service", href: "/terms"},
+      ],
+    },
   ],
-  contactEmail: 'hello@hamperly.com',
-  contactPhone: '+91 98765 43210',
+  contactEmail: "hello@hamperly.com",
+  contactPhone: "+91 7567005064",
 };
