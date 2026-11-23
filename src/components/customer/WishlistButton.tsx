@@ -32,7 +32,7 @@ export function WishlistButton({ itemId, itemType, className = '' }: WishlistBut
         toggleLocalState(itemId, itemType);
         toast.error(res.error);
       } else if (res?.isWishlisted) {
-        toast.success('Saved to wishlist ❤️', { icon: '❤️' });
+        toast.success('Saved to your wishlist', { icon: '❤️' });
       }
     } catch {
       // Revert on unexpected network failure

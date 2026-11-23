@@ -127,12 +127,12 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
     await page.goto('/hampers');
     await page.waitForTimeout(3000);
     
-    const firstHamperBtn = page.locator('button[aria-label="Add to Cart"]').first();
+    const firstHamperBtn = page.locator('button[aria-label$="to bag"]').first();
     await firstHamperBtn.waitFor({ state: 'visible' });
     await firstHamperBtn.click();
     
     // Wait for button to confirm item was added (ensures localStorage saved)
-    await expect(page.locator('button[aria-label="Added to Cart"]').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('button[aria-label^="Add another"]').first()).toBeVisible({ timeout: 10000 });
     
     // 3. Open cart slideover and navigate to checkout (SPA — preserves cart context)
     const navCartBtn = page.locator('button').filter({ has: page.locator('.lucide-shopping-bag') }).first();
@@ -169,7 +169,7 @@ test.describe('Live Production Spider & Lifecycle Test', () => {
 
     // 6. Verify Success Page
     await page.waitForURL('**/checkout/success/**', { timeout: 30000 });
-    await expect(page.locator('text=Order Confirmed')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/Order #\\w+ is in!/')).toBeVisible({ timeout: 10000 });
     
     // 7. Teardown: Navigate to My Orders and Cancel the test order
     await page.goto('/account/orders', { waitUntil: 'domcontentloaded', timeout: 30000 });

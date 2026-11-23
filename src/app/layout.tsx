@@ -1,15 +1,16 @@
 import type {Metadata} from "next";
-import {Nunito, Playfair_Display, Dancing_Script} from "next/font/google";
+import {Plus_Jakarta_Sans, Fraunces, Dancing_Script} from "next/font/google";
 import "./globals.css";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 const dancingScript = Dancing_Script({
@@ -33,12 +34,12 @@ export default async function RootLayout({children}: {children: React.ReactNode}
   const userId = user?.id || "guest";
 
   return (
-    <html lang="en" className={`${nunito.variable} ${playfair.variable} ${dancingScript.variable} font-sans h-full antialiased text-foreground bg-background`}>
+    <html lang="en" className={`${jakarta.variable} ${fraunces.variable} ${dancingScript.variable} font-sans h-full antialiased text-foreground bg-background`}>
       <head>
         <title>Hamperly</title>
       </head>
       <body className="min-h-full flex flex-col">
-        <NextTopLoader color="#C04A7B" showSpinner={false} />
+        <NextTopLoader color="#B83D72" showSpinner={false} />
         <InviteInterceptor />
         <WishlistProvider userId={userId}>
           <CartProvider userId={userId}>{children}</CartProvider>

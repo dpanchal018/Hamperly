@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useStorefront } from '@/contexts/StorefrontContext';
 import { Gift } from 'lucide-react';
 import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
 
@@ -16,15 +16,17 @@ export function HamperIndicator() {
   // (same hydration-guard pattern used elsewhere, e.g. HamperStudio.tsx) — treat
   // as "empty" until then so the first client render matches the server render.
   const hasItems = isInitialized && totalProductsCount > 0;
+  const { openStudio } = useStorefront();
 
   return (
-    <Link
-      href="/build"
+    <button
+      type="button"
+      onClick={() => openStudio()}
       aria-label={hasItems ? `Your hamper: ${totalProductsCount} items, finish it` : 'Start building a hamper'}
       className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-full border transition-colors text-xs ${
         hasItems
-          ? 'bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 font-bold'
-          : 'text-foreground/70 hover:text-primary border-primary/10 font-semibold'
+          ? 'bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 font-bold whitespace-nowrap'
+          : 'text-foreground/70 hover:text-primary border-primary/10 font-semibold whitespace-nowrap'
       }`}
     >
       <Gift className="w-4 h-4" strokeWidth={1.5} />
@@ -33,6 +35,6 @@ export function HamperIndicator() {
           ? `${totalProductsCount} item${totalProductsCount !== 1 ? 's' : ''} · ₹${totalPrice.toFixed(0)}`
           : 'Start a Hamper'}
       </span>
-    </Link>
+    </button>
   );
 }

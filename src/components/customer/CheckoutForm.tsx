@@ -1,7 +1,6 @@
 "use client";
 
 import {useCart} from "@/contexts/CartContext";
-import {useRouter} from "next/navigation";
 import {useState} from "react";
 import {placeCustomerOrder} from "@/actions/checkout.actions";
 import {ShoppingBag, MapPin, Phone, User, Check, Circle, PackageOpen, Truck, Clock, Sparkles, Loader2, MessageCircle} from "lucide-react";
@@ -21,9 +20,16 @@ function StepBadge({step, complete}: {step: number; complete: boolean}) {
   );
 }
 
-export function CheckoutForm({customer}: {customer: any}) {
+interface CheckoutFormProps {
+  customer: any;
+  /** Called after the order is created (the single-page storefront shows the confirmation overlay) */
+  onPlaced: (order: {id: string; total: number}) => void;
+  /** Empty-cart call to action */
+  onBrowse: () => void;
+}
+
+export function CheckoutForm({customer, onPlaced, onBrowse}: CheckoutFormProps) {
   const {items, subtotal, clearCart} = useCart();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const hasSavedAddress = !!(customer?.address && customer?.pincode);
   const [useSavedAddress, setUseSavedAddress] = useState(hasSavedAddress);
@@ -67,7 +73,7 @@ export function CheckoutForm({customer}: {customer: any}) {
         </div>
         <h2 className="text-3xl font-serif font-bold text-foreground mb-4 tracking-tight">Your cart is empty</h2>
         <p className="text-foreground/60 mb-8 max-w-md mx-auto">Looks like you haven't added anything to your cart yet. Let's find something special.</p>
-        <Button onClick={() => router.push("/products")} className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white">
+        <Button onClick={onBrowse} className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white">
           Continue Shopping
         </Button>
       </div>
@@ -174,9 +180,8 @@ export function CheckoutForm({customer}: {customer: any}) {
         return;
       }
 
-      // The loader stays up (isSubmitting) until the confirmation page replaces this one
       clearCart();
-      router.replace(`/checkout/success/${result.purchaseId}`);
+      onPlaced({id: result.purchaseId, total: result.total});
     } catch (error: any) {
       toast.error(error.message || "Failed to place order");
       setIsSubmitting(false);

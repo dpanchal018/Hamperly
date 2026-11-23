@@ -14,11 +14,11 @@ export async function placeCustomerOrder(
   pincode?: string,
   guestDetails?: GuestDetails,
   contactPhone?: string
-): Promise<{ success: true; purchaseId: string } | { success: false; error: string }> {
+): Promise<{ success: true; purchaseId: string; total: number } | { success: false; error: string }> {
   try {
     const { customer, snapshot } = await prepareOrder(cartItems, deliveryAddress, pincode, guestDetails, contactPhone);
     const purchaseId = await createPurchase(customer.id, snapshot);
-    return { success: true, purchaseId };
+    return { success: true, purchaseId, total: snapshot.subtotal };
   } catch (error: any) {
     console.error("placeCustomerOrder error:", error);
     return { success: false, error: error.message || "An unexpected error occurred while placing your order." };

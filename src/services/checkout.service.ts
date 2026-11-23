@@ -294,6 +294,10 @@ export async function prepareOrder(
       actual_unit_price: unitPrice,
       line_total: lineTotal
     });
+
+    // Free handwritten card added on the hamper page
+    const cardMessage = typeof item.personalMessage === 'string' ? item.personalMessage.trim().slice(0, 300) : '';
+    if (cardMessage) notesSections.push(`[${dbHamp.name}]\nGift Message: "${cardMessage}"`);
   }
 
   // Process Personalized Hampers

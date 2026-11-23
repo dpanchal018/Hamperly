@@ -14,7 +14,14 @@ import { StepCustomize } from './StepCustomize';
 import { StepPersonalize } from './StepPersonalize';
 import { StepReview } from './StepReview';
 import { Heart, Package, Sliders, MessageSquare, CheckCircle2, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import dynamic from 'next/dynamic';
+import { scrollToSection } from '@/contexts/StorefrontContext';
+
+// three.js only runs in the browser; load the 3D studio client-side
+const HamperStudio3D = dynamic(() => import('@/components/customer/studio/HamperStudio3D'), {
+  ssr: false,
+  loading: () => <div className="h-full rounded-[32px] bg-petal animate-pulse" aria-hidden="true" />,
+});
 
 interface Props {
   occasions: Occasion[];
@@ -62,10 +69,16 @@ export function HamperStudio({ occasions, products, categories, customizationCat
     setIsMounted(true);
   }, []);
 
-  // Smoothly scroll to top whenever currentStep changes
+  // When the step changes, bring the top of the studio section back into view (the studio is
+  // one section of the single-page storefront, so never jump the whole page to the top)
+  const lastStepRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isMounted) return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const previous = lastStepRef.current;
+    lastStepRef.current = currentStep;
+    if (previous === null || previous === currentStep) return;
+    const top = document.getElementById('studio')?.getBoundingClientRect().top ?? 0;
+    if (top < 0) scrollToSection('studio');
   }, [currentStep, isMounted]);
 
   // Step Completion & Accessibility Rules (Hydration Safe)
@@ -170,8 +183,12 @@ export function HamperStudio({ occasions, products, categories, customizationCat
   const displayStep = isMounted ? currentStep : 1;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-50/40 via-white to-slate-50 pt-28 pb-20">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <div className="bg-blush">
+      <div className="mx-auto px-4 sm:px-8 max-w-7xl">
+        <div className="text-center mb-8">
+          <div className="text-[13px] font-bold tracking-[0.12em] text-rose">HAMPER STUDIO · LIVE 3D</div>
+          <h1 className="font-serif font-semibold text-plum text-4xl sm:text-5xl tracking-[-0.02em] mt-2">Make it <span className="italic text-rose">theirs.</span></h1>
+        </div>
         
         {/* Stepper Header */}
         <div className="mb-12">
@@ -237,14 +254,22 @@ export function HamperStudio({ occasions, products, categories, customizationCat
           )}
         </div>
 
-        {/* Step Renderer */}
-        <div className="transition-all duration-300">
-          {displayStep === 1 && <StepOccasion occasions={occasions} events={events} />}
-          {displayStep === 2 && <StepProducts products={displayProducts} categories={categories} />}
-          {displayStep === 3 && <StepCustomize customizationCategories={customizationCategories} />}
-          {displayStep === 4 && <StepPersonalize />}
-          {displayStep === 5 && <StepReview customizationCategories={customizationCategories} />}
-        </div>
+        {/* Step Renderer: from step 2 on, the live 3D hamper sits beside the step */}
+        {displayStep === 1 ? (
+          <StepOccasion occasions={occasions} events={events} />
+        ) : (
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_480px] gap-8 items-start">
+            <div className="order-2 lg:order-1 min-w-0">
+              {displayStep === 2 && <StepProducts products={displayProducts} categories={categories} />}
+              {displayStep === 3 && <StepCustomize customizationCategories={customizationCategories} />}
+              {displayStep === 4 && <StepPersonalize />}
+              {displayStep === 5 && <StepReview customizationCategories={customizationCategories} />}
+            </div>
+            <aside className="order-1 lg:order-2 lg:sticky lg:top-28 h-[360px] sm:h-[440px] lg:h-[calc(100vh-9rem)] lg:max-h-[660px]" aria-label="Live 3D preview of your hamper">
+              <HamperStudio3D customizationCategories={customizationCategories} />
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );
