@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { MINIMUM_AGE, ageOn, todayInIndia } from '@/lib/age'
 
 /** Creates (or links) a customer account and signs it in. */
 async function registerCustomer(formData: FormData): Promise<{ ok: true } | { error: string }> {
@@ -12,6 +13,16 @@ async function registerCustomer(formData: FormData): Promise<{ ok: true } | { er
 
   if (!email || !password || !full_name) {
     return { error: 'All fields are required' }
+  }
+
+  // Indian contract law: only adults can enter into the purchase contract. The date of birth is
+  // checked here on the server and never stored; only the time the age was confirmed is kept.
+  const age = ageOn(((formData.get('date_of_birth') as string) || '').trim(), todayInIndia())
+  if (age === null) {
+    return { error: 'Please enter a valid date of birth' }
+  }
+  if (age < MINIMUM_AGE) {
+    return { error: `You need to be ${MINIMUM_AGE} or older to create a Hamperly account` }
   }
 
   // Create an admin client to bypass the email confirmation requirement
@@ -35,6 +46,7 @@ async function registerCustomer(formData: FormData): Promise<{ ok: true } | { er
     email_confirm: true,
     user_metadata: {
       full_name,
+      age_confirmed_at: new Date().toISOString(),
     }
   })
 

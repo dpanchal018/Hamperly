@@ -17,6 +17,7 @@ import { WhatsAppIcon } from '@/components/customer/SocialIcons';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { HamperQuickView } from './HamperQuickView';
 import { signInInline, signOutInline, signUpInline } from '@/actions/auth.actions';
+import { MINIMUM_AGE, todayInIndia } from '@/lib/age';
 import { getMyProfile, getMyPurchases } from '@/actions/account.actions';
 import { getMyNotifications, markAllNotificationsAsRead } from '@/actions/notification.actions';
 import type { PublicHamper } from '@/types/database.types';
@@ -182,6 +183,12 @@ function AuthDialog() {
           {isSignup && (
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-plum">Full name
               <input name="full_name" required autoComplete="name" className={inputClass} />
+            </label>
+          )}
+          {isSignup && (
+            <label className="flex flex-col gap-1.5 text-sm font-semibold text-plum">Date of birth
+              <input name="date_of_birth" type="date" required autoComplete="bday" min="1900-01-01" max={todayInIndia()} className={inputClass} />
+              <span className="text-xs font-normal text-ink-muted">You must be {MINIMUM_AGE} or older. We only check it, we don&apos;t store it.</span>
             </label>
           )}
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-plum">Email
