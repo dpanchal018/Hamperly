@@ -172,16 +172,17 @@ export function StepCustomize({ customizationCategories }: Props) {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100">
+      <div className="flex items-center justify-between gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-slate-100">
         <Button
           variant="outline"
           onClick={prevStep}
-          className="rounded-full px-8 h-12 text-slate-600 flex items-center gap-2"
+          aria-label="Back to Products"
+          className="rounded-full w-12 sm:w-auto px-0 sm:px-8 h-12 text-slate-600 flex items-center gap-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Products
+          <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Back to Products</span>
         </Button>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 sm:flex-none justify-end items-center gap-4 min-w-0">
           <div className="text-right hidden sm:block">
             <span className="text-xs text-slate-500 block font-light">Customization Add-ons</span>
             <span className="text-base font-bold text-slate-900">
@@ -192,7 +193,7 @@ export function StepCustomize({ customizationCategories }: Props) {
           <Button
             onClick={nextStep}
             disabled={!canProceed}
-            className="rounded-full px-10 h-14 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 disabled:opacity-50 transition-all flex items-center gap-2"
+            className="flex-1 sm:flex-none justify-center rounded-full px-5 sm:px-10 h-14 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 disabled:opacity-50 transition-all flex items-center gap-2"
           >
             <span>Add Personal Message</span>
             <ArrowRight className="w-5 h-5" />
