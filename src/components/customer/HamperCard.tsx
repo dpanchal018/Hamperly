@@ -1,20 +1,40 @@
 'use client';
 
-import Link from 'next/link';
+import { useStorefront } from '@/contexts/StorefrontContext';
 import Image from 'next/image';
 import { PreMadeHamper } from '@/types/database.types';
 import { HoverCard } from '@/components/ui/AnimatedWrapper';
 import { useCart } from '@/contexts/CartContext';
-import { Plus, Check, Gift } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { Plus, Check } from 'lucide-react';
+import { useState, useEffect, useRef, ViewTransition } from 'react';
 import { getInventoryStatus } from '@/lib/inventory';
 import { WishlistButton } from '@/components/customer/WishlistButton';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { toggleWishlistItem } from '@/actions/wishlist.actions';
+import toast from 'react-hot-toast';
 
 interface HamperCardProps {
   hamper: PreMadeHamper;
+  /** Optional highlight such as "Bestseller"; stock badges take priority. */
+  badge?: string;
 }
 
-export function HamperCard({ hamper }: HamperCardProps) {
+// Soft backdrops for hampers without a photo, picked per hamper so the grid isn't uniform
+const PLACEHOLDER_TINTS = [
+  { bg: '#EAF1FB', lid: '#7FB3F0' },
+  { bg: '#FBEAF0', lid: '#F2A7BD' },
+  { bg: '#FFF6E6', lid: '#E8C27A' },
+  { bg: '#F1F6E6', lid: '#B9D47A' },
+  { bg: '#F3ECFA', lid: '#C9B6E4' },
+];
+
+function tintFor(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return PLACEHOLDER_TINTS[h % PLACEHOLDER_TINTS.length];
+}
+
+export function HamperCard({ hamper, badge }: HamperCardProps) {
   const { items, addItem } = useCart();
   const [adding, setAdding] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -30,6 +50,33 @@ export function HamperCard({ hamper }: HamperCardProps) {
   const selectedItem = items.find(i => i.id === hamper.id && i.itemType === 'HAMPER');
   const selectedCount = selectedItem ? selectedItem.quantity : 0;
   
+  const { wishlistedHampers, toggleLocalState } = useWishlist();
+  const { openHamper } = useStorefront();
+  // Real link (shareable, opens in a new tab) that opens the in-page details overlay on click
+  const detailsHref = `/?hamper=${hamper.id}`;
+  const openDetails = (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    openHamper(hamper.id);
+  };
+  const watching = wishlistedHampers.has(hamper.id);
+
+  // Sold out: saving to the wishlist subscribes the shopper to a back-in-stock notification
+  const handleNotify = async () => {
+    if (watching) {
+      toast.success("You're on the list. We'll notify you when it's back.");
+      return;
+    }
+    toggleLocalState(hamper.id, 'HAMPER');
+    const res = await toggleWishlistItem(hamper.id, 'HAMPER');
+    if (res?.error) {
+      toggleLocalState(hamper.id, 'HAMPER');
+      toast.error(/logged in/i.test(res.error) ? 'Sign in to get notified when it’s back in stock.' : res.error);
+    } else {
+      toast.success("We'll notify you when it's back in stock", { icon: '🔔' });
+    }
+  };
+
   const handleAdd = () => {
     if (isOutOfStock) return;
     setAdding(true);
@@ -45,118 +92,83 @@ export function HamperCard({ hamper }: HamperCardProps) {
     timeoutRef.current = setTimeout(() => setAdding(false), 500);
   };
 
-  const getStatusColor = (s: string) => {
-    switch (s) {
-      case 'IN STOCK': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-      case 'LOW STOCK': return 'bg-amber-50 text-amber-700 border border-amber-200';
-      case 'CRITICAL': return 'bg-orange-50 text-orange-700 border border-orange-200';
-      case 'OUT OF STOCK': return 'bg-rose-50 text-rose-700 border border-rose-200';
-      default: return 'bg-slate-50 text-slate-700 border border-slate-200';
-    }
-  };
-
-  const customerStatus = status === 'CRITICAL' ? 'LOW STOCK' : status;
+  const lowStockLeft = !isOutOfStock && hamper.stock_quantity !== null && hamper.stock_quantity <= 5 ? hamper.stock_quantity : null;
+  const pill = isOutOfStock
+    ? { text: 'Sold out', cls: 'bg-[#EEE6EA] text-ink-muted' }
+    : lowStockLeft !== null
+    ? { text: `Only ${lowStockLeft} left`, cls: 'bg-[#FFF1D6] text-[#7A4A00]' }
+    : badge
+    ? { text: badge, cls: 'bg-plum text-white' }
+    : null;
+  const tint = tintFor(hamper.id);
 
   return (
     <HoverCard className="w-full h-full">
-      <div className={`group flex flex-col h-full bg-white rounded-3xl overflow-hidden transition-all duration-300 relative ${
-        isOutOfStock 
-          ? 'border border-slate-200 opacity-90'
-          : selectedCount > 0 
-          ? 'ring-2 ring-primary shadow-lg shadow-primary/20' 
-          : 'border border-primary/10 shadow-sm hover:shadow-xl hover:shadow-primary/10'
+      <article className={`group flex flex-col h-full bg-white rounded-[28px] overflow-hidden border transition-shadow duration-300 ${
+        selectedCount > 0 ? 'border-rose ring-2 ring-rose/30' : 'border-petal-line hover:shadow-[0_24px_48px_-20px_rgba(58,18,48,.35)]'
       }`}>
-        
-        {/* Out of Stock Ribbon / Selected Badge */}
-        {isOutOfStock ? (
-          <div className="absolute top-4 left-4 z-20">
-            <span className="bg-rose-600/90 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md border border-white/20">
-              Out of Stock
-            </span>
-          </div>
-        ) : selectedCount > 0 ? (
-          <div className="absolute top-4 left-4 z-20">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white shadow-md">
-              <Check className="w-4 h-4" strokeWidth={3} />
-            </span>
-          </div>
-        ) : null}
-
-        {/* Media / Image Container */}
-        <Link href={`/hampers/${hamper.id}`} className="relative aspect-[4/5] overflow-hidden bg-primary/5 flex items-center justify-center">
+        {/* Media */}
+        <a href={detailsHref} onClick={openDetails} aria-label={`View ${hamper.name}`} className="relative aspect-[4/4] overflow-hidden grid place-items-center" style={{ background: tint.bg }}>
+          {pill && (
+            <span className={`absolute left-3.5 top-3.5 z-20 text-xs font-bold px-2.5 py-1.5 rounded-full tracking-wide ${pill.cls}`}>{pill.text}</span>
+          )}
           <div className="absolute top-3 right-3 z-20 flex">
             <WishlistButton itemId={hamper.id} itemType="HAMPER" className="!relative !top-0 !right-0" />
           </div>
           {hamper.image_url ? (
-            <Image 
-              src={hamper.image_url} 
-              alt={hamper.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
-                isOutOfStock ? 'grayscale opacity-60' : ''
-              }`}
-            />
+            <ViewTransition name={`hamper-${hamper.id}`} share="hp-morph" default="none">
+              <Image
+                src={hamper.image_url}
+                alt={hamper.name}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
+              />
+            </ViewTransition>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-primary/30">
-              <Gift className="w-12 h-12 mb-2 stroke-[1.5]" />
-              <span className="font-script text-2xl">Hamperly Exclusive</span>
+            <svg viewBox="0 0 200 160" className="w-1/2 h-auto transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:rotate-[-2deg]" aria-hidden="true">
+              <rect x="36" y="64" width="128" height="80" rx="8" fill="#FFFFFF" stroke="#3A1230" strokeWidth="3" />
+              <rect x="28" y="50" width="144" height="22" rx="6" fill={tint.lid} stroke="#3A1230" strokeWidth="3" />
+              <rect x="92" y="50" width="16" height="94" fill={tint.lid} />
+              <path d="M100 50c-20-26-44-8-26 4 8 5 20 0 26-4zM100 50c20-26 44-8 26 4-8 5-20 0-26-4z" fill={tint.lid} stroke="#3A1230" strokeWidth="3" />
+              <text x="100" y="114" textAnchor="middle" fontFamily="var(--font-dancing), cursive" fontSize="18" fill="#3A1230">Hamperly</text>
+            </svg>
+          )}
+          {hamper.description && (
+            <div className="absolute left-3 right-3 bottom-3 rounded-2xl bg-white/95 px-3.5 py-3 text-[13px] text-ink opacity-0 translate-y-3 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none">
+              <div className="text-[11px] font-bold tracking-[0.12em] text-rose mb-1">WHAT&apos;S INSIDE</div>
+              <p className="line-clamp-2">{hamper.description}</p>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </Link>
-        
-        {/* Card Content */}
-        <div className="p-6 flex flex-col flex-1">
-          <div className="flex justify-between items-start mb-3">
-            <div className="text-xs font-semibold text-primary/70 bg-primary/5 px-3 py-1 rounded-full">
-              {'Exclusive Collection'}
-            </div>
-            <div className={`text-[10px] font-bold px-2 py-1 rounded-full ${getStatusColor(status)}`}>
-              {customerStatus}
-            </div>
-          </div>
-          
-          <Link href={`/hampers/${hamper.id}`} className="hover:text-primary transition-colors mb-2">
-            <h3 className="font-serif font-bold text-foreground text-xl leading-snug line-clamp-2" title={hamper.name}>
+        </a>
+
+        {/* Content */}
+        <div className="px-5 pt-4 pb-5 flex flex-col flex-1">
+          <a href={detailsHref} onClick={openDetails} className="hover:text-rose transition-colors">
+            <h3 className="font-serif font-semibold text-plum text-[22px] leading-snug line-clamp-2" title={hamper.name}>
               {hamper.name}
             </h3>
-          </Link>
-          
-          {hamper.description && (
-            <p className="text-sm text-foreground/60 line-clamp-2 mb-4">
-              {hamper.description}
-            </p>
-          )}
-          
-          <div className="mt-auto flex items-center justify-between pt-4 border-t border-primary/5">
-            <div className="text-lg font-bold text-foreground">
-              ₹{hamper.selling_price.toFixed(2)}
-            </div>
-            
+          </a>
+
+          <div className="mt-auto pt-4 flex items-center justify-between gap-3">
+            <div className="text-xl font-bold text-ink">₹{hamper.selling_price.toLocaleString('en-IN')}</div>
             <button
-              onClick={handleAdd}
-              disabled={isOutOfStock}
-              className={`p-3 rounded-full transition-all ${
-                isOutOfStock 
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              onClick={isOutOfStock ? handleNotify : handleAdd}
+              className={`h-11 px-4 shrink-0 whitespace-nowrap rounded-full text-sm font-bold flex items-center gap-1.5 transition-colors ${
+                isOutOfStock
+                  ? 'bg-plum text-white hover:bg-plum-soft'
                   : adding || selectedCount > 0
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-primary/5 text-primary hover:bg-primary hover:text-white'
+                  ? 'bg-plum text-white'
+                  : 'bg-rose text-white hover:bg-rose-deep'
               }`}
-              aria-label={isOutOfStock ? "Out of Stock" : selectedCount > 0 ? "Added to Cart" : "Add to Cart"}
+              aria-label={isOutOfStock ? `Notify me when ${hamper.name} is back in stock` : selectedCount > 0 ? `Add another ${hamper.name}` : `Add ${hamper.name} to bag`}
             >
-              {adding ? (
-                <Check className="w-5 h-5" strokeWidth={2.5} />
-              ) : selectedCount > 0 ? (
-                <Check className="w-5 h-5" strokeWidth={2.5} />
-              ) : (
-                <Plus className="w-5 h-5" strokeWidth={2.5} />
-              )}
+              {adding || selectedCount > 0 ? <Check className="w-4 h-4" strokeWidth={2.5} /> : !isOutOfStock && <Plus className="w-4 h-4" strokeWidth={2.5} />}
+              {isOutOfStock ? (watching ? 'Notifying you' : 'Notify me') : selectedCount > 0 ? `In bag · ${selectedCount}` : 'Add to bag'}
             </button>
           </div>
         </div>
-      </div>
+      </article>
     </HoverCard>
   );
 }

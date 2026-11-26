@@ -7,23 +7,9 @@ import { getCurrentUser } from '@/services/auth.service';
 import { redirect } from 'next/navigation';
 import { PrintInvoiceButton } from '@/components/customer/PrintInvoiceButton';
 import { OrderSuccessGuard } from '@/components/customer/OrderSuccessGuard';
-import { getSiteContent, defaultFooterContent } from '@/services/content.service';
-
-// Number customers message with their Order ID to receive the payment QR
-async function getWhatsAppNumber() {
-  const configured = process.env.WHATSAPP_ORDER_NUMBER;
-  const raw = configured || (await getSiteContent('footer', defaultFooterContent)).contactPhone || '';
-  const digits = raw.replace(/\D/g, '');
-  return digits.length === 10 ? `91${digits}` : digits;
-}
-
-function WhatsAppIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35zM12.04 21.5h-.01a9.45 9.45 0 0 1-4.82-1.32l-.35-.2-3.58.94.96-3.49-.23-.36a9.43 9.43 0 0 1-1.45-5.03c0-5.22 4.25-9.47 9.48-9.47 2.53 0 4.91.99 6.7 2.78a9.4 9.4 0 0 1 2.77 6.7c0 5.22-4.25 9.47-9.47 9.47zm8.06-17.53A11.32 11.32 0 0 0 12.04.63C5.76.63.65 5.74.65 12.02c0 2.01.52 3.97 1.52 5.69L.55 23.63l6.05-1.59a11.37 11.37 0 0 0 5.44 1.39h.01c6.28 0 11.39-5.11 11.39-11.39 0-3.04-1.18-5.9-3.34-8.07z" />
-    </svg>
-  );
-}
+import { getWhatsAppNumber } from '@/lib/whatsapp';
+import { WhatsAppIcon } from '@/components/customer/SocialIcons';
+import { ConfettiBurst } from '@/components/customer/ConfettiBurst';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,24 +93,25 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
   const whatsAppUrl = whatsAppNumber ? `https://wa.me/${whatsAppNumber}?text=${encodeURIComponent(whatsAppText)}` : null;
 
   return (
-    <div className="w-full bg-gradient-to-b from-[#F2FBF6] to-[#F8FAFC] py-8 px-4 sm:px-6 print:bg-white print:p-0">
-      <OrderSuccessGuard orderId={purchase.id} redirectTo={user ? '/account/orders' : '/'} />
+    <div className="w-full bg-blush py-8 px-4 sm:px-6 print:bg-white print:p-0">
+      <OrderSuccessGuard orderId={purchase.id} redirectTo={user ? '/?account=orders' : '/'} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full space-y-8 print:space-y-0">
         {/* Success Confirmation Banner - Hidden during print */}
-        <div className="bg-white rounded-3xl border border-emerald-100 p-8 shadow-xl shadow-emerald-900/5 text-center print:hidden">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-emerald-50">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+        <div className="relative overflow-hidden bg-white rounded-[32px] border border-petal-line p-8 sm:p-10 shadow-[0_30px_60px_-40px_rgba(58,18,48,.45)] text-center print:hidden">
+          {purchase.status !== 'CANCELLED' && <ConfettiBurst />}
+          <div className="relative w-16 h-16 bg-[#E7F6EC] rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-[#F2FBF6]">
+            <CheckCircle2 className="w-8 h-8 text-[#1F6B3E]" />
           </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">Order Confirmed!</h1>
-          <p className="text-slate-600 max-w-md mx-auto text-sm leading-relaxed">
-            Thank you for shopping with us! Your order has been placed successfully. A detailed tax invoice receipt is generated below.
+          <h1 className="relative font-serif font-semibold text-plum text-3xl sm:text-4xl tracking-[-0.02em] mb-2">Order #{orderRef} is in!</h1>
+          <p className="relative text-[#5E4453] max-w-md mx-auto leading-relaxed">
+            Thank you for shopping with us. Your order has been placed, and your invoice is below.
           </p>
 
           {awaitingPayment && (
-            <div className="mt-6 max-w-md mx-auto rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 text-left">
-              <p className="text-xs uppercase font-bold tracking-wider text-emerald-700 mb-1">Next step: payment</p>
-              <p className="text-sm text-slate-700 leading-relaxed">
+            <div className="relative mt-6 max-w-md mx-auto rounded-3xl border border-[#B6E2C5] bg-[#F2FBF6] p-5 text-left">
+              <p className="text-xs uppercase font-bold tracking-[0.12em] text-[#1F6B3E] mb-1">Next step: payment</p>
+              <p className="text-sm text-ink leading-relaxed">
                 Share your Order ID <span className="font-mono font-bold text-slate-900">#{orderRef}</span> with us on WhatsApp and we&apos;ll send you a QR code to pay.
               </p>
               {whatsAppUrl ? (
@@ -132,7 +119,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
                   href={whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-[#25D366] hover:bg-[#1EBE5A] text-white font-semibold text-sm transition-colors"
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-[#1E9E55] hover:bg-[#178a49] text-white font-bold text-sm transition-colors"
                 >
                   <WhatsAppIcon className="w-5 h-5" />
                   Send Order ID on WhatsApp
@@ -156,7 +143,7 @@ export default async function CheckoutSuccessPage({ params }: { params: Promise<
             <PrintInvoiceButton />
             {user && (
               <Link 
-                href="/account/orders"
+                href="/?account=orders"
                 className="inline-flex items-center justify-center px-5 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium rounded-xl transition-colors text-sm"
               >
                 View in Account

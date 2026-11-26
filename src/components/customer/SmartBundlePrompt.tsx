@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, PackageOpen, Gift, ShoppingBag, Check, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart, buildFromCartUrl, CartItem } from '@/contexts/CartContext';
-import { useRouter } from 'next/navigation';
+import { useStorefront } from '@/contexts/StorefrontContext';
 import * as Dialog from '@radix-ui/react-dialog';
 
 interface Props {
@@ -20,7 +20,7 @@ export function SmartBundlePrompt({ hampers, looseItemsCount }: Props) {
   const [selectedHamperId, setSelectedHamperId] = useState<string | null>(hampers[0]?.id || null);
   
   const { items, mergeLooseItemsIntoHamper, setIsCartOpen } = useCart();
-  const router = useRouter();
+  const { openStudio } = useStorefront();
 
   // If no loose items or hampers, don't show anything
   if (looseItemsCount === 0 || hampers.length === 0) {
@@ -40,7 +40,7 @@ export function SmartBundlePrompt({ hampers, looseItemsCount }: Props) {
   const handleNewHamper = () => {
     setIsOpen(false);
     setIsCartOpen(false);
-    router.push(buildFromCartUrl(items));
+    openStudio(Object.fromEntries(new URLSearchParams(buildFromCartUrl(items).split('?')[1] || '')));
   };
 
   const handleBuySeparate = () => {

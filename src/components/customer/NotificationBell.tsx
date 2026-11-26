@@ -5,14 +5,14 @@ import { useEffect, useState } from 'react';
 import { getMyNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead } from '@/actions/notification.actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
-import { useRouter } from 'next/navigation';
+import { useStorefront } from '@/contexts/StorefrontContext';
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { openAccount, openHamper } = useStorefront();
 
   const fetchUnreadCount = async () => {
     const res = await getUnreadNotificationCount();
@@ -53,9 +53,11 @@ export function NotificationBell() {
     setOpen(false);
 
     if (notif.type === 'ACCOUNT_WELCOME') {
-      router.push('/account');
+      openAccount('profile');
+    } else if (notif.type === 'BACK_IN_STOCK' && notif.metadata?.hamper_id) {
+      openHamper(notif.metadata.hamper_id);
     } else if (notif.purchase_id) {
-      router.push('/account/orders');
+      openAccount('orders');
     }
   };
 
@@ -125,7 +127,7 @@ export function NotificationBell() {
           )}
         </div>
         <div className="p-2 border-t border-slate-100 bg-slate-50">
-          <button onClick={() => { setOpen(false); router.push('/account/notifications'); }} className="w-full py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 transition-colors text-center">
+          <button onClick={() => { setOpen(false); openAccount('notifications'); }} className="w-full py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 transition-colors text-center">
             View all notifications
           </button>
         </div>

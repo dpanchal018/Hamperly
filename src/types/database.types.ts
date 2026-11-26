@@ -420,7 +420,8 @@ export type NotificationType =
   | 'ORDER_PREPARING'
   | 'ORDER_READY'
   | 'ORDER_COMPLETED'
-  | 'ORDER_CANCELLED';
+  | 'ORDER_CANCELLED'
+  | 'BACK_IN_STOCK';
 
 export interface Notification {
   id: string;

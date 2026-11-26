@@ -6,7 +6,7 @@ test.describe('Domain 4 & 5: Cart Management, Cross-Device Sync & Wishlist', () 
     await page.goto('/hampers');
 
     // Click 'Add to Cart' on first in-stock available hamper
-    const addBtn = page.locator('button:not([disabled])').filter({ hasText: /add to cart|quick add|buy now/i }).or(page.locator('button[aria-label="Add to Cart"]:not([disabled])')).first();
+    const addBtn = page.locator('button:not([disabled])').filter({ hasText: /add to bag|add to cart|quick add|buy now/i }).or(page.locator('button[aria-label="Add to Cart"]:not([disabled])')).first();
     if (await addBtn.isVisible()) {
       await addBtn.click();
       // Ensure cart count badge updates or drawer appears

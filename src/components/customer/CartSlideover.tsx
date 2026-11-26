@@ -2,20 +2,23 @@
 
 import { useCart, buildFromCartUrl } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, X, Minus, Plus, PackageOpen, Sparkles, Edit3, Heart, Sliders, MessageSquare } from 'lucide-react';
+import { ShoppingBag, X, Minus, Plus, PackageOpen, Sparkles, Edit3, Heart, Sliders, MessageSquare, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { getStorefrontProducts } from '@/actions/storefront.actions';
-import { AuthModal } from './AuthModal';
+import { useStorefront } from '@/contexts/StorefrontContext';
 import { SmartBundlePrompt } from './SmartBundlePrompt';
+
+// buildFromCartUrl returns a /build?… URL; the studio now lives on the home page, so keep only its query
+function studioParamsFromUrl(url: string) {
+  return Object.fromEntries(new URLSearchParams(url.split('?')[1] || ''));
+}
 
 export function CartSlideover({ user }: { user?: any }) {
   const { isCartOpen, setIsCartOpen, items, removeItem, updateQuantity, subtotal, addItem } = useCart();
   const [products, setProducts] = useState<any[]>([]);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const router = useRouter();
+  const { goTo, openCheckout, openStudio } = useStorefront();
 
   const hampersInCart = items.filter(i => i.itemType === 'PERSONALIZED_HAMPER' || i.itemType === 'HAMPER');
   const looseItemsCount = items.filter(i => i.itemType === 'PRODUCT').reduce((acc, i) => acc + i.quantity, 0);
@@ -69,7 +72,7 @@ export function CartSlideover({ user }: { user?: any }) {
                 <Button 
                   onClick={() => {
                     setIsCartOpen(false);
-                    router.push('/build');
+                    openStudio();
                   }}
                   className="rounded-full h-12 text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md"
                 >
@@ -78,7 +81,7 @@ export function CartSlideover({ user }: { user?: any }) {
                 <Button 
                   onClick={() => {
                     setIsCartOpen(false);
-                    router.push('/hampers');
+                    goTo('shop');
                   }}
                   variant="outline"
                   className="rounded-full h-12 text-sm font-semibold border-slate-200 text-slate-700"
@@ -103,7 +106,7 @@ export function CartSlideover({ user }: { user?: any }) {
                   <Button
                     onClick={() => {
                       setIsCartOpen(false);
-                      router.push(buildFromCartUrl(items));
+                      openStudio(studioParamsFromUrl(buildFromCartUrl(items)));
                     }}
                     size="sm"
                     className="bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs px-4 h-9 shadow-md shadow-rose-200 shrink-0 w-full sm:w-auto"
@@ -159,6 +162,14 @@ export function CartSlideover({ user }: { user?: any }) {
                           <p className="text-slate-900 font-bold text-sm">₹{item.price.toFixed(2)}</p>
                         </div>
                         
+                        {/* Low-stock nudge (stock as of when the item was added) */}
+                        {item.maxQuantity !== null && item.maxQuantity !== undefined && item.maxQuantity > 0 && item.maxQuantity <= 5 && (
+                          <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-[#FFF7E6] border border-[#F2D49A] px-2.5 py-1.5 text-[11px] font-semibold text-[#5A3700]" role="note">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
+                            Only {item.maxQuantity} left. Check out soon to keep it.
+                          </p>
+                        )}
+
                         {/* Quantity controls */}
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
                           <div className="flex items-center border border-slate-200 rounded-full w-fit bg-slate-50">
@@ -187,7 +198,7 @@ export function CartSlideover({ user }: { user?: any }) {
                             <button
                               onClick={() => {
                                 setIsCartOpen(false);
-                                router.push(`/build?editCartId=${item.id}`);
+                                openStudio({ editCartId: item.id });
                               }}
                               className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-full transition-colors"
                             >
@@ -232,6 +243,14 @@ export function CartSlideover({ user }: { user?: any }) {
                         )}
                       </div>
                     )}
+
+                    {/* Card message on a ready-made hamper */}
+                    {!isPersonalized && item.personalMessage && (
+                      <div className="bg-[#FFFDF8] border border-petal-line p-3 rounded-2xl text-xs text-ink">
+                        <span className="font-bold text-rose tracking-wide">CARD · </span>
+                        <span className="font-script text-base">{item.personalMessage}</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -256,7 +275,7 @@ export function CartSlideover({ user }: { user?: any }) {
             <Button 
               onClick={() => {
                 setIsCartOpen(false);
-                router.push('/checkout');
+                openCheckout();
               }}
               className="w-full rounded-full py-4 h-14 bg-rose-600 hover:bg-rose-700 text-white font-bold text-base shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2"
             >
@@ -268,10 +287,6 @@ export function CartSlideover({ user }: { user?: any }) {
         )}
       </div>
 
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-      />
     </>
   );
 }

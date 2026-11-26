@@ -1,13 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useHamperBuilder } from '@/contexts/HamperBuilderContext';
-import { Search, Menu, X, Heart, ShoppingBag, Gift, ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useStorefront, type SectionId } from '@/contexts/StorefrontContext';
+import { Search, Menu, X, Heart, ShoppingBag, Gift, ChevronDown, User } from 'lucide-react';
 
 import { NotificationBell } from './NotificationBell';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -15,38 +14,50 @@ import { HamperIndicator } from './HamperIndicator';
 
 import { HeaderContent, Occasion } from '@/types/database.types';
 
+// The storefront is one page: the menu scrolls to its sections
+const NAV: { id: SectionId; label: string }[] = [
+  { id: 'shop', label: 'Shop' },
+  { id: 'occasions', label: 'Occasions' },
+  { id: 'studio', label: 'Hamper Studio' },
+  { id: 'museum', label: 'Museum' },
+  { id: 'stories', label: 'Stories' },
+];
+
+/** Highlights the menu item for the section currently in view */
+function useActiveSection(enabled: boolean) {
+  const [active, setActive] = useState<SectionId | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const els = NAV.map(n => document.getElementById(n.id)).filter((el): el is HTMLElement => !!el);
+    if (els.length === 0) return;
+    const io = new IntersectionObserver(
+      entries => {
+        const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActive(visible.target.id as SectionId);
+      },
+      { rootMargin: '-40% 0px -50% 0px', threshold: [0, 0.25, 0.5] }
+    );
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [enabled]);
+  return enabled ? active : null;
+}
 
 function WishlistNavButton() {
   const { wishlistedHampers, wishlistedProducts, isLoaded } = useWishlist();
+  const { openAccount } = useStorefront();
   const totalItems = wishlistedHampers.size + wishlistedProducts.size;
-  
+
   return (
-    <Link 
-      href="/account/wishlist"
-      className="relative text-foreground/70 hover:text-primary transition-colors p-2"
-      aria-label="Wishlist"
+    <button
+      type="button"
+      onClick={() => openAccount('wishlist')}
+      className="relative grid place-items-center w-11 h-11 rounded-full text-ink hover:bg-petal transition-colors"
+      aria-label={`Wishlist${isLoaded && totalItems > 0 ? `, ${totalItems} saved` : ''}`}
     >
       <Heart className="w-5 h-5" strokeWidth={1.5} />
       {isLoaded && totalItems > 0 && (
-        <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-          {totalItems}
-        </span>
-      )}
-      <span className="sr-only">Wishlist</span>
-    </Link>
-  );
-}
-
-function CartButton() {
-  const { setIsCartOpen, totalItems } = useCart();
-  return (
-    <button 
-      onClick={() => setIsCartOpen(true)}
-      className="relative text-foreground/70 hover:text-primary transition-colors p-2"
-    >
-      <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
-      {totalItems > 0 && (
-        <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+        <span className="absolute top-0.5 right-0.5 bg-rose text-white text-[10px] font-bold min-w-4 h-4 px-1 grid place-items-center rounded-full">
           {totalItems}
         </span>
       )}
@@ -54,206 +65,161 @@ function CartButton() {
   );
 }
 
-export function Navbar({ user, role, content, occasions = [] }: { user: any; role?: string | null; content: HeaderContent, occasions?: Occasion[] }) {
+function CartButton() {
+  const { setIsCartOpen, totalItems } = useCart();
+  return (
+    <button
+      onClick={() => setIsCartOpen(true)}
+      aria-label={`Bag, ${totalItems} item${totalItems === 1 ? '' : 's'}`}
+      className="flex items-center gap-2 h-11 pl-3.5 pr-4 rounded-full bg-plum text-white text-sm font-semibold hover:bg-plum-soft transition-colors"
+    >
+      <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={2} />
+      <span className="hidden sm:inline">Bag</span>
+      {totalItems > 0 && <span className="tabular-nums">· {totalItems}</span>}
+    </button>
+  );
+}
+
+export function Navbar({ user, role, content, occasions = [] }: { user: { id: string } | null; role?: string | null; content: HeaderContent, occasions?: Occasion[] }) {
   const pathname = usePathname();
+  const onHome = pathname === '/';
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileOccasionsOpen, setMobileOccasionsOpen] = useState(false);
   const { totalProductsCount, totalPrice, isInitialized } = useHamperBuilder();
+  const { goTo, setShopFilter, openStudio, openAuth, openAccount } = useStorefront();
+  const active = useActiveSection(onHome);
   const hasHamperItems = isInitialized && totalProductsCount > 0;
-
-  // Filter out Occasions from header nav links
-  const navLinks = (content.navLinks || []).filter(link => link.href !== '/occasions');
-
   const parentOccasions = occasions.filter(o => !o.parent_id);
-  const childOccasions = occasions.filter(o => o.parent_id);
+
+  // Off the home page (only the printable invoice now), menu items go back to the page sections
+  const jump = (id: SectionId) => {
+    setMobileMenuOpen(false);
+    if (onHome) goTo(id);
+    else router.push(`/?section=${id}`);
+  };
+  const filterOccasion = (occasionId: string) => {
+    setMobileMenuOpen(false);
+    if (onHome) setShopFilter({ occasion: occasionId }, { replace: true, scroll: true });
+    else router.push(`/?occasion=${occasionId}`);
+  };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-primary/10 shadow-sm">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        
+    <header className="w-full px-3 sm:px-6 pt-3">
+      <div className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl border border-plum/10 rounded-full shadow-[0_10px_30px_-18px_rgba(58,18,48,.35)] pl-5 sm:pl-7 pr-2 py-1.5 flex items-center gap-4">
+
+        <button type="button" onClick={() => jump('top')} className="font-script text-[32px] leading-none text-rose pt-1 shrink-0 transition-transform hover:scale-105" aria-label="Hamperly, back to top">
+          {content.logoText}
+        </button>
+
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8 flex-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm font-semibold transition-colors hover:text-primary ${
-                pathname === link.href ? 'text-primary' : 'text-foreground/70'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-          
-          {/* Occasions Flyout Dropdown */}
-          {parentOccasions.length > 0 && (
-            <div className="group/nav relative">
-              <button className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center py-4">
-                Occasions
-                <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover/nav:rotate-180" />
+        <nav className="hidden xl:flex items-center gap-1 ml-4 flex-1 whitespace-nowrap" aria-label="Main">
+          {NAV.map(item => {
+            const isActive = active === item.id;
+            if (item.id === 'occasions' && parentOccasions.length > 0) {
+              return (
+                <div key={item.id} className="group/nav relative">
+                  <button
+                    type="button"
+                    onClick={() => jump('occasions')}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={`px-4 py-2.5 rounded-full text-[15px] font-semibold transition-colors flex items-center ${isActive ? 'bg-petal text-plum' : 'text-ink hover:bg-blush'}`}
+                  >
+                    Occasions
+                    <ChevronDown className="w-4 h-4 ml-1 transition-transform group-hover/nav:rotate-180" />
+                  </button>
+                  <ul className="absolute left-0 top-full hidden group-hover/nav:block group-focus-within/nav:block bg-white border border-petal-line shadow-xl rounded-2xl py-2 min-w-[240px] z-50">
+                    {parentOccasions.map(o => (
+                      <li key={o.id}>
+                        <button type="button" onClick={() => filterOccasion(o.id)} className="w-full text-left px-4 py-2.5 text-sm font-medium text-ink hover:bg-blush hover:text-rose">
+                          {o.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => jump(item.id)}
+                aria-current={isActive ? 'true' : undefined}
+                className={`px-4 py-2.5 rounded-full text-[15px] font-semibold transition-colors ${isActive ? 'bg-petal text-plum' : 'text-ink hover:bg-blush'}`}
+              >
+                {item.label}
               </button>
-              
-              {/* Level 1 Dropdown */}
-              <ul className="absolute left-0 top-full hidden group-hover/nav:block bg-white border border-slate-100 shadow-xl rounded-xl py-2 min-w-[240px] z-50">
-                {parentOccasions.map(parent => {
-                  const children = childOccasions.filter(child => child.parent_id === parent.id);
-                  const hasChildren = children.length > 0;
-                  
-                  return (
-                    <li key={parent.id} className="group/item relative px-4 py-2 hover:bg-slate-50 transition-colors">
-                      <Link href={`/occasions/${parent.slug}`} className="flex justify-between items-center w-full text-sm font-medium text-slate-700 hover:text-primary">
-                        {parent.name}
-                        {hasChildren && <ChevronRight className="w-4 h-4 text-slate-400" />}
-                      </Link>
-                      
-                      {/* Level 2 Flyout (Right side) */}
-                      {hasChildren && (
-                        <ul className="absolute left-full top-0 hidden group-hover/item:block bg-white border border-slate-100 shadow-xl rounded-xl py-2 min-w-[200px] z-50 -ml-1">
-                          {children.map(child => (
-                            <li key={child.id} className="px-4 py-2 hover:bg-slate-50 transition-colors">
-                              <Link href={`/occasions/${child.slug}`} className="text-sm text-slate-600 hover:text-primary block">
-                                {child.name}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+            );
+          })}
         </nav>
 
-        {/* Logo */}
-        <div className="flex-1 flex md:justify-center">
-          <Link href="/" className="inline-block group">
-             <div className="bg-white border border-primary/20 shadow-sm shadow-primary/5 rounded-full px-6 py-2 transition-transform group-hover:scale-105">
-                <h2 className="text-3xl font-script text-primary leading-none pt-1">{content.logoText}</h2>
-             </div>
-          </Link>
-        </div>
-
         {/* Actions */}
-        <div className="flex items-center justify-end space-x-4 flex-1">
-          <Link href="/products" className="hidden md:flex text-foreground/70 hover:text-primary transition-colors p-2">
-            <Search className="w-5 h-5" strokeWidth={1.5} />
-            <span className="sr-only">Search</span>
-          </Link>
+        <div className="flex items-center justify-end gap-1 ml-auto">
+          <button type="button" onClick={() => jump('shop')} className="hidden md:grid place-items-center w-11 h-11 rounded-full text-ink hover:bg-petal transition-colors" aria-label="Search hampers">
+            <Search className="w-5 h-5" strokeWidth={2} />
+          </button>
 
           <WishlistNavButton />
           <HamperIndicator />
           {user && <NotificationBell />}
           <CartButton />
 
-          <div className="hidden md:flex items-center gap-3 ml-2">
+          <div className="hidden xl:flex items-center ml-1">
             {user ? (
               <ProfileDropdown user={user} role={role} />
             ) : (
-              <Link href="/login">
-                <Button variant="outline" className="rounded-full border-primary/20 text-primary hover:bg-primary/5">
-                  Sign In
-                </Button>
-              </Link>
+              <button type="button" onClick={() => openAuth('login')} className="h-11 px-4 grid place-items-center rounded-full text-sm font-semibold text-rose hover:bg-petal transition-colors">
+                Sign in
+              </button>
             )}
           </div>
 
-          {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-foreground/70 hover:text-primary"
+            className="xl:hidden grid place-items-center w-11 h-11 rounded-full text-ink hover:bg-petal"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" strokeWidth={1.5} /> : <Menu className="w-6 h-6" strokeWidth={1.5} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-primary/10 bg-white max-h-[80vh] overflow-y-auto">
-          <nav className="flex flex-col p-4 space-y-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-base font-semibold ${
-                  pathname === link.href ? 'text-primary' : 'text-foreground'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.name}
-              </Link>
+        <div className="xl:hidden max-w-7xl mx-auto mt-2 rounded-3xl border border-petal-line bg-white shadow-xl max-h-[75vh] overflow-y-auto">
+          <nav className="flex flex-col p-3" aria-label="Main">
+            {NAV.map(item => (
+              <button key={item.id} type="button" onClick={() => jump(item.id)} className={`text-left px-4 py-3 rounded-2xl text-base font-semibold ${active === item.id ? 'bg-petal text-plum' : 'text-ink hover:bg-blush'}`}>
+                {item.label}
+              </button>
             ))}
-            
-            {/* Mobile Occasions Accordion */}
             {parentOccasions.length > 0 && (
-              <div className="border-t border-slate-100 pt-4">
-                <button 
-                  className="flex items-center justify-between w-full text-base font-semibold text-foreground"
-                  onClick={() => setMobileOccasionsOpen(!mobileOccasionsOpen)}
-                >
-                  Occasions
-                  <ChevronDown className={`w-5 h-5 transition-transform ${mobileOccasionsOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {mobileOccasionsOpen && (
-                  <div className="mt-4 pl-4 space-y-4">
-                    {parentOccasions.map(parent => (
-                      <div key={parent.id} className="space-y-2">
-                        <Link 
-                          href={`/occasions/${parent.slug}`} 
-                          className="block font-semibold text-primary"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          {parent.name}
-                        </Link>
-                        {childOccasions.filter(child => child.parent_id === parent.id).map(child => (
-                          <Link 
-                            key={child.id}
-                            href={`/occasions/${child.slug}`} 
-                            className="block text-sm text-slate-600 pl-4 py-1"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="flex flex-wrap gap-2 px-4 py-3 border-t border-petal-line mt-2">
+                {parentOccasions.map(o => (
+                  <button key={o.id} type="button" onClick={() => filterOccasion(o.id)} className="h-9 px-3 rounded-full bg-blush text-sm font-semibold text-plum">
+                    {o.name}
+                  </button>
+                ))}
               </div>
             )}
-
-            <div className="pt-4 mt-4 border-t border-primary/10 flex flex-col space-y-4">
-              <Link
-                href="/build"
-                className="flex items-center justify-between text-foreground hover:text-primary py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="flex items-center">
-                  <Gift className="w-5 h-5 mr-3" strokeWidth={1.5} />
-                  {hasHamperItems ? 'Finish My Hamper' : 'Start a Hamper'}
-                </span>
+            <div className="border-t border-petal-line mt-2 pt-2 flex flex-col">
+              <button type="button" onClick={() => { setMobileMenuOpen(false); openStudio(); }} className="flex items-center justify-between px-4 py-3 rounded-2xl text-ink hover:bg-blush">
+                <span className="flex items-center font-semibold"><Gift className="w-5 h-5 mr-3 text-rose" />{hasHamperItems ? 'Finish my hamper' : 'Start a hamper'}</span>
                 {hasHamperItems && (
-                  <span className="text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full">
+                  <span className="text-xs font-bold text-rose bg-petal px-2.5 py-1 rounded-full">
                     {totalProductsCount} item{totalProductsCount !== 1 ? 's' : ''} · ₹{totalPrice.toFixed(0)}
                   </span>
                 )}
-              </Link>
-              <Link href="/products" className="flex items-center text-foreground hover:text-primary py-2" onClick={() => setMobileMenuOpen(false)}>
-                <Search className="w-5 h-5 mr-3" strokeWidth={1.5} />
-                Search
-              </Link>
+              </button>
               {user ? (
-                <Link href="/account" className="text-foreground hover:text-primary font-semibold py-2" onClick={() => setMobileMenuOpen(false)}>
-                  My Account
-                </Link>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); openAccount('orders'); }} className="flex items-center px-4 py-3 rounded-2xl font-semibold text-ink hover:bg-blush">
+                  <User className="w-5 h-5 mr-3 text-rose" />My account
+                </button>
               ) : (
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full rounded-full bg-primary text-white hover:bg-primary/90">
-                    Sign In
-                  </Button>
-                </Link>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); openAuth('login'); }} className="m-2 h-12 rounded-full bg-rose text-white font-bold">
+                  Sign in
+                </button>
               )}
             </div>
           </nav>

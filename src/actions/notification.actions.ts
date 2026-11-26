@@ -49,7 +49,7 @@ export async function getMyNotifications() {
 
   const { data: notifications, error } = await supabase
     .from('notifications')
-    .select('id, type, title, message, is_read, created_at, purchase_id')
+    .select('id, type, title, message, is_read, created_at, purchase_id, metadata')
     .eq('customer_id', customers.id)
     .order('created_at', { ascending: false })
     .limit(50);

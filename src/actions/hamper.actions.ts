@@ -3,6 +3,7 @@ import {requireAdmin} from "@/services/auth.service";
 import {createClient} from "@/lib/supabase/server";
 import {PreMadeHamper, HamperDetailView, PublicHamper} from "@/types/database.types";
 import {revalidatePath} from "next/cache";
+import {createClient as createSupabaseAdmin} from "@supabase/supabase-js";
 import {PublicProduct} from "@/services/catalog.service";
 
 export async function getHampers() {
@@ -114,6 +115,8 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper> & {r
   const supabase = await createClient();
   await requireAdmin();
 
+  const {data: before} = await supabase.from("hampers").select("stock_quantity").eq("id", id).maybeSingle();
+
   const {data: hamper, error} = await supabase
     .from("hampers")
     .update({
@@ -148,9 +151,40 @@ export async function updateHamper(id: string, data: Partial<PreMadeHamper> & {r
     }
   }
 
+  // Sold out -> back in stock: tell everyone who saved this hamper to their wishlist
+  const wasSoldOut = before?.stock_quantity !== null && before?.stock_quantity !== undefined && before.stock_quantity <= 0;
+  const nowInStock = hamper.stock_quantity === null || hamper.stock_quantity > 0;
+  if (wasSoldOut && nowInStock && hamper.is_active) {
+    try {
+      await notifyBackInStock(hamper.id, hamper.name);
+    } catch (notifyErr) {
+      console.error("Back-in-stock notification failed:", notifyErr);
+    }
+  }
+
   revalidatePath("/admin/hampers");
   revalidatePath(`/admin/hampers/${id}`);
   return {hamper: hamper as PreMadeHamper};
+}
+
+async function notifyBackInStock(hamperId: string, hamperName: string) {
+  const admin = createSupabaseAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const {data: wishes} = await admin.from("wishlists").select("user_id").eq("hamper_id", hamperId);
+  const userIds = [...new Set((wishes || []).map((w) => w.user_id))];
+  if (userIds.length === 0) return;
+  const {data: customers} = await admin.from("customers").select("id").in("user_id", userIds);
+  const {createNotification} = await import("./notification.actions");
+  await Promise.all(
+    (customers || []).map((c) =>
+      createNotification({
+        customer_id: c.id,
+        type: "BACK_IN_STOCK",
+        title: "Back in stock 🎁",
+        message: `${hamperName} from your wishlist is available again. Grab it before it sells out!`,
+        metadata: {hamper_id: hamperId},
+      }),
+    ),
+  );
 }
 
 export async function getHamperItems(hamperId: string) {

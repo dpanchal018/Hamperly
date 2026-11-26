@@ -2,13 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { User, LayoutDashboard, ShoppingBag, Package, LogOut, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useStorefront } from '@/contexts/StorefrontContext';
+import { signOutInline } from '@/actions/auth.actions';
+import { User, LayoutDashboard, ShoppingBag, Package, LogOut, ChevronDown } from 'lucide-react';
 
 export function ProfileDropdown({ user, role }: { user?: any; role?: string | null }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { openAccount } = useStorefront();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Extract initials
   const fullName = user?.user_metadata?.full_name || (role === 'ADMIN' ? 'Admin' : 'Customer');
@@ -66,35 +69,34 @@ export function ProfileDropdown({ user, role }: { user?: any; role?: string | nu
               </>
             ) : (
               <>
-                <Link 
-                  href="/account/orders" 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                <button
+                  type="button"
+                  onClick={() => { setIsOpen(false); openAccount('orders'); }}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                 >
                   <ShoppingBag className="w-4 h-4 mr-3" />
                   My Orders
-                </Link>
-                <Link 
-                  href="/account/profile" 
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsOpen(false); openAccount('profile'); }}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                 >
                   <User className="w-4 h-4 mr-3" />
                   Profile Settings
-                </Link>
+                </button>
               </>
             )}
           </div>
           <div className="border-t border-slate-100 py-2">
-            <form action="/api/auth/logout" method="POST">
-              <button 
-                type="submit" 
-                className="flex items-center w-full px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 transition-colors"
-              >
-                <LogOut className="w-4 h-4 mr-3" />
-                Sign Out
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={async () => { setIsOpen(false); await signOutInline(); router.refresh(); }}
+              className="flex items-center w-full px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4 mr-3" />
+              Sign Out
+            </button>
           </div>
         </div>
       )}
