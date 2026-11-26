@@ -72,14 +72,18 @@ export function GiftFinder({ recipients, hampers }: { recipients: { id: number |
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2.5 pt-5 border-t border-dashed border-[#E5C2CF]">
-        <span className="font-bold text-plum mr-2">Budget</span>
-        {BUDGETS.map(b => (
-          <button key={b.id} type="button" aria-pressed={budget === b.id} onClick={() => setBudget(budget === b.id ? '' : b.id)} className={chip(budget === b.id)}>
-            {b.label}
-          </button>
-        ))}
-        <button type="button" onClick={() => setShopFilter({ recipient, priceRange: budget }, { replace: true, scroll: true })} className="ml-auto h-12 px-5 rounded-full bg-plum text-white font-bold inline-flex items-center gap-2 hover:bg-plum-soft transition-colors">
+      {/* Phone: label on its own line, budgets in an even 2x2 grid, full-width button.
+          Wider screens: everything flows on one line with the button pushed right. */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-2.5 pt-5 border-t border-dashed border-[#E5C2CF]">
+        <span className="font-bold text-plum sm:mr-2">Budget</span>
+        <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap" role="group" aria-label="Budget">
+          {BUDGETS.map(b => (
+            <button key={b.id} type="button" aria-pressed={budget === b.id} onClick={() => setBudget(budget === b.id ? '' : b.id)} className={`${chip(budget === b.id)} max-sm:px-2 whitespace-nowrap`}>
+              {b.label}
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={() => setShopFilter({ recipient, priceRange: budget }, { replace: true, scroll: true })} className="mt-1 sm:mt-0 w-full sm:w-auto sm:ml-auto h-12 px-5 rounded-full bg-plum text-white font-bold inline-flex items-center justify-center gap-2 hover:bg-plum-soft transition-colors">
           {matches > 0 ? `Show ${matches} matching hamper${matches === 1 ? '' : 's'}` : 'Browse all hampers'}
           <ArrowRight className="w-4 h-4" />
         </button>

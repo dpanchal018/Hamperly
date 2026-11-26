@@ -81,18 +81,19 @@ export function StepPersonalize() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
+      <div className="flex items-center justify-between gap-3 sm:gap-4 pt-6 border-t border-slate-100">
         <Button
           variant="outline"
           onClick={prevStep}
-          className="rounded-full px-8 h-12 text-slate-600 flex items-center gap-2"
+          aria-label="Back to Customizations"
+          className="rounded-full w-12 sm:w-auto px-0 sm:px-8 h-12 text-slate-600 flex items-center gap-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Customizations
+          <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Back to Customizations</span>
         </Button>
 
         <Button
           onClick={nextStep}
-          className="rounded-full px-10 h-14 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 transition-all flex items-center gap-2"
+          className="flex-1 sm:flex-none justify-center rounded-full px-5 sm:px-10 h-14 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-base shadow-lg shadow-rose-200 transition-all flex items-center gap-2"
         >
           <span>Review Complete Hamper</span>
           <ArrowRight className="w-5 h-5" />

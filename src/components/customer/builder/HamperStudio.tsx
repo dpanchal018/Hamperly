@@ -182,8 +182,10 @@ export function HamperStudio({ occasions, products, categories, customizationCat
 
   const displayStep = isMounted ? currentStep : 1;
 
+  // No background of its own: the #studio section's tint must run edge to edge, otherwise its
+  // padding shows as a pale stripe above and below the studio.
   return (
-    <div className="bg-blush">
+    <div>
       <div className="mx-auto px-4 sm:px-8 max-w-7xl">
         <div className="text-center mb-8">
           <div className="text-[13px] font-bold tracking-[0.12em] text-rose">HAMPER STUDIO · LIVE 3D</div>

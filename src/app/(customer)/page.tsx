@@ -220,7 +220,7 @@ export default async function HomePage() {
       )}
 
       {/* Shop */}
-      <section id="shop" className="scroll-mt-28 max-w-7xl mx-auto px-4 sm:px-8 pb-24">
+      <section id="shop" className="scroll-mt-28 max-w-7xl mx-auto px-4 sm:px-8 pb-14 sm:pb-24">
         <SectionHeading eyebrow="READY TO GIFT" title="The shop." />
         <HampersCatalog
           initialHampers={allHampers}
@@ -233,7 +233,7 @@ export default async function HomePage() {
       </section>
 
       {/* Hamper studio (the full builder, in-page) */}
-      <section id="studio" className="scroll-mt-24 bg-white/60 border-y border-petal-line py-16">
+      <section id="studio" className="scroll-mt-24 bg-white/60 border-y border-petal-line py-10 sm:py-16">
         <Suspense fallback={<div className="max-w-7xl mx-auto px-8 h-96 rounded-[32px] bg-petal animate-pulse" />}>
           <HamperStudio
             occasions={occasions}
